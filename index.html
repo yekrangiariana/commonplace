@@ -1,0 +1,1433 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Commonplace</title>
+    <script>
+      // Apply theme and accent color immediately to prevent flash
+      (function () {
+        try {
+          var stored = localStorage.getItem("bookmarkManagerState");
+          if (stored) {
+            var state = JSON.parse(stored);
+            var theme = state.theme === "dark" ? "dark" : "light";
+            var highlight = ["yellow", "green", "red"].includes(
+              state.highlightColor,
+            )
+              ? state.highlightColor
+              : "green";
+            var font = ["mono", "sans", "serif"].includes(state.displayFont)
+              ? state.displayFont
+              : "mono";
+            document.documentElement.setAttribute("data-theme", theme);
+            document.documentElement.setAttribute(
+              "data-highlight-color",
+              highlight,
+            );
+            document.documentElement.setAttribute(
+              "data-accent-color",
+              highlight,
+            );
+            document.documentElement.setAttribute("data-font", font);
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+    <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/context-menu.css" />
+    <link rel="stylesheet" href="./css/tts-player.css" />
+    <link rel="stylesheet" href="./css/mobile-responsive.css" />
+  </head>
+  <body>
+    <!-- Login Modal -->
+    <div id="login-modal" class="login-modal login-modal--hidden">
+      <div class="login-modal__backdrop"></div>
+      <div class="login-modal__card">
+        <div class="login-modal__header">
+          <i class="fa-solid fa-lock login-modal__icon" aria-hidden="true"></i>
+          <h2 class="login-modal__title">Commonplace</h2>
+          <p class="login-modal__subtitle">Please sign in to continue</p>
+        </div>
+        <form id="login-form" class="login-modal__form">
+          <div class="login-modal__field">
+            <label for="login-username" class="login-modal__label"
+              >Username</label
+            >
+            <input
+              type="text"
+              id="login-username"
+              name="username"
+              class="login-modal__input"
+              autocomplete="username"
+              required
+            />
+          </div>
+          <div class="login-modal__field">
+            <label for="login-password" class="login-modal__label"
+              >Password</label
+            >
+            <input
+              type="password"
+              id="login-password"
+              name="password"
+              class="login-modal__input"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+          <p id="login-error" class="login-modal__error" aria-live="polite"></p>
+          <button type="submit" class="login-modal__submit">Sign In</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="app-branding">
+          <h1 class="app-title">Commonplace</h1>
+          <p class="app-eyebrow">Collect, Connect, Compose</p>
+        </div>
+        <nav class="tab-bar" aria-label="Primary">
+          <button class="tab-button" id="add-article-open-button" type="button">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            Add
+          </button>
+          <button class="tab-button" data-tab-target="rss">
+            <i class="fa-solid fa-compass" aria-hidden="true"></i>
+            Explore
+          </button>
+          <button class="tab-button" data-tab-target="library">
+            <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+            Library
+          </button>
+          <button class="tab-button" data-tab-target="projects">
+            <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
+            Projects
+          </button>
+          <button class="tab-button" data-tab-target="settings">
+            <i class="fa-solid fa-gear" aria-hidden="true"></i>
+            Settings
+          </button>
+        </nav>
+      </header>
+
+      <main class="app-main">
+        <section class="tab-panel" data-tab-panel="rss">
+          <div class="panel-grid panel-grid--rss">
+            <aside class="panel-card panel-card--rss-folders">
+              <div class="section-heading section-heading--compact">
+                <h2>Folders</h2>
+              </div>
+              <div
+                id="rss-folder-list"
+                class="rss-folder-list"
+                aria-live="polite"
+              ></div>
+            </aside>
+
+            <section class="panel-card panel-card--rss-main">
+              <div class="rss-toolbar">
+                <div class="section-heading section-heading--compact">
+                  <h2>Feeds</h2>
+                  <p id="rss-last-updated" class="meta-text rss-last-updated">
+                    Last updated: Never
+                  </p>
+                </div>
+                <div class="rss-toolbar-actions">
+                  <div class="reader-meta-action-wrap rss-subscribe-wrap">
+                    <button
+                      type="button"
+                      class="button button--ghost button--small"
+                      data-rss-open-subscribe
+                      title="Subscribe to feed"
+                    >
+                      <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                      Feed
+                    </button>
+
+                    <div
+                      class="reader-popover rss-subscribe-popover"
+                      id="rss-subscribe-popover"
+                      hidden
+                    >
+                      <form
+                        id="rss-subscribe-form"
+                        class="rss-subscribe-form rss-subscribe-form--popover"
+                      >
+                        <input
+                          id="rss-feed-url-input"
+                          type="url"
+                          placeholder="https://example.com/feed.xml"
+                          autocomplete="off"
+                          required
+                        />
+                        <input
+                          id="rss-feed-folder-input"
+                          type="text"
+                          placeholder="Folder (optional)"
+                          autocomplete="off"
+                        />
+                        <div id="rss-folder-suggestions" class="chip-row"></div>
+                        <p class="meta-text">Popular feeds</p>
+                        <div class="chip-row">
+                          <button
+                            type="button"
+                            class="chip chip--helper"
+                            data-rss-suggest="http://feeds.bbci.co.uk/news/rss.xml"
+                          >
+                            BBC News
+                          </button>
+                          <button
+                            type="button"
+                            class="chip chip--helper"
+                            data-rss-suggest="https://www.theguardian.com/world/rss"
+                          >
+                            The Guardian
+                          </button>
+                          <button
+                            type="button"
+                            class="chip chip--helper"
+                            data-rss-suggest="http://feeds.reuters.com/reuters/topNews"
+                          >
+                            Reuters
+                          </button>
+                          <button
+                            type="button"
+                            class="chip chip--helper"
+                            data-rss-suggest="https://www.aljazeera.com/xml/rss/all.xml"
+                          >
+                            Al Jazeera
+                          </button>
+                          <button
+                            type="button"
+                            class="chip chip--helper"
+                            data-rss-suggest="https://feeds.npr.org/1001/rss.xml"
+                          >
+                            NPR News
+                          </button>
+                          <button
+                            type="button"
+                            class="chip chip--helper"
+                            data-rss-suggest="https://news.ycombinator.com/rss"
+                          >
+                            Hacker News
+                          </button>
+                          <button
+                            type="button"
+                            class="chip chip--helper"
+                            data-rss-suggest="https://www.wired.com/feed/rss"
+                          >
+                            Wired
+                          </button>
+                        </div>
+                        <div class="reader-popover-actions">
+                          <button
+                            type="button"
+                            class="button button--ghost button--small"
+                            data-rss-close-subscribe
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            class="button button--primary button--small"
+                          >
+                            Add feed
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="button button--ghost button--small"
+                    data-rss-refresh-active
+                    title="Fetch newest items from active feed"
+                  >
+                    <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              <div class="library-toolbar rss-toolbar-secondary">
+                <div class="library-toolbar__actions">
+                  <div
+                    class="library-view-options"
+                    aria-label="RSS view options"
+                  >
+                    <button
+                      type="button"
+                      class="view-btn"
+                      data-rss-view="1"
+                      title="List view"
+                    >
+                      <i class="fa-solid fa-list" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn"
+                      data-rss-view="2"
+                      title="2-column grid"
+                    >
+                      <i
+                        class="fa-solid fa-table-cells-large"
+                        aria-hidden="true"
+                      ></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn"
+                      data-rss-view="3"
+                      title="3-column grid"
+                    >
+                      <i class="fa-solid fa-grip" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                  <div class="library-sort-options" aria-label="Sort RSS items">
+                    <button
+                      type="button"
+                      class="view-btn sort-btn"
+                      data-rss-sort="newest"
+                      title="Sort by newest"
+                      aria-label="Sort by newest"
+                    >
+                      <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn sort-btn"
+                      data-rss-sort="oldest"
+                      title="Sort by oldest"
+                      aria-label="Sort by oldest"
+                    >
+                      <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn sort-btn"
+                      data-rss-sort="latest-opened"
+                      title="Sort by latest opened"
+                      aria-label="Sort by latest opened"
+                    >
+                      <i class="fa-solid fa-clock" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                  <div
+                    class="library-sort-options"
+                    aria-label="Filter RSS items by read state"
+                  >
+                    <button
+                      type="button"
+                      class="view-btn sort-btn"
+                      data-rss-read-filter="all"
+                      title="Show all items"
+                      aria-label="Show all items"
+                    >
+                      <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn sort-btn"
+                      data-rss-read-filter="unread"
+                      title="Show unread items"
+                      aria-label="Show unread items"
+                    >
+                      <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn sort-btn"
+                      data-rss-read-filter="read"
+                      title="Show read items"
+                      aria-label="Show read items"
+                    >
+                      <i
+                        class="fa-solid fa-envelope-open"
+                        aria-hidden="true"
+                      ></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                id="rss-feed-list"
+                class="rss-feed-list"
+                aria-live="polite"
+              ></div>
+              <div id="rss-items" class="rss-items" aria-live="polite"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="library">
+          <div class="panel-grid panel-grid--library">
+            <section class="panel-card panel-card--library-list">
+              <div class="library-toolbar">
+                <div class="section-heading section-heading--compact">
+                  <h2 id="library-articles-title">Saved articles</h2>
+                </div>
+                <div class="library-toolbar__actions">
+                  <div class="library-view-options">
+                    <button
+                      type="button"
+                      class="view-btn"
+                      data-library-view="1"
+                      title="List view"
+                    >
+                      <i class="fa-solid fa-list" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn"
+                      data-library-view="2"
+                      title="2-column grid"
+                    >
+                      <i
+                        class="fa-solid fa-table-cells-large"
+                        aria-hidden="true"
+                      ></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn"
+                      data-library-view="3"
+                      title="3-column grid"
+                    >
+                      <i class="fa-solid fa-grip" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                  <div class="library-sort-options" aria-label="Sort library">
+                    <button
+                      type="button"
+                      class="view-btn sort-btn"
+                      data-library-sort="newest"
+                      title="Sort by newest"
+                      aria-label="Sort by newest"
+                    >
+                      <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn sort-btn"
+                      data-library-sort="oldest"
+                      title="Sort by oldest"
+                      aria-label="Sort by oldest"
+                    >
+                      <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn sort-btn"
+                      data-library-sort="latest-opened"
+                      title="Sort by latest opened"
+                      aria-label="Sort by latest opened"
+                    >
+                      <i class="fa-solid fa-clock" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                  <div
+                    class="library-sort-options"
+                    aria-label="Card display toggles"
+                  >
+                    <button
+                      type="button"
+                      class="view-btn sort-btn"
+                      data-library-toggle-images
+                      title="Toggle article images"
+                      aria-label="Toggle article images"
+                    >
+                      <i class="fa-regular fa-image" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn sort-btn"
+                      data-library-toggle-tags
+                      title="Toggle article tags"
+                      aria-label="Toggle article tags"
+                    >
+                      <i class="fa-solid fa-tags" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="article-list" id="article-list"></div>
+            </section>
+
+            <aside
+              class="panel-card panel-card--highlights panel-card--library-filters"
+            >
+              <div class="section-heading section-heading--compact">
+                <h2>Tags</h2>
+              </div>
+
+              <div
+                id="library-tag-filters"
+                class="chip-row"
+                aria-live="polite"
+              ></div>
+
+              <div class="highlights-actions" id="library-tag-clear" hidden>
+                <button type="button" class="button button--ghost">
+                  Clear tags
+                </button>
+              </div>
+
+              <div class="section-heading section-heading--compact">
+                <h2>Projects</h2>
+              </div>
+
+              <div
+                id="library-project-filters"
+                class="chip-row"
+                aria-live="polite"
+              ></div>
+
+              <div class="highlights-actions" id="library-project-clear" hidden>
+                <button type="button" class="button button--ghost">
+                  Clear projects
+                </button>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="reader">
+          <div class="panel-grid panel-grid--reader">
+            <section class="panel-card panel-card--article">
+              <div class="reader-topbar">
+                <button
+                  class="button button--ghost button--small"
+                  id="reader-back-button"
+                  type="button"
+                >
+                  <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                  Back
+                </button>
+              </div>
+
+              <div class="reader-header">
+                <h1 id="reader-title" class="reader-title">
+                  Choose an article
+                </h1>
+                <div class="reader-meta" id="reader-meta"></div>
+              </div>
+
+              <div class="selection-menu" id="selection-menu" hidden>
+                <button
+                  type="button"
+                  class="selection-menu__button"
+                  id="highlight-selection-button"
+                >
+                  <span>Highlight</span>
+                </button>
+                <button
+                  type="button"
+                  class="selection-menu__button"
+                  id="note-selection-button"
+                >
+                  <span>Note</span>
+                </button>
+                <button
+                  type="button"
+                  class="selection-menu__button"
+                  id="share-selection-button"
+                >
+                  <span>Copy</span>
+                </button>
+              </div>
+
+              <article class="reader-surface" id="reader-surface">
+                <div class="empty-state">
+                  <h3>No article selected</h3>
+                  <p>
+                    Select an article from the library to read and highlight it.
+                  </p>
+                </div>
+              </article>
+            </section>
+
+            <aside class="panel-card panel-card--highlights">
+              <div
+                class="reader-side-tabs"
+                role="tablist"
+                aria-label="Reader side panel tabs"
+              >
+                <button
+                  type="button"
+                  class="reader-side-tab is-active"
+                  data-reader-side-tab="highlights"
+                  role="tab"
+                  aria-selected="true"
+                >
+                  Highlights
+                </button>
+                <button
+                  type="button"
+                  class="reader-side-tab"
+                  data-reader-side-tab="next"
+                  role="tab"
+                  aria-selected="false"
+                >
+                  Next in Feed
+                </button>
+              </div>
+
+              <div class="reader-side-content" id="reader-side-content">
+                <div
+                  id="reader-side-pane-highlights"
+                  class="reader-side-pane is-active"
+                  role="tabpanel"
+                >
+                  <div class="highlight-list" id="highlight-list"></div>
+                </div>
+                <div
+                  id="reader-side-pane-next"
+                  class="reader-side-pane"
+                  role="tabpanel"
+                  hidden
+                >
+                  <div id="rss-reader-next" class="reader-side-next"></div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="projects">
+          <div
+            class="panel-grid panel-grid--projects"
+            id="projects-library-panel"
+          >
+            <section
+              class="panel-card panel-card--library-list panel-card--project-list"
+            >
+              <div class="library-toolbar">
+                <div class="section-heading section-heading--compact">
+                  <h2 id="projects-title">Workspaces (0)</h2>
+                </div>
+                <div class="library-toolbar__actions">
+                  <div class="library-view-options">
+                    <button
+                      type="button"
+                      class="view-btn"
+                      data-project-view="1"
+                      title="List view"
+                    >
+                      <i class="fa-solid fa-list" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn"
+                      data-project-view="2"
+                      title="2-column grid"
+                    >
+                      <i
+                        class="fa-solid fa-table-cells-large"
+                        aria-hidden="true"
+                      ></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn"
+                      data-project-view="3"
+                      title="3-column grid"
+                    >
+                      <i class="fa-solid fa-grip" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                  <div class="library-sort-options" aria-label="Sort projects">
+                    <button
+                      type="button"
+                      class="view-btn sort-btn"
+                      data-project-sort="newest"
+                      title="Sort by newest"
+                      aria-label="Sort by newest"
+                    >
+                      <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn sort-btn"
+                      data-project-sort="oldest"
+                      title="Sort by oldest"
+                      aria-label="Sort by oldest"
+                    >
+                      <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      type="button"
+                      class="view-btn sort-btn"
+                      data-project-sort="latest-opened"
+                      title="Sort by latest opened"
+                      aria-label="Sort by latest opened"
+                    >
+                      <i class="fa-solid fa-clock" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="project-list" id="project-list"></div>
+            </section>
+
+            <aside
+              class="panel-card panel-card--highlights panel-card--library-filters"
+            >
+              <div class="section-heading section-heading--compact">
+                <h2>Folders</h2>
+              </div>
+
+              <div
+                id="projects-project-filters"
+                class="stage-folder-list"
+                aria-live="polite"
+              ></div>
+
+              <div
+                class="highlights-actions"
+                id="projects-project-clear"
+                hidden
+              >
+                <button type="button" class="button button--ghost">
+                  Clear folder filter
+                </button>
+              </div>
+            </aside>
+          </div>
+
+          <div
+            class="panel-grid panel-grid--project-editor"
+            id="project-editor-panel"
+            hidden
+          >
+            <section class="panel-card panel-card--project-editor-main">
+              <div class="reader-topbar">
+                <div class="utility-row">
+                  <button
+                    class="button button--ghost button--small"
+                    id="project-back-button"
+                    type="button"
+                  >
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                    Back
+                  </button>
+                  <div class="project-stage-menu">
+                    <button
+                      class="button button--ghost button--small project-stage-menu__trigger"
+                      id="project-stage-menu-button"
+                      type="button"
+                      aria-haspopup="menu"
+                    >
+                      <span id="project-stage-menu-label">Idea</span>
+                      <i
+                        class="fa-solid fa-chevron-down"
+                        aria-hidden="true"
+                      ></i>
+                    </button>
+                    <div
+                      class="project-stage-menu__list"
+                      id="project-stage-menu-list"
+                      role="menu"
+                      aria-label="Project progress stages"
+                    >
+                      <button
+                        class="project-stage-menu__option"
+                        type="button"
+                        data-project-stage-option="idea"
+                        role="menuitemradio"
+                      >
+                        <span>Idea</span>
+                        <i
+                          class="fa-solid fa-check project-stage-menu__check"
+                          aria-hidden="true"
+                        ></i>
+                      </button>
+                      <button
+                        class="project-stage-menu__option"
+                        type="button"
+                        data-project-stage-option="research"
+                        role="menuitemradio"
+                      >
+                        <span>Research</span>
+                        <i
+                          class="fa-solid fa-check project-stage-menu__check"
+                          aria-hidden="true"
+                        ></i>
+                      </button>
+                      <button
+                        class="project-stage-menu__option"
+                        type="button"
+                        data-project-stage-option="done"
+                        role="menuitemradio"
+                      >
+                        <span>Done</span>
+                        <i
+                          class="fa-solid fa-check project-stage-menu__check"
+                          aria-hidden="true"
+                        ></i>
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    class="button button--ghost button--small project-preview-toggle"
+                    id="project-toggle-markdown-button"
+                    type="button"
+                  >
+                    <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                    Preview
+                  </button>
+                </div>
+              </div>
+
+              <div class="field-group">
+                <div
+                  class="project-link-popover"
+                  id="project-link-popover"
+                  hidden
+                >
+                  <label class="field-group">
+                    <span>Link URL</span>
+                    <input
+                      id="project-link-input"
+                      type="url"
+                      placeholder="https://example.com"
+                    />
+                  </label>
+                  <div class="reader-popover-actions">
+                    <button
+                      type="button"
+                      class="button button--ghost button--small"
+                      id="project-link-cancel-button"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      class="button button--primary button--small"
+                      id="project-link-apply-button"
+                    >
+                      Apply link
+                    </button>
+                  </div>
+                </div>
+                <textarea
+                  id="project-editor-content"
+                  class="project-editor-content"
+                  placeholder="Draft ideas, outline arguments, and synthesize highlights here..."
+                ></textarea>
+                <article
+                  id="project-editor-preview"
+                  class="project-editor-preview"
+                  hidden
+                ></article>
+              </div>
+            </section>
+
+            <aside class="panel-card panel-card--project-sources">
+              <div class="reader-topbar" id="project-sidebar-topbar" hidden>
+                <button
+                  class="button button--ghost button--small"
+                  id="project-sidebar-back-button"
+                  type="button"
+                >
+                  <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                  Back
+                </button>
+              </div>
+
+              <div class="section-heading section-heading--compact">
+                <h2 id="project-sidebar-title">Project excerpts</h2>
+              </div>
+
+              <div class="reader-meta" id="project-sidebar-meta"></div>
+
+              <div
+                class="project-highlight-list"
+                id="project-highlight-list"
+              ></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="tab-panel" data-tab-panel="settings">
+          <div class="panel-grid panel-grid--settings">
+            <section class="panel-card panel-card--settings-detail">
+              <section class="settings-panel" data-settings-panel="export">
+                <div class="section-heading section-heading--compact">
+                  <h2>Export &amp; data</h2>
+                </div>
+
+                <div class="stack-form">
+                  <div class="field-group">
+                    <span>Markdown export</span>
+                    <p class="meta-text">
+                      Export your library and projects as Markdown files to a
+                      local folder. Re-opening the app will auto-sync any
+                      changes.
+                    </p>
+                    <div class="button-row">
+                      <button
+                        class="button button--primary"
+                        id="export-markdown-folder-button"
+                        type="button"
+                      >
+                        <i
+                          class="fa-solid fa-folder-open"
+                          aria-hidden="true"
+                        ></i>
+                        Export Markdown to folder
+                      </button>
+                    </div>
+                    <p
+                      class="meta-text"
+                      id="export-markdown-status"
+                      aria-live="polite"
+                    >
+                      Creates Commonplace/library and Commonplace/projects in
+                      the folder you choose.
+                    </p>
+                  </div>
+
+                  <div class="field-group" aria-live="polite">
+                    <span>Storage usage</span>
+                    <p class="meta-text" id="settings-storage-summary">
+                      Not calculated yet.
+                    </p>
+                    <p class="meta-text" id="settings-storage-breakdown"></p>
+                    <div class="button-row">
+                      <button
+                        class="button button--ghost"
+                        id="settings-storage-refresh-button"
+                        type="button"
+                      >
+                        <i class="fa-solid fa-database" aria-hidden="true"></i>
+                        Calculate storage usage
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="field-group">
+                    <span>Danger zone</span>
+                    <p class="meta-text">
+                      This permanently removes all articles, projects, tags,
+                      highlights, and app preferences from this browser.
+                    </p>
+                    <div class="button-row">
+                      <button
+                        class="button button--danger"
+                        id="delete-all-data-button"
+                        type="button"
+                      >
+                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                        Delete all saved data
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section
+                class="settings-panel"
+                data-settings-panel="projects"
+                hidden
+              >
+                <div class="section-heading section-heading--compact">
+                  <h2>Create a project</h2>
+                </div>
+
+                <form id="project-form" class="stack-form">
+                  <label class="field-group">
+                    <span>Name</span>
+                    <input
+                      id="project-name"
+                      name="name"
+                      type="text"
+                      placeholder="Essay on civic trust"
+                      required
+                    />
+                  </label>
+
+                  <label class="field-group">
+                    <span>Description</span>
+                    <textarea
+                      id="project-description"
+                      name="description"
+                      rows="3"
+                      placeholder="What are you writing and why does it matter?"
+                    ></textarea>
+                  </label>
+
+                  <button type="submit" class="button button--primary">
+                    <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                    Save project
+                  </button>
+                </form>
+
+                <hr class="panel-divider" />
+
+                <div class="section-heading section-heading--compact">
+                  <h2>Edit projects</h2>
+                </div>
+
+                <div
+                  class="project-settings-list"
+                  id="project-settings-list"
+                ></div>
+              </section>
+
+              <section class="settings-panel" data-settings-panel="tags" hidden>
+                <div class="section-heading section-heading--compact">
+                  <h2>Tags &amp; auto-tag</h2>
+                </div>
+
+                <div class="stack-form">
+                  <div class="field-group">
+                    <span>Add a tag</span>
+                    <form id="tag-form" class="stack-form">
+                      <input
+                        id="tag-name"
+                        name="tag"
+                        type="text"
+                        placeholder="analysis"
+                        required
+                      />
+                      <button type="submit" class="button button--primary">
+                        <i
+                          class="fa-solid fa-floppy-disk"
+                          aria-hidden="true"
+                        ></i>
+                        Save tag
+                      </button>
+                    </form>
+                  </div>
+
+                  <div class="field-group">
+                    <span>Saved tags</span>
+                    <div class="tag-list" id="tag-list"></div>
+                  </div>
+
+                  <hr class="panel-divider" />
+
+                  <div class="field-group">
+                    <span>Auto-tag</span>
+                    <p class="meta-text">
+                      Suggestions are generated during fetch by scanning article
+                      text. Keep this list short and focused for better
+                      precision.
+                    </p>
+                    <div
+                      class="settings-toggle-grid"
+                      role="group"
+                      aria-label="Enable auto-tag suggestions"
+                    >
+                      <label
+                        class="settings-toggle-card"
+                        for="auto-tag-enabled"
+                      >
+                        <input id="auto-tag-enabled" type="checkbox" checked />
+                        <strong>Enable suggestions</strong>
+                        <small
+                          >Generate tag suggestions after each fetch.</small
+                        >
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="field-group">
+                    <span>Custom rules</span>
+                    <form
+                      id="auto-tag-rule-form"
+                      class="stack-form settings-inline-grid"
+                    >
+                      <label class="field-group">
+                        <span>Tag to suggest</span>
+                        <input
+                          id="auto-tag-rule-tag"
+                          type="text"
+                          placeholder="middle east"
+                          required
+                        />
+                      </label>
+                      <label class="field-group">
+                        <span>Keywords (comma separated)</span>
+                        <input
+                          id="auto-tag-rule-keywords"
+                          type="text"
+                          placeholder="gulf, levant, mena"
+                          required
+                        />
+                      </label>
+                      <button type="submit" class="button button--primary">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        Save rule
+                      </button>
+                    </form>
+
+                    <div
+                      id="auto-tag-rules-list"
+                      class="project-settings-list"
+                    ></div>
+                  </div>
+
+                  <div
+                    class="settings-toggle-grid"
+                    role="group"
+                    aria-label="Country defaults option"
+                  >
+                    <label
+                      class="settings-toggle-card"
+                      for="auto-tag-use-default-countries"
+                    >
+                      <input
+                        id="auto-tag-use-default-countries"
+                        type="checkbox"
+                        checked
+                      />
+                      <strong>Use country defaults</strong>
+                      <small
+                        >Include built-in country and nationality
+                        matching.</small
+                      >
+                    </label>
+                  </div>
+
+                  <hr class="panel-divider" />
+
+                  <div class="field-group">
+                    <span>Import rules (JSON)</span>
+                    <p class="meta-text">
+                      Use an array of objects: <strong>tag</strong> +
+                      <strong>keywords</strong>.
+                    </p>
+                    <pre class="settings-code-block">
+[{"tag":"france","keywords":["france","french"]},
+ {"tag":"energy","keywords":"oil, gas, lng"}]</pre
+                    >
+                    <textarea
+                      id="auto-tag-import-input"
+                      rows="8"
+                      placeholder='[{"tag":"france","keywords":["france","french"]}]'
+                    ></textarea>
+                    <div class="button-row">
+                      <button
+                        id="auto-tag-import-button"
+                        class="button button--ghost"
+                        type="button"
+                      >
+                        <i
+                          class="fa-solid fa-file-import"
+                          aria-hidden="true"
+                        ></i>
+                        Import rules
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section
+                class="settings-panel"
+                data-settings-panel="display"
+                hidden
+              >
+                <div class="section-heading section-heading--compact">
+                  <h2>Display options</h2>
+                </div>
+
+                <div class="field-group">
+                  <span>Reading font</span>
+                  <div
+                    class="display-option-grid"
+                    role="group"
+                    aria-label="Reading font options"
+                  >
+                    <button
+                      type="button"
+                      class="display-option-tile"
+                      data-display-font="mono"
+                    >
+                      <strong>Mono</strong>
+                      <small>Roboto Mono</small>
+                    </button>
+                    <button
+                      type="button"
+                      class="display-option-tile"
+                      data-display-font="sans"
+                    >
+                      <strong>Sans</strong>
+                      <small>Atkinson style</small>
+                    </button>
+                    <button
+                      type="button"
+                      class="display-option-tile"
+                      data-display-font="serif"
+                    >
+                      <strong>Serif</strong>
+                      <small>Book style</small>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <span>Theme</span>
+                  <div
+                    class="display-option-grid display-option-grid--theme"
+                    role="group"
+                    aria-label="Theme options"
+                  >
+                    <button
+                      type="button"
+                      class="display-option-tile"
+                      data-display-theme="light"
+                    >
+                      <strong>
+                        <i class="fa-solid fa-sun" aria-hidden="true"></i>
+                        Light
+                      </strong>
+                    </button>
+                    <button
+                      type="button"
+                      class="display-option-tile"
+                      data-display-theme="dark"
+                    >
+                      <strong>
+                        <i class="fa-solid fa-moon" aria-hidden="true"></i>
+                        Dark
+                      </strong>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <span>Accent color</span>
+                  <div
+                    class="display-option-grid display-option-grid--accent"
+                    role="group"
+                    aria-label="Accent color options"
+                  >
+                    <button
+                      type="button"
+                      class="display-option-tile"
+                      data-display-highlight="yellow"
+                    >
+                      <strong>Yellow</strong>
+                    </button>
+                    <button
+                      type="button"
+                      class="display-option-tile"
+                      data-display-highlight="green"
+                    >
+                      <strong>Green</strong>
+                    </button>
+                    <button
+                      type="button"
+                      class="display-option-tile"
+                      data-display-highlight="red"
+                    >
+                      <strong>Red</strong>
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <section class="settings-panel" data-settings-panel="rss" hidden>
+                <div class="section-heading section-heading--compact">
+                  <h2>RSS options</h2>
+                </div>
+
+                <div class="field-group">
+                  <span>Explore RSS cache retention</span>
+                  <select
+                    id="rss-retention-select"
+                    aria-label="RSS cache retention"
+                  >
+                    <option value="7">7 days</option>
+                    <option value="14">14 days</option>
+                    <option value="30">30 days</option>
+                    <option value="never">Never prune</option>
+                  </select>
+                  <p class="meta-text">
+                    Items older than this are removed from Explore if they are
+                    not in your bookmarks.
+                  </p>
+                </div>
+
+                <div class="field-group">
+                  <span>Auto refresh while app is open</span>
+                  <select
+                    id="rss-auto-refresh-select"
+                    aria-label="RSS auto refresh interval"
+                  >
+                    <option value="off">Off</option>
+                    <option value="1">Every 1 minute</option>
+                    <option value="5">Every 5 minutes</option>
+                    <option value="10">Every 10 minutes</option>
+                    <option value="15">Every 15 minutes</option>
+                    <option value="30">Every 30 minutes</option>
+                  </select>
+                  <p class="meta-text">
+                    Refreshes the active feed in Explore while this app tab is
+                    open and visible.
+                  </p>
+                </div>
+
+                <div class="field-group">
+                  <span>Selected feed last fetch</span>
+                  <p id="rss-settings-last-fetched" class="meta-text">
+                    Select a feed in Explore to see its last fetch time.
+                  </p>
+                </div>
+              </section>
+            </section>
+
+            <aside class="panel-card panel-card--settings-nav">
+              <div class="section-heading section-heading--compact">
+                <h2>Settings</h2>
+              </div>
+              <div class="settings-nav-list" id="settings-nav-list">
+                <button
+                  type="button"
+                  class="settings-nav-button"
+                  data-settings-section="export"
+                >
+                  <i class="fa-solid fa-file-export" aria-hidden="true"></i>
+                  Export
+                </button>
+                <button
+                  type="button"
+                  class="settings-nav-button"
+                  data-settings-section="projects"
+                >
+                  <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
+                  Projects
+                </button>
+                <button
+                  type="button"
+                  class="settings-nav-button"
+                  data-settings-section="tags"
+                >
+                  <i class="fa-solid fa-tags" aria-hidden="true"></i>
+                  Tags
+                </button>
+                <button
+                  type="button"
+                  class="settings-nav-button"
+                  data-settings-section="display"
+                >
+                  <i class="fa-solid fa-display" aria-hidden="true"></i>
+                  Display
+                </button>
+                <button
+                  type="button"
+                  class="settings-nav-button"
+                  data-settings-section="rss"
+                >
+                  <i class="fa-solid fa-rss" aria-hidden="true"></i>
+                  RSS
+                </button>
+              </div>
+            </aside>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog
+      id="add-article-dialog"
+      class="add-article-dialog"
+      aria-labelledby="add-article-dialog-title"
+    >
+      <div class="add-article-dialog__inner">
+        <div class="add-article-dialog__header">
+          <h2 id="add-article-dialog-title">Add an article</h2>
+          <button
+            type="button"
+            id="add-article-close-button"
+            class="add-article-dialog__close"
+            aria-label="Close"
+          >
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </div>
+        <form id="bookmark-form" class="stack-form">
+          <label class="field-group">
+            <span>Article URL</span>
+            <input
+              id="article-url"
+              name="url"
+              type="url"
+              placeholder="https://example.com/article"
+              required
+            />
+          </label>
+          <label class="field-group" for="experimental-reader-toggle">
+            <span>Experimental fetch</span>
+            <input
+              id="experimental-reader-toggle"
+              name="experimental-reader-toggle"
+              type="checkbox"
+              class="toggle-switch"
+            />
+          </label>
+          <label class="field-group">
+            <span>Tags</span>
+            <input
+              id="article-tags"
+              name="tags"
+              type="text"
+              placeholder="research, essay, philosophy"
+            />
+          </label>
+          <div
+            id="available-tags"
+            class="field-suggestions"
+            aria-live="polite"
+          ></div>
+          <label class="field-group">
+            <span>Attach to projects</span>
+            <input
+              id="article-projects"
+              name="projects"
+              type="text"
+              placeholder="essay draft, trust piece"
+            />
+          </label>
+          <div
+            id="available-projects"
+            class="field-suggestions"
+            aria-live="polite"
+          ></div>
+          <div class="button-row">
+            <button type="submit" class="button button--primary">
+              <i class="fa-solid fa-link" aria-hidden="true"></i>
+              Fetch article
+            </button>
+          </div>
+        </form>
+        <div
+          class="status-box"
+          id="fetch-status"
+          aria-live="polite"
+          hidden
+        ></div>
+      </div>
+    </dialog>
+
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>

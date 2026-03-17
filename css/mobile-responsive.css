@@ -1,0 +1,1002 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Mobile Responsive Styles
+   Target: Mobile devices only (<= 480px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 761px) {
+  /* ─── Root Layout Adjustments ────────────────────────────────────────────── */
+
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    border: none;
+    overflow-x: hidden; /* Prevent horizontal page scroll */
+  }
+
+  /* ─── Header Fixed to Bottom (Dock Style) ────────────────────────────────── */
+
+  .app-header {
+    order: 2;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transform: none;
+    width: 100%;
+    max-width: none;
+    z-index: 100;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: var(--surface);
+    border-top: var(--border-light);
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Dark mode dock */
+  html[data-theme="dark"] .app-header {
+    background: var(--surface);
+    border-top: var(--border-light);
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Hide app title section on mobile */
+  .app-header > div:first-child {
+    display: none;
+  }
+
+  .tab-bar {
+    width: 100%;
+    display: flex;
+    gap: 0;
+    align-items: center;
+    justify-content: space-around;
+    padding: 8px 0;
+    position: relative;
+  }
+
+  .tab-button {
+    flex: 0 0 auto;
+    width: 52px;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 4px 4px;
+    border: none;
+    border-radius: 8px;
+    font-size: 9px;
+    letter-spacing: 0.3px;
+    background: transparent;
+    color: var(--text-muted);
+  }
+
+  html[data-theme="dark"] .tab-button {
+    color: var(--text-muted);
+  }
+
+  .tab-button i {
+    font-size: 18px;
+  }
+
+  .tab-button:hover {
+    background: var(--surface-muted);
+  }
+
+  html[data-theme="dark"] .tab-button:hover {
+    background: var(--surface-muted);
+  }
+
+  .tab-button.is-active {
+    background: transparent;
+    border: none;
+    color: var(--success);
+  }
+
+  html[data-theme="dark"] .tab-button.is-active {
+    color: var(--success);
+  }
+
+  /* Add button - circular raised style */
+  #add-article-open-button {
+    position: relative;
+    top: -20px;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--success);
+    color: var(--surface);
+    border: 4px solid var(--surface);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-size: 0; /* Hide text */
+    order: 3; /* Position in middle */
+    transition:
+      background-color 0s,
+      border-color 0s; /* No transition to prevent flash */
+  }
+
+  html[data-theme="dark"] #add-article-open-button {
+    border-color: var(--surface);
+    background: var(--success);
+    color: var(--bg);
+  }
+
+  #add-article-open-button i {
+    font-size: 22px;
+    color: inherit;
+    transition: transform 0.2s ease;
+  }
+
+  #add-article-open-button:hover {
+    transform: scale(1.05);
+    background: var(--success);
+  }
+
+  /* Reorder tabs: Explore(2), Library(3), [Add button center via order:3], Projects(4), Settings(5) */
+  .tab-button[data-tab-target="rss"] {
+    order: 1;
+  }
+  .tab-button[data-tab-target="library"] {
+    order: 2;
+  }
+  .tab-button[data-tab-target="projects"] {
+    order: 4;
+  }
+  .tab-button[data-tab-target="settings"] {
+    order: 5;
+  }
+
+  /* ─── Main Content Area ─────────────────────────────────────────────────── */
+
+  .app-main {
+    order: 1;
+    flex: 1;
+    padding-bottom: 80px; /* Space for bottom nav */
+    overflow-y: auto;
+  }
+
+  .panel-card {
+    min-height: auto;
+    padding: 12px;
+  }
+
+  /* ─── Panel Grids: Stack All Columns ─────────────────────────────────────── */
+
+  .panel-grid--library,
+  .panel-grid--rss,
+  .panel-grid--projects,
+  .panel-grid--settings,
+  .panel-grid--project-editor {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ─── Sidebar Panels (Filters/Folders/Nav) ──────────────────────────────── */
+
+  /* RSS Folders sidebar - show as collapsible horizontal chips */
+  .panel-card--rss-folders {
+    order: 1;
+    border-right: none;
+    border-bottom: var(--border-light);
+    padding: 10px 12px;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .panel-card--rss-folders .section-heading {
+    display: none;
+  }
+
+  .rss-folder-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .rss-folder-chip {
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  /* Consistent folder/nav button sizing across all sections */
+  .sidebar-folder-button,
+  .rss-folder-chip,
+  .stage-folder {
+    padding: 8px 12px;
+    font-size: var(--font-size-xs);
+  }
+
+  .sidebar-folder-button__name,
+  .stage-folder__name {
+    font-size: 11px;
+    gap: 5px;
+  }
+
+  .sidebar-folder-button__count,
+  .stage-folder__count {
+    font-size: 10px;
+  }
+
+  .panel-card--rss-main {
+    order: 2;
+    border-left: none;
+  }
+
+  /* Library/Projects Filter sidebar - show as horizontal scroll */
+  .panel-card--library-filters {
+    order: 1;
+    border-right: none;
+    border-left: none;
+    border-bottom: var(--border-light);
+    padding: 10px 12px;
+  }
+
+  .panel-card--library-filters .section-heading {
+    margin-bottom: 6px;
+  }
+
+  .panel-card--library-filters .section-heading h2 {
+    font-size: var(--font-size-sm);
+  }
+
+  .panel-card--library-filters .chip-row,
+  .panel-card--library-filters .stage-folder-list {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .panel-card--library-filters .chip-row::-webkit-scrollbar,
+  .panel-card--library-filters .stage-folder-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .panel-card--library-list,
+  .panel-card--project-list {
+    order: 2;
+    border-left: none;
+    border-right: none;
+  }
+
+  /* Settings navigation - horizontal scroll */
+  .panel-card--settings-nav {
+    order: 1;
+    border-right: none;
+    border-left: none;
+    border-bottom: var(--border-light);
+    padding: 10px 12px;
+    overflow: hidden; /* Contain the horizontal scroll */
+  }
+
+  .settings-nav-list {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .settings-nav-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .settings-nav-button {
+    flex: 0 0 auto;
+    width: auto; /* Override base width: 100% */
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
+  .panel-card--settings-detail {
+    order: 2;
+    padding: 14px 12px;
+    border-left: none;
+    padding-right: 12px;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Settings panel content adjustments */
+  .settings-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .settings-panel .field-group {
+    gap: 8px;
+    max-width: 100%;
+  }
+
+  .settings-panel .stack-form {
+    gap: 12px;
+  }
+
+  .settings-inline-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* Prevent settings code blocks from causing overflow */
+  .settings-code-block {
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 11px;
+  }
+
+  /* Settings textareas */
+  .settings-panel textarea {
+    max-width: 100%;
+  }
+
+  /* ─── Reader Panel ──────────────────────────────────────────────────────── */
+
+  .panel-grid--reader {
+    grid-template-columns: 1fr !important;
+    min-height: auto;
+    max-height: none;
+  }
+
+  .panel-card--article {
+    order: 1;
+    height: auto;
+    max-height: none;
+  }
+
+  .panel-card--highlights {
+    order: 2;
+    border-left: none;
+    border-top: var(--border-light);
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .reader-surface {
+    max-height: none;
+    min-height: 40vh;
+  }
+
+  .reader-title {
+    font-size: 1.25rem;
+  }
+
+  /* Reader meta tags - smaller to match library/card tags */
+  .reader-meta .chip {
+    min-height: 24px;
+    height: 24px;
+    padding: 3px 7px;
+    font-size: 10px;
+  }
+
+  .reader-meta .chip--removable {
+    padding-right: 4px;
+  }
+
+  .reader-meta .chip__remove {
+    width: 16px;
+    height: 16px;
+  }
+
+  .reader-meta .chip-row {
+    gap: 4px;
+  }
+
+  /* Reader side tabs - smaller on mobile */
+  .reader-side-tabs {
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+  }
+
+  .reader-side-tab {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  /* ─── Project Editor Panel ──────────────────────────────────────────────── */
+
+  .panel-card--project-editor-main {
+    order: 1;
+  }
+
+  .panel-card--project-sources {
+    order: 2;
+    border-left: none;
+    border-top: var(--border-light);
+  }
+
+  .project-editor-content,
+  .project-editor-preview {
+    min-height: 40vh;
+  }
+
+  /* Project editor utility row - keep all items on one row */
+  .panel-card--project-editor-main .utility-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  /* Make all three buttons equal width */
+  .panel-card--project-editor-main .utility-row > * {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  /* Override min-width/height for project editor buttons */
+  .panel-card--project-editor-main .utility-row .button--small {
+    padding: 6px 10px;
+    font-size: 11px;
+    min-height: 32px;
+    min-width: auto;
+    white-space: nowrap;
+    width: 100%; /* Fill the flex container */
+  }
+
+  .project-preview-toggle {
+    margin-left: 0; /* Remove auto margin to allow equal flex sizing */
+  }
+
+  .project-stage-menu {
+    display: flex;
+  }
+
+  .project-stage-menu__trigger {
+    padding: 6px 10px;
+    font-size: 11px;
+    min-height: 32px;
+    min-width: auto;
+    width: 100%; /* Fill the flex container */
+  }
+
+  /* ─── Toolbars & View Options ───────────────────────────────────────────── */
+
+  .library-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .library-toolbar .section-heading {
+    margin-bottom: 0;
+  }
+
+  .library-toolbar__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* More spacing between groups */
+    justify-content: start;
+  }
+
+  .library-view-options,
+  .library-sort-options {
+    gap: 1px;
+  }
+
+  /* Smaller view/sort buttons on mobile */
+  /* .view-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .sort-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    font-size: 12px;
+  } */
+
+  /* View options: keep all buttons, remap grid columns
+     - View 1 (list): stays as list
+     - View 2: becomes 1-column grid on mobile
+     - View 3: becomes 2-column grid on mobile
+  */
+
+  /* RSS toolbar - feed title and actions on same row */
+  .rss-toolbar {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .rss-toolbar .section-heading {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .rss-toolbar .section-heading h2 {
+    font-size: var(--font-size-sm);
+  }
+
+  .rss-toolbar .section-heading .meta-text {
+    font-size: 10px;
+  }
+
+  .rss-toolbar-actions {
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  /* Override min-width/height for RSS toolbar buttons */
+  .rss-toolbar-actions .button--small {
+    padding: 6px 8px;
+    font-size: 11px;
+    min-height: 32px;
+    min-width: auto;
+  }
+
+  .rss-toolbar-secondary {
+    margin-bottom: 8px;
+  }
+
+  /* ─── Cards & Lists ─────────────────────────────────────────────────────── */
+
+  /* View 2 (2-col on desktop) becomes 1-column on mobile */
+  .article-list--view-2,
+  .project-list--view-2,
+  .rss-items--view-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* View 3 (3-col on desktop) becomes 2-column on mobile */
+  .article-list--view-3,
+  .project-list--view-3,
+  .rss-items--view-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  /* List view cards - more compact on mobile */
+  .article-list--view-1 .article-card,
+  .rss-items--view-1 .rss-item-card {
+    grid-template-columns: 80px minmax(0, 1fr);
+  }
+
+  .article-list--view-1 .article-card__image,
+  .rss-items--view-1 .rss-item-card__image {
+    aspect-ratio: 1 / 1;
+  }
+
+  .article-card h3,
+  .project-card h3,
+  .rss-item-card h3 {
+    font-size: 12px;
+  }
+
+  /* Chips smaller on mobile */
+  .chip {
+    min-height: 26px;
+    padding: 4px 7px;
+    font-size: 10px;
+  }
+
+  .article-card .chip-row .chip,
+  .project-card .chip-row .chip {
+    height: 24px;
+    min-height: 24px;
+    font-size: 10px;
+  }
+
+  /* ─── Buttons ───────────────────────────────────────────────────────────── */
+
+  .button {
+    padding: 10px 14px;
+  }
+
+  .button--small {
+    padding: 8px 10px;
+  }
+
+  .button-row {
+    flex-direction: column;
+  }
+
+  .button-row .button {
+    width: 100%;
+  }
+
+  /* Reader back button */
+  .reader-topbar {
+    margin-bottom: 8px;
+  }
+
+  /* ─── Dialogs & Popovers ────────────────────────────────────────────────── */
+
+  body.add-dialog-open {
+    overflow: hidden;
+  }
+  .add-article-dialog[open] {
+    position: fixed !important;
+    inset: 0 0 54px 0 !important;
+    width: 100vw !important;
+    height: auto !important;
+    max-height: none !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border: none;
+    border-radius: 0;
+    z-index: 99;
+  }
+  .add-article-dialog::backdrop {
+    display: none;
+  }
+  .add-article-dialog__close {
+    display: none;
+  }
+  body.add-dialog-open #add-article-open-button i {
+    transform: rotate(45deg);
+  }
+  #add-article-open-button i {
+    transition: transform 0.2s ease;
+  }
+
+  .add-article-dialog__inner {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .add-article-dialog .stack-form {
+    gap: 12px;
+  }
+
+  .add-article-dialog .field-group {
+    gap: 6px;
+  }
+
+  .add-article-dialog .button-row {
+    flex-direction: row;
+    gap: 8px;
+    margin-top: auto; /* Push to bottom */
+    padding-top: 12px;
+  }
+
+  .add-article-dialog .button-row .button {
+    flex: 1;
+    width: auto;
+  }
+
+  /* All popovers - fixed position on mobile with blur backdrop */
+  .reader-popover,
+  .rss-subscribe-popover,
+  .reader-meta-action-wrap .reader-popover {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 90px !important; /* Above bottom nav */
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: 50vh;
+    overflow-y: auto;
+    transform: none !important;
+    z-index: 200;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Popover backdrop blur overlay */
+  .reader-popover:not([hidden])::before,
+  .rss-subscribe-popover:not([hidden])::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* Extra specificity for RSS popover to ensure it works */
+  .rss-subscribe-wrap .rss-subscribe-popover {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 90px !important;
+    left: 12px !important;
+    right: 12px !important;
+  }
+
+  /* Popover text and buttons - improve visibility on blur backdrop */
+  .rss-subscribe-popover .meta-text,
+  .reader-popover .meta-text {
+    color: var(--text);
+  }
+
+  .rss-subscribe-popover .reader-popover-actions .button,
+  .reader-popover .reader-popover-actions .button {
+    background: var(--success);
+    color: var(--surface);
+    border-color: var(--success);
+  }
+
+  .rss-subscribe-popover .reader-popover-actions .button--ghost,
+  .reader-popover .reader-popover-actions .button--ghost {
+    background: var(--surface-muted);
+    color: var(--text);
+    border-color: var(--border-light);
+  }
+
+  /* Selection menu (text selection toolbar) */
+  .selection-menu {
+    width: calc(100vw - 24px);
+    left: 12px !important;
+    right: 12px !important;
+  }
+
+  /* Context menu - full width at bottom */
+  .workspace-context-menu {
+    width: calc(100vw - 24px);
+    left: 12px !important;
+    right: 12px !important;
+  }
+
+  .workspace-context-menu__submenu-flyout {
+    position: static;
+    width: 100%;
+    margin-top: 4px;
+    box-shadow: none;
+    border-top: var(--border-faint);
+  }
+
+  /* ─── Settings Panel ────────────────────────────────────────────────────── */
+
+  .settings-panel {
+    gap: 18px; /* More spacing between settings groups */
+  }
+
+  .settings-panel .field-group {
+    margin-bottom: 4px;
+  }
+
+  .display-option-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+  }
+
+  .display-option-grid--theme {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .display-option-tile {
+    min-height: 60px;
+    padding: 6px;
+  }
+
+  .display-option-tile strong {
+    font-size: 10px;
+    gap: 4px;
+  }
+
+  .display-option-tile small {
+    display: none;
+  }
+
+  .settings-toggle-grid {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .settings-toggle-card {
+    min-height: 60px;
+    padding: 8px 10px;
+  }
+
+  .settings-toggle-card strong {
+    font-size: 11px;
+  }
+
+  .settings-toggle-card small {
+    font-size: 10px;
+  }
+
+  /* ─── RSS Feed Chips ────────────────────────────────────────────────────── */
+
+  .rss-feed-list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .rss-feed-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .rss-feed-chip {
+    flex-shrink: 0;
+  }
+
+  /* ─── Typography Adjustments ────────────────────────────────────────────── */
+
+  .section-heading h2 {
+    font-size: var(--font-size-base);
+  }
+
+  .meta-text {
+    font-size: var(--font-size-xs);
+  }
+
+  /* ─── Form Elements ─────────────────────────────────────────────────────── */
+
+  input[type="text"],
+  input[type="url"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 12px;
+  }
+
+  /* ─── TTS Player ────────────────────────────────────────────────────────── */
+
+  .tts-player {
+    padding: 10px;
+  }
+
+  .tts-player__settings-popover {
+    width: calc(100vw - 24px);
+    right: 0;
+    left: auto;
+  }
+
+  /* ─── Empty States ──────────────────────────────────────────────────────── */
+
+  .empty-state {
+    padding: 24px 16px;
+    min-height: 200px;
+  }
+
+  .empty-state h3 {
+    font-size: var(--font-size-sm);
+  }
+
+  /* ─── Highlight List in Reader ──────────────────────────────────────────── */
+
+  .highlight-list {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .highlight-card {
+    padding: 10px;
+  }
+
+  .highlight-quote {
+    padding-left: 10px;
+    font-size: small;
+  }
+
+  /* ─── Project Stage Menu ────────────────────────────────────────────────── */
+
+  .project-stage-menu__list {
+    min-width: 140px;
+  }
+
+  /* General utility row - allow wrapping only when needed */
+  .utility-row {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  /* ─── Pagination ────────────────────────────────────────────────────────── */
+
+  .library-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* Prev and Next buttons stay in a row */
+  .library-pagination .button {
+    order: 1;
+    flex: 0 0 auto;
+  }
+
+  /* Page meta goes below, full width, centered */
+  .library-pagination__meta {
+    order: 2;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* ─── Better Touch Targets ──────────────────────────────────────────────── */
+
+  /* Primary action buttons get large touch targets */
+  .button--primary,
+  .button--danger {
+    min-height: 44px;
+  }
+
+  /* Small buttons in toolbars stay compact */
+  .button--small {
+    min-height: 32px;
+    min-width: auto;
+  }
+
+  .chip {
+    min-height: 32px;
+  }
+
+  .view-btn {
+    min-height: 28px;
+    min-width: 28px;
+  }
+
+  .tab-button {
+    min-height: 56px;
+  }
+
+  /* ─── Delete/Action Buttons Always Visible ──────────────────────────────── */
+
+  .article-card__delete {
+    opacity: 1;
+    width: 32px;
+    height: 32px;
+  }
+
+  /* ─── Safe Area Insets (for notched devices) ────────────────────────────── */
+
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .app-header {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .app-main {
+      padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    }
+  }
+}
+
+/* Disable hover effects on touch devices */
+@media (hover: none) {
+  *:hover {
+    transition: none !important;
+  }
+
+  .tab-button:hover {
+    background: transparent;
+  }
+  .tab-button.is-active:hover {
+    background: transparent;
+  }
+  #add-article-open-button:hover {
+    transform: none;
+  }
+  .article-card:hover,
+  .project-card:hover,
+  .rss-item-card:hover {
+    background: var(--surface);
+  }
+  .rss-item-card--read:hover {
+    background: var(--surface-muted);
+  }
+  .button--primary:hover {
+    background: var(--success-bg);
+  }
+  .chip--helper:hover {
+    background: var(--input-bg);
+  }
+}
