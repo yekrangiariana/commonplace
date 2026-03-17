@@ -13,6 +13,10 @@ export async function hydrateRuntimeConfig(runtimeConfig) {
     runtimeConfig.supabaseAnonKey = (settings.supabaseAnonKey || "").trim();
     runtimeConfig.requestTimeoutMs =
       Number(settings.requestTimeoutMs) || DEFAULT_FETCH_TIMEOUT_MS;
+    runtimeConfig.appVersion = (
+      settings.appVersion || runtimeConfig.appVersion
+    ).trim();
+    runtimeConfig.appDescription = (settings.appDescription || "").trim();
   } catch {
     // Optional settings file. Missing file keeps defaults.
   }

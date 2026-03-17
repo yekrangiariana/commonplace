@@ -1240,6 +1240,47 @@
                 </div>
               </section>
 
+              <section
+                class="settings-panel"
+                data-settings-panel="about"
+                hidden
+              >
+                <div class="about-branding">
+                  <div class="app-branding">
+                    <span class="app-icon">🪷</span>
+                    <div class="app-branding-text">
+                      <h1 class="app-title">Commonplace</h1>
+                      <p class="app-eyebrow">Collect, Connect, Compose</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="stack-form">
+                  <div class="about-info-row">
+                    <strong>Version</strong>
+                    <span id="about-app-version"></span>
+                  </div>
+                  <div class="about-info-row">
+                    <strong>Description</strong>
+                    <p id="about-app-description" class="meta-text"></p>
+                  </div>
+                  <div class="about-info-row">
+                    <strong>Made by</strong>
+                    <span>Ariana Yekrangi</span>
+                  </div>
+                  <div class="about-info-row">
+                    <strong>Features</strong>
+                    <button
+                      type="button"
+                      class="link-button"
+                      data-about-open-features
+                    >
+                      Full feature list
+                    </button>
+                  </div>
+                </div>
+              </section>
+
               <section class="settings-panel" data-settings-panel="rss" hidden>
                 <div class="section-heading section-heading--compact">
                   <h2>RSS</h2>
@@ -1335,6 +1376,14 @@
                 >
                   <i class="fa-solid fa-rss" aria-hidden="true"></i>
                   RSS
+                </button>
+                <button
+                  type="button"
+                  class="settings-nav-button"
+                  data-settings-section="about"
+                >
+                  <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                  About
                 </button>
               </div>
             </aside>

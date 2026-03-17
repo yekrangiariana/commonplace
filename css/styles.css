@@ -2421,6 +2421,37 @@ html[data-theme="dark"][data-highlight-color="red"] .reader-highlight {
   color: var(--danger);
 }
 
+/* About section */
+.about-branding {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0 8px;
+}
+
+.about-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border: var(--border-light);
+  border-radius: 6px;
+  background: var(--surface-muted);
+}
+
+.about-info-row strong {
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.about-info-row span,
+.about-info-row p {
+  font-size: var(--font-size-sm);
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* Select row - label + dropdown side by side */
 .settings-select-row {
   display: flex;

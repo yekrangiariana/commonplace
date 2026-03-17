@@ -90,6 +90,8 @@ export const dom = {
   rssRetentionSelect: document.querySelector("#rss-retention-select"),
   rssAutoRefreshSelect: document.querySelector("#rss-auto-refresh-select"),
   rssSettingsLastFetched: document.querySelector("#rss-settings-last-fetched"),
+  aboutAppVersion: document.querySelector("#about-app-version"),
+  aboutAppDescription: document.querySelector("#about-app-description"),
   tagForm: document.querySelector("#tag-form"),
   tagName: document.querySelector("#tag-name"),
   tagList: document.querySelector("#tag-list"),

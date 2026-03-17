@@ -271,6 +271,19 @@ export function initReaderTtsPlayer({
         `${progressPercent.toFixed(1)}%`,
       );
     }
+
+    const remainingEl = dom.readerMeta.querySelector("[data-tts-remaining]");
+
+    if (remainingEl) {
+      const article = getSelectedArticle();
+      const speakableText = article ? getSpeakableText(article) : "";
+      const totalDuration = estimateDurationSeconds(
+        speakableText,
+        clampRate(state.ttsRate),
+      );
+      const secs = getRemainingSeconds(totalDuration);
+      remainingEl.textContent = `${formatSeconds(secs)} left`;
+    }
   }
 
   function queueRender() {

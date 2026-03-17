@@ -1,3 +1,5 @@
+# Feature inventory
+
 ## 1. Article capture and ingestion
 
 - Add articles by pasting a URL into the app.
@@ -135,5 +137,3 @@
 - Load images lazily in the library.
 - Avoid re-sorting and over-rendering large lists unnecessarily.
 - Preserve responsive browsing with pagination and cached list state.
-
-## Differentiators worth highlighting in marketing

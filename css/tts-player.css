@@ -79,7 +79,11 @@
 .tts-player__seek::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--text-muted) 28%, transparent);
+  background: linear-gradient(
+    to right,
+    var(--success) var(--tts-progress, 0%),
+    color-mix(in srgb, var(--text-muted) 28%, transparent) var(--tts-progress, 0%)
+  );
 }
 
 .tts-player__seek::-webkit-slider-thumb {
@@ -96,7 +100,11 @@
 .tts-player__seek::-moz-range-track {
   height: 4px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--text-muted) 28%, transparent);
+  background: linear-gradient(
+    to right,
+    var(--success) var(--tts-progress, 0%),
+    color-mix(in srgb, var(--text-muted) 28%, transparent) var(--tts-progress, 0%)
+  );
 }
 
 .tts-player__seek::-moz-range-thumb {

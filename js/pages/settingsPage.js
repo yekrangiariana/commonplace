@@ -2,8 +2,16 @@ import { escapeHtml, formatDate } from "../utils.js";
 import { getDerivedIndexes } from "../derivedIndexes.js";
 import { splitCommaSeparated, splitProjectNames } from "../taxonomy.js";
 import { normalizeRssAutoRefreshMinutes } from "../services/rssAutoRefresh.js";
+import { runtimeConfig } from "../state.js";
 
-const SETTINGS_SECTIONS = ["export", "projects", "tags", "display", "rss"];
+const SETTINGS_SECTIONS = [
+  "export",
+  "projects",
+  "tags",
+  "display",
+  "rss",
+  "about",
+];
 
 export function renderSettings(state, dom) {
   const activeSection = SETTINGS_SECTIONS.includes(state.settingsSection)
@@ -79,6 +87,7 @@ export function renderSettings(state, dom) {
   renderTagList(state, dom);
   renderAutoTagSettings(state, dom);
   renderArticleTaxonomyHelpers(state, dom);
+  renderAboutSection(dom);
 }
 
 export function buildArticlesExportPayload(state) {
@@ -95,6 +104,13 @@ export function buildProjectsExportPayload(state) {
     version: 1,
     projects: state.projects,
   };
+}
+
+function renderAboutSection(dom) {
+  const versionEl = dom.aboutAppVersion;
+  const descEl = dom.aboutAppDescription;
+  if (versionEl) versionEl.textContent = runtimeConfig.appVersion;
+  if (descEl) descEl.textContent = runtimeConfig.appDescription;
 }
 
 function renderTagList(state, dom) {

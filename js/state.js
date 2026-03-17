@@ -5,6 +5,8 @@ export const runtimeConfig = {
   fetchServiceUrl: "",
   supabaseAnonKey: "",
   requestTimeoutMs: DEFAULT_FETCH_TIMEOUT_MS,
+  appVersion: "1.0.0",
+  appDescription: "",
 };
 
 function nextRuntimeVersion(value) {

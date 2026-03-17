@@ -382,6 +382,11 @@ function bindEvents() {
     refreshStorageUsageDisplay,
   );
   dom.deleteAllDataButton.addEventListener("click", handleDeleteAllData);
+
+  document
+    .querySelector("[data-about-open-features]")
+    ?.addEventListener("click", openFeatureInventoryInReader);
+
   dom.displayFontButtons.forEach((button) => {
     button.addEventListener("click", () => {
       state.displayFont = button.dataset.displayFont;
@@ -1219,6 +1224,86 @@ function scrollReaderToTop() {
     appMainEl.scrollTop = 0;
   }
   window.scrollTo(0, 0);
+}
+
+async function openFeatureInventoryInReader() {
+  try {
+    const response = await fetch("./docs/feature-inventory.md", {
+      cache: "no-store",
+    });
+    if (!response.ok) return;
+    const text = await response.text();
+
+    const lines = text.replace(/\r\n/g, "\n").split("\n");
+    const blocks = [];
+    let paragraphLines = [];
+
+    function pushParagraph() {
+      const joined = paragraphLines.join(" ").replace(/\s+/g, " ").trim();
+      if (joined) {
+        blocks.push({
+          type: "paragraph",
+          text: joined,
+          segments: [{ text: joined }],
+        });
+      }
+      paragraphLines = [];
+    }
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        pushParagraph();
+        continue;
+      }
+      if (/^#{1,6}\s/.test(trimmed)) {
+        pushParagraph();
+        const heading = trimmed.replace(/^#{1,6}\s*/, "");
+        blocks.push({
+          type: "heading",
+          text: heading,
+          segments: [{ text: heading }],
+        });
+        continue;
+      }
+      if (trimmed.startsWith("- ")) {
+        pushParagraph();
+        const item = trimmed.replace(/^-\s*/, "");
+        blocks.push({
+          type: "paragraph",
+          text: `\u2022 ${item}`,
+          segments: [{ text: `\u2022 ${item}` }],
+        });
+        continue;
+      }
+      paragraphLines.push(trimmed);
+    }
+    pushParagraph();
+
+    state.selectedArticleId = null;
+    state.rssReaderArticle = {
+      id: createId("rss-reader"),
+      url: "",
+      title: "Feature Inventory",
+      description: "",
+      source: "Commonplace",
+      publishedAt: "",
+      previewText: "",
+      imageUrl: "",
+      tags: [],
+      projectIds: [],
+      blocks,
+      fetchedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      lastOpenedAt: new Date().toISOString(),
+      highlights: [],
+      isTransientRss: true,
+    };
+    switchTab("reader");
+    scrollReaderToTop();
+  } catch {
+    // Silently fail if the file can't be loaded
+  }
 }
 
 function handleTagSubmit(event) {
