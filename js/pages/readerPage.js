@@ -180,7 +180,8 @@ export function renderReader(state, dom, activeArticle) {
   const transientSaveButtonMarkup = isTransientRss
     ? `
       <button type="button" class="chip chip--helper chip--meta-action chip--meta-action--library" data-reader-save-rss>
-        + LIBRARY
+        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+        Library
       </button>
     `
     : "";

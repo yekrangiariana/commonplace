@@ -3291,12 +3291,18 @@ function applyReaderTagsFromPopover() {
 
   const merged = [...new Set([...(article.tags || []), ...newTags])];
   article.tags = merged;
+  const didSave = ensureHighlightedRssReaderArticleInLibrary();
   touchBookmarks(state);
   persistState(state);
   renderAndSyncUrl();
-  setStatus(
-    `Added ${newTags.length} tag${newTags.length === 1 ? "" : "s"} to this article.`,
-  );
+
+  if (didSave) {
+    showTransientStatus("Saved this RSS article to library after adding tag.");
+  } else {
+    setStatus(
+      `Added ${newTags.length} tag${newTags.length === 1 ? "" : "s"} to this article.`,
+    );
+  }
 }
 
 function applyReaderProjectsFromPopover() {
@@ -3318,12 +3324,18 @@ function applyReaderProjectsFromPopover() {
   article.projectIds = [
     ...new Set([...(article.projectIds || []), ...projectIds]),
   ];
+  const didSave = ensureHighlightedRssReaderArticleInLibrary();
   touchBookmarks(state);
   persistState(state);
   renderAndSyncUrl();
-  setStatus(
-    `Added ${projectIds.length} project${projectIds.length === 1 ? "" : "s"} to this article.`,
-  );
+
+  if (didSave) {
+    showTransientStatus("Saved this RSS article to library after adding project.");
+  } else {
+    setStatus(
+      `Added ${projectIds.length} project${projectIds.length === 1 ? "" : "s"} to this article.`,
+    );
+  }
 }
 
 function removeReaderTag(tag) {

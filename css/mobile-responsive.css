@@ -113,7 +113,7 @@
     border-radius: 50%;
     background: var(--success);
     color: var(--surface);
-    border: 4px solid var(--surface);
+    border: 1px solid var(--border-light);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     font-size: 0; /* Hide text */
     order: 3; /* Position in middle */

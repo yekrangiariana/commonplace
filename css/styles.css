@@ -4,9 +4,9 @@
   --text: #1a1a1a;
   --text-light: #555555;
   --text-muted: #777777;
-  --bg: #faf9f7;
-  --surface: #ffffff;
-  --surface-muted: #f4f3f0;
+  --bg: #f8f5ed;
+  --surface: #f8f5ed;
+  --surface-muted: #f8f5ed;
   --input-bg: #f8f7f5;
   --border: 1px solid #1a1a1a;
   --border-light: 1px solid #d4d2ce;
@@ -219,7 +219,7 @@ select:focus {
 }
 
 button {
-  border: var(--border);
+  border: var(--border-light);
   background: var(--input-bg);
   color: var(--text);
   border-radius: 4px;
@@ -231,11 +231,6 @@ button {
   align-items: center;
   justify-content: center;
   gap: 8px;
-}
-
-button:hover {
-  background: var(--surface-muted);
-  border-color: var(--text);
 }
 
 button:disabled {
@@ -264,9 +259,10 @@ button:disabled {
 
 .app-branding {
   display: flex;
+  background: var(--input-bg);
   flex-direction: column;
   padding: 5px 8px;
-  border: var(--border);
+  border: var(--border-light);
   border-radius: 4px;
   width: fit-content;
   user-select: none;
@@ -727,7 +723,7 @@ a:visited {
 
 .rss-item-card {
   padding: 10px;
-  border: var(--border-faint);
+  border-bottom: var(--border-light);
   background: var(--surface);
   cursor: pointer;
   display: grid;
@@ -1154,7 +1150,7 @@ html[data-theme="dark"] .selection-menu {
 .project-source-card,
 .tag-card {
   padding: 10px;
-  border: var(--border-light);
+  border-bottom: var(--border-light);
   background: var(--surface);
 }
 
@@ -1377,7 +1373,6 @@ html[data-theme="dark"] .selection-menu {
 .article-card:hover,
 .article-card:focus-visible {
   background: var(--surface-muted);
-  border-color: var(--text);
   outline: none;
 }
 
