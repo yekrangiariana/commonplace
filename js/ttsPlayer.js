@@ -6,7 +6,6 @@ function isMobileBrowser() {
 
 const CHUNK_MAX_LENGTH = 200;
 const INTER_CHUNK_DELAY_MS = 80;
-const INTER_CHUNK_DELAY_DESKTOP_MS = 15;
 
 function splitIntoChunks(text, maxLength = CHUNK_MAX_LENGTH) {
   const chunks = [];
@@ -478,7 +477,7 @@ export function initReaderTtsPlayer({
       return;
     }
 
-    if (chunkIndex >= chunkQueue.length) {
+    if (chunkQueue.length === 0) {
       isPlaying = false;
       isPaused = false;
       activeUtterance = null;
@@ -489,98 +488,92 @@ export function initReaderTtsPlayer({
     }
 
     const selectedVoice = getVoiceById(getSelectedVoiceId());
-    const chunkText = chunkQueue[chunkIndex];
-    const utterance = new SpeechSynthesisUtterance(chunkText);
-    utterance.rate = clampRate(state.ttsRate);
 
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-      utterance.lang = selectedVoice.lang;
-    }
-
-    utterance.onstart = () => {
-      if (token !== playToken) {
-        return;
-      }
-
-      isPlaying = true;
-      isPaused = false;
-      updateStatus("Playing");
-      queueRender();
-      startProgressInterpolation(token);
-    };
-
-    utterance.onend = () => {
-      if (token !== playToken) {
-        return;
-      }
-
-      stopProgressInterpolation();
-
-      chunkIndex += 1;
-
-      // Update progress based on chunk position
-      const totalChars = Math.max(1, currentText.length);
-      const spokenUpTo =
-        chunkIndex < chunkCharOffsets.length
-          ? chunkCharOffsets[chunkIndex]
-          : totalChars;
-      updateProgress(
-        (clamp(currentStartChar + spokenUpTo, 0, totalChars) / totalChars) *
-          100,
-      );
-
-      if (chunkIndex >= chunkQueue.length) {
-        isPlaying = false;
-        isPaused = false;
-        activeUtterance = null;
-        updateProgress(100);
-        updateStatus("Finished");
-        queueRender();
-        return;
-      }
-
-      if (isMobile) {
-        // Small delay between chunks — important on mobile
-        interChunkTimer = setTimeout(() => {
-          interChunkTimer = null;
-          speakChunkQueue(token);
-        }, INTER_CHUNK_DELAY_MS);
-      } else {
-        // Must defer on desktop too — Chrome truncates utterances
-        // when speak() is called synchronously from onend
-        interChunkTimer = setTimeout(() => {
-          interChunkTimer = null;
-          speakChunkQueue(token);
-        }, INTER_CHUNK_DELAY_DESKTOP_MS);
-      }
-    };
-
-    utterance.onerror = (event) => {
-      if (token !== playToken) {
-        return;
-      }
-
-      // "interrupted" fires on normal cancel — not a real error
-      if (event.error === "interrupted" || event.error === "canceled") {
-        return;
-      }
-
-      stopProgressInterpolation();
-      isPlaying = false;
-      isPaused = false;
-      activeUtterance = null;
-      updateStatus("Playback failed. Try again.", true);
-      queueRender();
-    };
-
-    activeUtterance = utterance;
-
-    // Cancel before speaking — critical on mobile browsers
+    // Cancel stale state before queuing — critical on mobile
     if (isMobile) {
       synthesis.cancel();
     }
-    synthesis.speak(utterance);
+
+    // Pre-queue every chunk into the browser's native speech queue
+    // in one synchronous pass so the user-gesture context is preserved
+    for (let i = chunkIndex; i < chunkQueue.length; i++) {
+      const chunkText = chunkQueue[i];
+      const idx = i;
+      const utterance = new SpeechSynthesisUtterance(chunkText);
+      utterance.rate = clampRate(state.ttsRate);
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        utterance.lang = selectedVoice.lang;
+      }
+
+      utterance.onstart = () => {
+        if (token !== playToken) {
+          return;
+        }
+
+        chunkIndex = idx;
+        isPlaying = true;
+        isPaused = false;
+        updateStatus("Playing");
+        queueRender();
+        startProgressInterpolation(token);
+      };
+
+      utterance.onend = () => {
+        if (token !== playToken) {
+          return;
+        }
+
+        stopProgressInterpolation();
+
+        // Snap progress to this chunk's end
+        const totalChars = Math.max(1, currentText.length);
+        const spokenUpTo =
+          idx + 1 < chunkCharOffsets.length
+            ? chunkCharOffsets[idx + 1]
+            : totalChars - currentStartChar;
+        updateProgress(
+          (clamp(currentStartChar + spokenUpTo, 0, totalChars) / totalChars) *
+            100,
+        );
+
+        // If this was the last chunk, finalize
+        if (idx === chunkQueue.length - 1) {
+          chunkIndex = chunkQueue.length;
+          isPlaying = false;
+          isPaused = false;
+          activeUtterance = null;
+          updateProgress(100);
+          updateStatus("Finished");
+          queueRender();
+        }
+      };
+
+      utterance.onerror = (event) => {
+        if (token !== playToken) {
+          return;
+        }
+
+        if (event.error === "interrupted" || event.error === "canceled") {
+          return;
+        }
+
+        stopProgressInterpolation();
+        isPlaying = false;
+        isPaused = false;
+        activeUtterance = null;
+        updateStatus("Playback failed. Try again.", true);
+        queueRender();
+      };
+
+      // Keep a reference to the current utterance for the active chunk
+      if (i === chunkIndex) {
+        activeUtterance = utterance;
+      }
+
+      synthesis.speak(utterance);
+    }
   }
 
   async function speakFromPercent(article, startPercent) {
@@ -596,6 +589,7 @@ export function initReaderTtsPlayer({
       return;
     }
 
+    // Load voices ahead of time so the speak path below stays synchronous
     await ensureVoicesLoaded();
 
     const safePercent = clampProgress(startPercent);
@@ -632,6 +626,54 @@ export function initReaderTtsPlayer({
     speakChunkQueue(token);
   }
 
+  // Synchronous version — called directly from click handlers so
+  // synthesis.speak() stays in the user-gesture call stack (required by
+  // Chrome Android).  Voices must already be loaded before calling this.
+  function speakFromPercentSync(article, startPercent) {
+    if (!synthesis || typeof SpeechSynthesisUtterance === "undefined") {
+      updateStatus("System speech is unavailable in this browser.", true);
+      return;
+    }
+
+    const text = getSpeakableText(article);
+
+    if (!text) {
+      updateStatus("No readable text available for this article.", true);
+      return;
+    }
+
+    const safePercent = clampProgress(startPercent);
+    const startChar = Math.floor((safePercent / 100) * text.length);
+    const slicedText = text.slice(startChar).trim();
+
+    if (!slicedText) {
+      updateProgress(100);
+      updateStatus("Finished");
+      return;
+    }
+
+    const token = playToken + 1;
+    playToken = token;
+
+    cancelSpeech(false, false);
+
+    currentText = text;
+    currentStartChar = startChar;
+
+    chunkQueue = splitIntoChunks(slicedText);
+    chunkIndex = 0;
+
+    chunkCharOffsets = [];
+    let offset = 0;
+    for (const chunk of chunkQueue) {
+      chunkCharOffsets.push(offset);
+      offset += chunk.length;
+    }
+
+    updateStatus("Starting playback...");
+    speakChunkQueue(token);
+  }
+
   async function handlePlayToggle(article) {
     if (!article) {
       return;
@@ -655,18 +697,24 @@ export function initReaderTtsPlayer({
     if (isPaused) {
       isPaused = false;
 
-      // Resume from current chunk if still valid, otherwise re-speak from progress
+      // Resume: re-queue from the current chunk position, synchronously
+      // so the user-gesture context is preserved for synthesis.speak()
       if (chunkQueue.length > 0 && chunkIndex < chunkQueue.length) {
         const token = playToken + 1;
         playToken = token;
         speakChunkQueue(token);
       } else {
-        await speakFromPercent(article, progressPercent);
+        speakFromPercentSync(article, progressPercent);
       }
       return;
     }
 
-    await speakFromPercent(article, progressPercent);
+    // First play — voices may not be loaded yet, so await them first
+    // then call the sync path so speak() is still as close to the
+    // gesture as possible.  ensureVoicesLoaded resolves immediately
+    // if voices are already cached.
+    await ensureVoicesLoaded();
+    speakFromPercentSync(article, progressPercent);
   }
 
   function handleSeekToPercent(article, nextPercent) {
