@@ -1,3 +1,59 @@
+function isMobileBrowser() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent,
+  );
+}
+
+const CHUNK_MAX_LENGTH = 200;
+const INTER_CHUNK_DELAY_MS = 80;
+const INTER_CHUNK_DELAY_DESKTOP_MS = 15;
+
+function splitIntoChunks(text, maxLength = CHUNK_MAX_LENGTH) {
+  const chunks = [];
+  let remaining = text;
+
+  while (remaining.length > 0) {
+    if (remaining.length <= maxLength) {
+      chunks.push(remaining);
+      break;
+    }
+
+    let splitAt = -1;
+
+    // Try to split at a sentence boundary
+    for (let i = maxLength; i >= maxLength * 0.5; i--) {
+      if (
+        remaining[i] === "." ||
+        remaining[i] === "!" ||
+        remaining[i] === "?"
+      ) {
+        splitAt = i + 1;
+        break;
+      }
+    }
+
+    // Fall back to a word boundary
+    if (splitAt === -1) {
+      for (let i = maxLength; i >= maxLength * 0.3; i--) {
+        if (remaining[i] === " ") {
+          splitAt = i + 1;
+          break;
+        }
+      }
+    }
+
+    // Hard split as last resort
+    if (splitAt === -1) {
+      splitAt = maxLength;
+    }
+
+    chunks.push(remaining.slice(0, splitAt).trim());
+    remaining = remaining.slice(splitAt).trim();
+  }
+
+  return chunks.filter(Boolean);
+}
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
@@ -40,16 +96,30 @@ function formatSeconds(totalSeconds) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
+function stripTagsForSpeech(text) {
+  return text
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function getSpeakableText(article) {
   if (!article) {
     return "";
   }
 
-  return (article.blocks || [])
-    .map((block) => (block?.text || "").trim())
-    .filter(Boolean)
-    .join(" ")
-    .trim();
+  return stripTagsForSpeech(
+    (article.blocks || [])
+      .map((block) => (block?.text || "").trim())
+      .filter(Boolean)
+      .join(" "),
+  );
 }
 
 function toVoiceOption(voice) {
@@ -154,6 +224,15 @@ export function initReaderTtsPlayer({
   let voicesPromise = null;
   let activeUtterance = null;
   let playToken = 0;
+  const isMobile = isMobileBrowser();
+  let chunkQueue = [];
+  let chunkIndex = 0;
+  let chunkCharOffsets = [];
+  let interChunkTimer = null;
+  let progressRafId = null;
+  let chunkStartTime = 0;
+  let chunkStartPercent = 0;
+  let chunkEndPercent = 0;
 
   let renderQueued = false;
   let renderVersion = 0;
@@ -303,10 +382,64 @@ export function initReaderTtsPlayer({
     return voicesPromise;
   }
 
+  function stopProgressInterpolation() {
+    if (progressRafId !== null) {
+      cancelAnimationFrame(progressRafId);
+      progressRafId = null;
+    }
+  }
+
+  function startProgressInterpolation(token) {
+    stopProgressInterpolation();
+
+    const chunkLen = (chunkQueue[chunkIndex] || "").length;
+    const wordsInChunk = (chunkQueue[chunkIndex] || "").split(/\s+/).length;
+    const rate = clampRate(state.ttsRate);
+    const estimatedMs = Math.max(200, (wordsInChunk / (165 * rate)) * 60000);
+
+    chunkStartTime = performance.now();
+    chunkStartPercent = progressPercent;
+
+    // Figure out what progress will be at the end of this chunk
+    const totalChars = Math.max(1, currentText.length);
+    const nextOffset =
+      chunkIndex + 1 < chunkCharOffsets.length
+        ? chunkCharOffsets[chunkIndex + 1]
+        : totalChars - currentStartChar;
+    chunkEndPercent = clampProgress(
+      ((currentStartChar + nextOffset) / totalChars) * 100,
+    );
+
+    function tick() {
+      if (token !== playToken) {
+        return;
+      }
+
+      const elapsed = performance.now() - chunkStartTime;
+      const fraction = Math.min(1, elapsed / estimatedMs);
+      const interpolated =
+        chunkStartPercent + (chunkEndPercent - chunkStartPercent) * fraction;
+      updateProgress(interpolated);
+
+      if (fraction < 1) {
+        progressRafId = requestAnimationFrame(tick);
+      }
+    }
+
+    progressRafId = requestAnimationFrame(tick);
+  }
+
   function cancelSpeech(resetFlags = true, bumpToken = true) {
     if (bumpToken) {
       playToken += 1;
     }
+
+    if (interChunkTimer !== null) {
+      clearTimeout(interChunkTimer);
+      interChunkTimer = null;
+    }
+
+    stopProgressInterpolation();
 
     if (synthesis) {
       synthesis.cancel();
@@ -340,6 +473,116 @@ export function initReaderTtsPlayer({
     }
   }
 
+  function speakChunkQueue(token) {
+    if (token !== playToken) {
+      return;
+    }
+
+    if (chunkIndex >= chunkQueue.length) {
+      isPlaying = false;
+      isPaused = false;
+      activeUtterance = null;
+      updateProgress(100);
+      updateStatus("Finished");
+      queueRender();
+      return;
+    }
+
+    const selectedVoice = getVoiceById(getSelectedVoiceId());
+    const chunkText = chunkQueue[chunkIndex];
+    const utterance = new SpeechSynthesisUtterance(chunkText);
+    utterance.rate = clampRate(state.ttsRate);
+
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+      utterance.lang = selectedVoice.lang;
+    }
+
+    utterance.onstart = () => {
+      if (token !== playToken) {
+        return;
+      }
+
+      isPlaying = true;
+      isPaused = false;
+      updateStatus("Playing");
+      queueRender();
+      startProgressInterpolation(token);
+    };
+
+    utterance.onend = () => {
+      if (token !== playToken) {
+        return;
+      }
+
+      stopProgressInterpolation();
+
+      chunkIndex += 1;
+
+      // Update progress based on chunk position
+      const totalChars = Math.max(1, currentText.length);
+      const spokenUpTo =
+        chunkIndex < chunkCharOffsets.length
+          ? chunkCharOffsets[chunkIndex]
+          : totalChars;
+      updateProgress(
+        (clamp(currentStartChar + spokenUpTo, 0, totalChars) / totalChars) *
+          100,
+      );
+
+      if (chunkIndex >= chunkQueue.length) {
+        isPlaying = false;
+        isPaused = false;
+        activeUtterance = null;
+        updateProgress(100);
+        updateStatus("Finished");
+        queueRender();
+        return;
+      }
+
+      if (isMobile) {
+        // Small delay between chunks — important on mobile
+        interChunkTimer = setTimeout(() => {
+          interChunkTimer = null;
+          speakChunkQueue(token);
+        }, INTER_CHUNK_DELAY_MS);
+      } else {
+        // Must defer on desktop too — Chrome truncates utterances
+        // when speak() is called synchronously from onend
+        interChunkTimer = setTimeout(() => {
+          interChunkTimer = null;
+          speakChunkQueue(token);
+        }, INTER_CHUNK_DELAY_DESKTOP_MS);
+      }
+    };
+
+    utterance.onerror = (event) => {
+      if (token !== playToken) {
+        return;
+      }
+
+      // "interrupted" fires on normal cancel — not a real error
+      if (event.error === "interrupted" || event.error === "canceled") {
+        return;
+      }
+
+      stopProgressInterpolation();
+      isPlaying = false;
+      isPaused = false;
+      activeUtterance = null;
+      updateStatus("Playback failed. Try again.", true);
+      queueRender();
+    };
+
+    activeUtterance = utterance;
+
+    // Cancel before speaking — critical on mobile browsers
+    if (isMobile) {
+      synthesis.cancel();
+    }
+    synthesis.speak(utterance);
+  }
+
   async function speakFromPercent(article, startPercent) {
     if (!synthesis || typeof SpeechSynthesisUtterance === "undefined") {
       updateStatus("System speech is unavailable in this browser.", true);
@@ -365,79 +608,28 @@ export function initReaderTtsPlayer({
       return;
     }
 
-    cancelSpeech(false, false);
-
+    // Bump token FIRST so old callbacks are invalidated before cancel fires events
     const token = playToken + 1;
     playToken = token;
+
+    cancelSpeech(false, false);
 
     currentText = text;
     currentStartChar = startChar;
 
-    const utterance = new SpeechSynthesisUtterance(slicedText);
-    utterance.rate = clampRate(state.ttsRate);
+    chunkQueue = splitIntoChunks(slicedText);
+    chunkIndex = 0;
 
-    const selectedVoice = getVoiceById(getSelectedVoiceId());
-
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-      utterance.lang = selectedVoice.lang;
+    // Build cumulative char-offset map for progress tracking
+    chunkCharOffsets = [];
+    let offset = 0;
+    for (const chunk of chunkQueue) {
+      chunkCharOffsets.push(offset);
+      offset += chunk.length;
     }
 
-    utterance.onstart = () => {
-      if (token !== playToken) {
-        return;
-      }
-
-      isPlaying = true;
-      isPaused = false;
-      updateStatus("Playing");
-      queueRender();
-    };
-
-    utterance.onboundary = (event) => {
-      if (token !== playToken) {
-        return;
-      }
-
-      if (typeof event.charIndex === "number") {
-        const absoluteChar = clamp(
-          currentStartChar + event.charIndex,
-          0,
-          currentText.length,
-        );
-        updateProgress((absoluteChar / Math.max(1, currentText.length)) * 100);
-      }
-    };
-
-    utterance.onend = () => {
-      if (token !== playToken) {
-        return;
-      }
-
-      isPlaying = false;
-      isPaused = false;
-      activeUtterance = null;
-      updateProgress(100);
-      updateStatus("Finished");
-      queueRender();
-    };
-
-    utterance.onerror = () => {
-      if (token !== playToken) {
-        return;
-      }
-
-      isPlaying = false;
-      isPaused = false;
-      activeUtterance = null;
-      updateStatus("Playback failed. Try again.", true);
-      queueRender();
-    };
-
-    activeUtterance = utterance;
     updateStatus("Starting playback...");
-
-    synthesis.speak(utterance);
+    speakChunkQueue(token);
   }
 
   async function handlePlayToggle(article) {
@@ -451,22 +643,26 @@ export function initReaderTtsPlayer({
     }
 
     if (isPlaying && !isPaused) {
-      if (typeof synthesis.pause === "function") {
-        synthesis.pause();
-      }
+      // Pause: cancel speech and remember chunk position
+      cancelSpeech(false, true);
       isPaused = true;
+      isPlaying = false;
       updateStatus("Paused");
       queueRender();
       return;
     }
 
     if (isPaused) {
-      if (typeof synthesis.resume === "function") {
-        synthesis.resume();
-      }
       isPaused = false;
-      updateStatus("Playing");
-      queueRender();
+
+      // Resume from current chunk if still valid, otherwise re-speak from progress
+      if (chunkQueue.length > 0 && chunkIndex < chunkQueue.length) {
+        const token = playToken + 1;
+        playToken = token;
+        speakChunkQueue(token);
+      } else {
+        await speakFromPercent(article, progressPercent);
+      }
       return;
     }
 
@@ -765,7 +961,7 @@ export function initReaderTtsPlayer({
       }
 
       ensureVoicesLoaded().then(() => {
-        if (voiceOptions.length) {
+        if (voiceOptions.length && !isPlaying && !isPaused) {
           updateStatus("Ready");
         }
       });
