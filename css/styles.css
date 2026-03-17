@@ -375,6 +375,61 @@ a:visited {
   color: var(--text);
 }
 
+/* Add Dialog Tabs */
+.add-dialog-tabs {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.add-dialog-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  transition: all 0.15s ease;
+}
+
+.add-dialog-tab:hover {
+  background: var(--highlight);
+  color: var(--text);
+}
+
+.add-dialog-tab.is-active {
+  background: var(--success-bg);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.add-dialog-tab i {
+  font-size: 0.85em;
+}
+
+/* Add Dialog Panels */
+.add-dialog-panels {
+  display: grid;
+  overflow: hidden;
+}
+
+.add-dialog-panel {
+  display: none;
+}
+
+.add-dialog-panel.is-active {
+  display: block;
+}
+
+/* Add Dialog Indicators (mobile only) */
+.add-dialog-indicators {
+  display: none;
+}
+
 .app-main {
   display: grid;
   background: var(--surface);
@@ -1378,8 +1433,6 @@ html[data-theme="dark"] .selection-menu {
 
 .project-card:hover,
 .project-card:focus-visible {
-  background: var(--surface-muted);
-  border-color: var(--text);
   outline: none;
 }
 

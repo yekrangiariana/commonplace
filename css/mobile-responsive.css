@@ -676,6 +676,74 @@
     width: auto;
   }
 
+  /* Add Dialog: Swipeable Panels on Mobile */
+  .add-dialog-tabs {
+    display: none;
+  }
+
+  .add-dialog-panels {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .add-dialog-panels::-webkit-scrollbar {
+    display: none;
+  }
+
+  .add-dialog-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 100%;
+    width: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    padding: 0 2px;
+    box-sizing: border-box;
+  }
+
+  .add-dialog-panel.is-active {
+    display: flex;
+  }
+
+  .add-dialog-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 0;
+    position: fixed;
+    bottom: 120px;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+
+  .add-dialog-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: white;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .add-dialog-indicator.is-active {
+    background: var(--success);
+    transform: scale(1.25);
+  }
+
+  .add-article-dialog__inner {
+    display: flex;
+    flex-direction: column;
+  }
+
   /* All popovers - fixed position on mobile with blur backdrop */
   .reader-popover,
   .rss-subscribe-popover,

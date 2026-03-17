@@ -1312,7 +1312,20 @@
     >
       <div class="add-article-dialog__inner">
         <div class="add-article-dialog__header">
-          <h2 id="add-article-dialog-title">Add an article</h2>
+          <nav class="add-dialog-tabs" aria-label="Add type">
+            <button type="button" class="add-dialog-tab" data-add-tab="feed">
+              <i class="fa-solid fa-rss" aria-hidden="true"></i>
+              <span>Feed</span>
+            </button>
+            <button type="button" class="add-dialog-tab" data-add-tab="article">
+              <i class="fa-solid fa-link" aria-hidden="true"></i>
+              <span>Article</span>
+            </button>
+            <button type="button" class="add-dialog-tab" data-add-tab="project">
+              <i class="fa-solid fa-folder" aria-hidden="true"></i>
+              <span>Project</span>
+            </button>
+          </nav>
           <button
             type="button"
             id="add-article-close-button"
@@ -1322,61 +1335,181 @@
             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
           </button>
         </div>
-        <form id="bookmark-form" class="stack-form">
-          <label class="field-group">
-            <span>Article URL</span>
-            <input
-              id="article-url"
-              name="url"
-              type="url"
-              placeholder="https://example.com/article"
-              required
-            />
-          </label>
-          <label class="field-group" for="experimental-reader-toggle">
-            <span>Experimental fetch</span>
-            <input
-              id="experimental-reader-toggle"
-              name="experimental-reader-toggle"
-              type="checkbox"
-              class="toggle-switch"
-            />
-          </label>
-          <label class="field-group">
-            <span>Tags</span>
-            <input
-              id="article-tags"
-              name="tags"
-              type="text"
-              placeholder="research, essay, philosophy"
-            />
-          </label>
-          <div
-            id="available-tags"
-            class="field-suggestions"
-            aria-live="polite"
-          ></div>
-          <label class="field-group">
-            <span>Attach to projects</span>
-            <input
-              id="article-projects"
-              name="projects"
-              type="text"
-              placeholder="essay draft, trust piece"
-            />
-          </label>
-          <div
-            id="available-projects"
-            class="field-suggestions"
-            aria-live="polite"
-          ></div>
-          <div class="button-row">
-            <button type="submit" class="button button--primary">
-              <i class="fa-solid fa-link" aria-hidden="true"></i>
-              Fetch article
-            </button>
+
+        <div class="add-dialog-panels" id="add-dialog-panels">
+          <!-- Feed Panel -->
+          <div class="add-dialog-panel" data-add-panel="feed">
+            <form id="add-feed-form" class="stack-form">
+              <label class="field-group">
+                <span>Feed URL</span>
+                <input
+                  id="add-feed-url"
+                  name="url"
+                  type="url"
+                  placeholder="https://example.com/feed.xml"
+                  autocomplete="off"
+                  required
+                />
+              </label>
+              <label class="field-group">
+                <span>Folder (optional)</span>
+                <input
+                  id="add-feed-folder"
+                  name="folder"
+                  type="text"
+                  placeholder="News, Tech, etc."
+                  autocomplete="off"
+                />
+              </label>
+              <div
+                id="add-feed-folder-suggestions"
+                class="field-suggestions"
+              ></div>
+              <p class="meta-text">Popular feeds</p>
+              <div class="chip-row">
+                <button
+                  type="button"
+                  class="chip chip--helper"
+                  data-add-feed-suggest="http://feeds.bbci.co.uk/news/rss.xml"
+                >
+                  BBC News
+                </button>
+                <button
+                  type="button"
+                  class="chip chip--helper"
+                  data-add-feed-suggest="https://www.theguardian.com/world/rss"
+                >
+                  The Guardian
+                </button>
+                <button
+                  type="button"
+                  class="chip chip--helper"
+                  data-add-feed-suggest="https://hnrss.org/frontpage"
+                >
+                  Hacker News
+                </button>
+              </div>
+              <div class="button-row">
+                <button type="submit" class="button button--primary">
+                  <i class="fa-solid fa-rss" aria-hidden="true"></i>
+                  Subscribe
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
+
+          <!-- Article Panel -->
+          <div class="add-dialog-panel" data-add-panel="article">
+            <form id="bookmark-form" class="stack-form">
+              <label class="field-group">
+                <span>Article URL</span>
+                <input
+                  id="article-url"
+                  name="url"
+                  type="url"
+                  placeholder="https://example.com/article"
+                  required
+                />
+              </label>
+              <label class="field-group" for="experimental-reader-toggle">
+                <span>Experimental fetch</span>
+                <input
+                  id="experimental-reader-toggle"
+                  name="experimental-reader-toggle"
+                  type="checkbox"
+                  class="toggle-switch"
+                />
+              </label>
+              <label class="field-group">
+                <span>Tags</span>
+                <input
+                  id="article-tags"
+                  name="tags"
+                  type="text"
+                  placeholder="research, essay, philosophy"
+                />
+              </label>
+              <div
+                id="available-tags"
+                class="field-suggestions"
+                aria-live="polite"
+              ></div>
+              <label class="field-group">
+                <span>Attach to projects</span>
+                <input
+                  id="article-projects"
+                  name="projects"
+                  type="text"
+                  placeholder="essay draft, trust piece"
+                />
+              </label>
+              <div
+                id="available-projects"
+                class="field-suggestions"
+                aria-live="polite"
+              ></div>
+              <div class="button-row">
+                <button type="submit" class="button button--primary">
+                  <i class="fa-solid fa-link" aria-hidden="true"></i>
+                  Fetch article
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Project Panel -->
+          <div class="add-dialog-panel" data-add-panel="project">
+            <form id="add-project-form" class="stack-form">
+              <label class="field-group">
+                <span>Name</span>
+                <input
+                  id="add-project-name"
+                  name="name"
+                  type="text"
+                  placeholder="Essay on civic trust"
+                  required
+                />
+              </label>
+              <label class="field-group">
+                <span>Description</span>
+                <textarea
+                  id="add-project-description"
+                  name="description"
+                  rows="3"
+                  placeholder="What are you writing and why does it matter?"
+                ></textarea>
+              </label>
+              <div class="button-row">
+                <button type="submit" class="button button--primary">
+                  <i class="fa-solid fa-folder-plus" aria-hidden="true"></i>
+                  Create project
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="add-dialog-indicators" id="add-dialog-indicators">
+          <button
+            type="button"
+            class="add-dialog-indicator"
+            data-add-indicator="feed"
+            aria-label="Feed"
+          ></button>
+          <button
+            type="button"
+            class="add-dialog-indicator"
+            data-add-indicator="article"
+            aria-label="Article"
+          ></button>
+          <button
+            type="button"
+            class="add-dialog-indicator"
+            data-add-indicator="project"
+            aria-label="Project"
+          ></button>
+        </div>
+
         <div
           class="status-box"
           id="fetch-status"

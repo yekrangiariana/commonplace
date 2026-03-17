@@ -208,7 +208,7 @@ function bindEvents() {
   dom.bookmarkForm.addEventListener("submit", handleBookmarkSubmit);
   document
     .querySelector("#add-article-open-button")
-    ?.addEventListener("click", openAddModal);
+    ?.addEventListener("click", () => openAddModal());
   document
     .querySelector("#add-article-close-button")
     ?.addEventListener("click", closeAddModal);
@@ -217,6 +217,72 @@ function bindEvents() {
       closeAddModal();
     }
   });
+
+  // Add dialog tab switching
+  dom.addDialogTabs.forEach((tab) => {
+    tab.addEventListener("click", () => switchAddDialogTab(tab.dataset.addTab));
+  });
+
+  // Add dialog indicator clicks (mobile)
+  dom.addDialogIndicators.forEach((indicator) => {
+    indicator.addEventListener("click", () =>
+      switchAddDialogTab(indicator.dataset.addIndicator),
+    );
+  });
+
+  // Add dialog swipe detection (mobile)
+  let scrollTimeout;
+  dom.addDialogPanels?.addEventListener("scroll", () => {
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      const scrollLeft = dom.addDialogPanels.scrollLeft;
+      const panelWidth = dom.addDialogPanels.scrollWidth / 3;
+      const index = Math.round(scrollLeft / panelWidth);
+      const tabs = ["feed", "article", "project"];
+      if (tabs[index] && tabs[index] !== currentAddTab) {
+        currentAddTab = tabs[index];
+        // Update UI without scrolling again
+        dom.addDialogTabs.forEach((tabBtn) => {
+          tabBtn.classList.toggle(
+            "is-active",
+            tabBtn.dataset.addTab === currentAddTab,
+          );
+        });
+        dom.addDialogPanelElements.forEach((panel) => {
+          panel.classList.toggle(
+            "is-active",
+            panel.dataset.addPanel === currentAddTab,
+          );
+        });
+        dom.addDialogIndicators.forEach((ind) => {
+          ind.classList.toggle(
+            "is-active",
+            ind.dataset.addIndicator === currentAddTab,
+          );
+        });
+      }
+    }, 50);
+  });
+
+  // Add feed form
+  dom.addFeedForm?.addEventListener("submit", handleAddFeedSubmit);
+  dom.addFeedFolderSuggestions?.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-add-feed-folder]");
+    if (btn && dom.addFeedFolder) {
+      dom.addFeedFolder.value = btn.dataset.addFeedFolder;
+    }
+  });
+  dom.addArticleDialog?.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-add-feed-suggest]");
+    if (btn && dom.addFeedUrl) {
+      dom.addFeedUrl.value = btn.dataset.addFeedSuggest;
+      dom.addFeedForm?.requestSubmit();
+    }
+  });
+
+  // Add project form
+  dom.addProjectForm?.addEventListener("submit", handleAddProjectSubmit);
+
   dom.projectForm.addEventListener("submit", handleProjectSubmit);
   dom.tagForm.addEventListener("submit", handleTagSubmit);
   dom.rssSubscribeForm?.addEventListener("submit", handleRssSubscribeSubmit);
@@ -2880,27 +2946,204 @@ function applyDisplayPreferences() {
   root.setAttribute("data-accent-color", accentColor);
 }
 
-function openAddModal() {
+// Add dialog tab management
+let currentAddTab = "article";
+
+function switchAddDialogTab(tab) {
+  currentAddTab = tab;
+
+  // Update tabs
+  dom.addDialogTabs.forEach((tabBtn) => {
+    tabBtn.classList.toggle("is-active", tabBtn.dataset.addTab === tab);
+  });
+
+  // Update panels
+  dom.addDialogPanelElements.forEach((panel) => {
+    panel.classList.toggle("is-active", panel.dataset.addPanel === tab);
+  });
+
+  // Update indicators
+  dom.addDialogIndicators.forEach((indicator) => {
+    indicator.classList.toggle(
+      "is-active",
+      indicator.dataset.addIndicator === tab,
+    );
+  });
+
+  // Scroll to panel on mobile
+  const isMobile = window.matchMedia("(max-width: 761px)").matches;
+  if (isMobile && dom.addDialogPanels) {
+    const panelIndex = ["feed", "article", "project"].indexOf(tab);
+    const scrollTarget = dom.addDialogPanels.scrollWidth * (panelIndex / 3);
+    dom.addDialogPanels.scrollTo({ left: scrollTarget, behavior: "smooth" });
+  }
+
+  // Focus appropriate input
+  setTimeout(() => {
+    if (tab === "feed") {
+      dom.addFeedUrl?.focus();
+    } else if (tab === "article") {
+      dom.articleUrl?.focus();
+    } else if (tab === "project") {
+      dom.addProjectName?.focus();
+    }
+  }, 100);
+}
+
+function getDefaultAddTab() {
+  // Select tab based on current main tab
+  if (state.activeTab === "rss") return "feed";
+  if (state.activeTab === "library") return "article";
+  if (state.activeTab === "projects") return "project";
+  return "article";
+}
+
+function openAddModal(tabOverride) {
   // Toggle behavior: if already open, close it
   if (dom.addArticleDialog?.open) {
     closeAddModal();
     return;
   }
+
+  const targetTab = tabOverride || getDefaultAddTab();
+  switchAddDialogTab(targetTab);
+
   renderArticleTaxonomyHelpers(state, dom);
+  renderAddFeedFolderSuggestions();
+
   // Use show() on mobile to allow header interaction, showModal() on desktop for centering
   const isMobile = window.matchMedia("(max-width: 761px)").matches;
   if (isMobile) {
     dom.addArticleDialog?.show();
+    // Reset scroll position after showing
+    setTimeout(() => {
+      const panelIndex = ["feed", "article", "project"].indexOf(targetTab);
+      if (dom.addDialogPanels) {
+        dom.addDialogPanels.scrollLeft =
+          dom.addDialogPanels.scrollWidth * (panelIndex / 3);
+      }
+    }, 0);
   } else {
     dom.addArticleDialog?.showModal();
   }
-  dom.articleUrl?.focus();
+
   document.body.classList.add("add-dialog-open");
 }
 
 function closeAddModal() {
   dom.addArticleDialog?.close();
   document.body.classList.remove("add-dialog-open");
+}
+
+function renderAddFeedFolderSuggestions() {
+  if (!dom.addFeedFolderSuggestions) return;
+
+  const folders = [
+    ...new Set(state.rssFeeds.map((f) => f.folder).filter(Boolean)),
+  ];
+  if (folders.length === 0) {
+    dom.addFeedFolderSuggestions.innerHTML = "";
+    return;
+  }
+
+  dom.addFeedFolderSuggestions.innerHTML = folders
+    .map(
+      (folder) =>
+        `<button type="button" class="chip chip--helper" data-add-feed-folder="${escapeHtml(folder)}">${escapeHtml(folder)}</button>`,
+    )
+    .join("");
+}
+
+async function handleAddFeedSubmit(event) {
+  event.preventDefault();
+
+  const url = (dom.addFeedUrl?.value || "").trim();
+  const folder = normalizeRssFolderName(dom.addFeedFolder?.value || "");
+
+  if (!url) {
+    return;
+  }
+
+  const normalized = normalizeUrl(url);
+  const alreadySubscribed = state.rssFeeds.some(
+    (f) => normalizeUrl(f.url) === normalized,
+  );
+
+  if (alreadySubscribed) {
+    showTransientStatus("Already subscribed to that feed.");
+    return;
+  }
+
+  showTransientStatus("Loading feed…");
+
+  try {
+    const feedData = await fetchRssFeed(runtimeConfig, url);
+    const fetchedCount = Array.isArray(feedData.items)
+      ? feedData.items.length
+      : 0;
+    const feed = {
+      id: createUniqueRssFeedId(),
+      url: normalized,
+      title: feedData.title,
+      items: (feedData.items || []).map((item) => ({
+        ...item,
+        canonicalUrl: canonicalizeArticleUrl(item.url),
+      })),
+      folder,
+      lastFetchedAt: new Date().toISOString(),
+      lastFetchItemCount: fetchedCount,
+      lastFetchNewItemCount: fetchedCount,
+      itemsVersion: 1,
+    };
+
+    state.rssFeeds.push(feed);
+    pruneRssItemsForRetention();
+    state.rssFolderFilter = folder || "";
+    state.rssActiveFeedId = feed.id;
+    touchRss(state);
+    persistState(state);
+    dom.addFeedForm?.reset();
+    closeAddModal();
+    showTransientStatus(`Subscribed to "${feed.title}".`);
+    renderRssPanel();
+    rssAutoRefreshController?.sync();
+  } catch (error) {
+    showTransientStatus(error.message || "Could not load feed.");
+  }
+}
+
+function handleAddProjectSubmit(event) {
+  event.preventDefault();
+  const name = (dom.addProjectName?.value || "").replace(/\s+/g, " ").trim();
+  const description = (dom.addProjectDescription?.value || "").trim();
+
+  if (!name) {
+    return;
+  }
+
+  const existingProject = state.projects.find(
+    (project) => project.name.trim().toLowerCase() === name.toLowerCase(),
+  );
+
+  if (existingProject) {
+    showTransientStatus(`Project "${name}" already exists.`);
+    return;
+  }
+
+  state.projects.unshift({
+    id: createId("project"),
+    name,
+    stage: "idea",
+    description,
+    content: "",
+    createdAt: new Date().toISOString(),
+  });
+  touchProjects(state);
+  persistState(state);
+  dom.addProjectForm?.reset();
+  closeAddModal();
+  showTransientStatus(`Created project "${name}".`);
+  renderAndSyncUrl();
 }
 
 function openProjectsCreateFromContextMenu() {

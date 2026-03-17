@@ -117,4 +117,18 @@ export const dom = {
   rssFolderList: document.querySelector("#rss-folder-list"),
   rssFeedList: document.querySelector("#rss-feed-list"),
   rssItems: document.querySelector("#rss-items"),
+  // Add dialog unified modal
+  addDialogTabs: [...document.querySelectorAll("[data-add-tab]")],
+  addDialogPanels: document.querySelector("#add-dialog-panels"),
+  addDialogPanelElements: [...document.querySelectorAll("[data-add-panel]")],
+  addDialogIndicators: [...document.querySelectorAll("[data-add-indicator]")],
+  addFeedForm: document.querySelector("#add-feed-form"),
+  addFeedUrl: document.querySelector("#add-feed-url"),
+  addFeedFolder: document.querySelector("#add-feed-folder"),
+  addFeedFolderSuggestions: document.querySelector(
+    "#add-feed-folder-suggestions",
+  ),
+  addProjectForm: document.querySelector("#add-project-form"),
+  addProjectName: document.querySelector("#add-project-name"),
+  addProjectDescription: document.querySelector("#add-project-description"),
 };
