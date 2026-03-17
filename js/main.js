@@ -284,7 +284,10 @@ function bindEvents() {
   // Add project form
   dom.addProjectForm?.addEventListener("submit", handleAddProjectSubmit);
 
-  dom.projectForm.addEventListener("submit", handleProjectSubmit);
+  dom.openAddProjectModalButton?.addEventListener("click", () => {
+    openAddModal("project");
+  });
+
   dom.tagForm.addEventListener("submit", handleTagSubmit);
   dom.rssSubscribeForm?.addEventListener("submit", handleRssSubscribeSubmit);
   dom.rssSubscribePopover?.addEventListener("click", (event) => {
@@ -1071,8 +1074,13 @@ async function refreshStorageUsageDisplay() {
     dom.settingsStorageRefreshButton.disabled = true;
   }
 
+  const resultsEl = document.querySelector("#settings-storage-results");
+
   if (dom.settingsStorageSummary) {
-    dom.settingsStorageSummary.textContent = "Calculating storage usage...";
+    dom.settingsStorageSummary.innerHTML = `<p class="meta-text">Calculating...</p>`;
+  }
+  if (resultsEl) {
+    resultsEl.hidden = false;
   }
 
   try {
@@ -1086,41 +1094,58 @@ async function refreshStorageUsageDisplay() {
       : "n/a";
 
     if (dom.settingsStorageSummary) {
-      dom.settingsStorageSummary.textContent = `Database usage (approx): ${estimatedDbText}. Origin usage: ${browserUsageText} / ${browserQuotaText}.`;
+      dom.settingsStorageSummary.innerHTML = `
+        <div class="settings-storage-meter">
+          <div class="settings-storage-meter__label">
+            <span>Used</span>
+            <strong>${browserUsageText}</strong>
+          </div>
+          <div class="settings-storage-meter__bar">
+            <div class="settings-storage-meter__fill" style="width: ${Math.min(100, (usage.browserUsageBytes / usage.browserQuotaBytes) * 100 || 0).toFixed(1)}%"></div>
+          </div>
+          <div class="settings-storage-meter__label">
+            <span>Quota</span>
+            <strong>${browserQuotaText}</strong>
+          </div>
+        </div>
+      `;
     }
 
     if (dom.settingsStorageBreakdown) {
-      const breakdownText = usage.storeBreakdown.length
+      const rows = usage.storeBreakdown.length
         ? usage.storeBreakdown
             .map((entry) => {
               if (entry.error) {
-                return `${entry.storeName}: unavailable`;
+                return `<tr><td>${entry.storeName}</td><td>-</td><td class="meta-text">unavailable</td></tr>`;
               }
-
               const countLabel = Number.isFinite(entry.recordCount)
-                ? `${entry.recordCount} records`
-                : "records unknown";
+                ? entry.recordCount
+                : "-";
               const bytesLabel = Number.isFinite(entry.approxBytes)
                 ? formatBytes(entry.approxBytes)
-                : "size unknown";
-              return `${entry.storeName}: ${bytesLabel} (${countLabel})`;
+                : "-";
+              return `<tr><td>${entry.storeName}</td><td>${countLabel}</td><td>${bytesLabel}</td></tr>`;
             })
-            .join(" | ")
-        : "No IndexedDB stores found for this app yet.";
+            .join("")
+        : "<tr><td colspan='3' class='meta-text'>No data stores found yet.</td></tr>";
 
-      dom.settingsStorageBreakdown.textContent = breakdownText;
+      dom.settingsStorageBreakdown.innerHTML = `
+        <table class="settings-storage-table">
+          <thead><tr><th>Store</th><th>Records</th><th>Size</th></tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr><td><strong>Total (approx)</strong></td><td></td><td><strong>${estimatedDbText}</strong></td></tr></tfoot>
+        </table>
+      `;
     }
 
     setStatus(`Estimated local DB usage: ${estimatedDbText}.`);
   } catch {
     if (dom.settingsStorageSummary) {
-      dom.settingsStorageSummary.textContent =
-        "Could not calculate storage usage in this browser.";
+      dom.settingsStorageSummary.innerHTML = `<p class="meta-text">Could not calculate storage usage in this browser.</p>`;
     }
 
     if (dom.settingsStorageBreakdown) {
-      dom.settingsStorageBreakdown.textContent =
-        "Try again or check browser storage permissions.";
+      dom.settingsStorageBreakdown.innerHTML = `<p class="meta-text">Try again or check browser storage permissions.</p>`;
     }
 
     setStatus("Could not calculate storage usage.");
@@ -1194,39 +1219,6 @@ function scrollReaderToTop() {
     appMainEl.scrollTop = 0;
   }
   window.scrollTo(0, 0);
-}
-
-function handleProjectSubmit(event) {
-  event.preventDefault();
-  const name = dom.projectName.value.replace(/\s+/g, " ").trim();
-  const description = dom.projectDescription.value.trim();
-
-  if (!name) {
-    return;
-  }
-
-  const existingProject = state.projects.find(
-    (project) => project.name.trim().toLowerCase() === name.toLowerCase(),
-  );
-
-  if (existingProject) {
-    existingProject.description = description || existingProject.description;
-    touchProjects(state);
-  } else {
-    state.projects.unshift({
-      id: createId("project"),
-      name,
-      stage: "idea",
-      description,
-      content: "",
-      createdAt: new Date().toISOString(),
-    });
-    touchProjects(state);
-  }
-
-  persistState(state);
-  dom.projectForm.reset();
-  renderAndSyncUrl();
 }
 
 function handleTagSubmit(event) {
@@ -3264,11 +3256,7 @@ function handleAddProjectSubmit(event) {
 }
 
 function openProjectsCreateFromContextMenu() {
-  state.settingsSection = "projects";
-  switchTab("settings");
-  window.setTimeout(() => {
-    dom.projectName?.focus();
-  }, 0);
+  openAddModal("project");
 }
 
 function markRssItemAsReadFromContextMenu(url) {
@@ -3534,6 +3522,9 @@ function saveCustomAutoTagRule() {
   state.autoTagCustomRules = merged;
   persistState(state);
   dom.autoTagRuleForm?.reset();
+  if (dom.autoTagRuleDetails) {
+    dom.autoTagRuleDetails.open = false;
+  }
   renderSettings(state, dom);
   setStatus(`Saved auto-tag rule for "${tag}".`);
 }

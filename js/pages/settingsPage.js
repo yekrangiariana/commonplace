@@ -106,71 +106,87 @@ function renderTagList(state, dom) {
 
   const indexes = getDerivedIndexes(state);
   const tagCounts = indexes.tagArticleCount;
-  dom.tagList.innerHTML = state.savedTags
-    .slice()
-    .sort((left, right) => left.localeCompare(right))
-    .map(
-      (tag) => `
-      <article class="tag-card settings-entity-card">
-        <div class="tag-card__header settings-entity-card__header">
-          <div>
-            <h3 class="settings-entity-card__title">
-              <i class="fa-solid fa-tag" aria-hidden="true"></i>
-              ${escapeHtml(tag)}
-            </h3>
-            <p class="meta-text settings-entity-card__meta">Used in ${tagCounts.get(tag) || 0} articles</p>
-          </div>
-          <div class="tag-card__actions settings-entity-card__actions">
-            <button class="link-button" data-rename-tag="${escapeHtml(tag)}">Rename</button>
-            <button class="link-button" data-delete-tag="${escapeHtml(tag)}">Delete</button>
-          </div>
-        </div>
-      </article>
-    `,
-    )
-    .join("");
+  dom.tagList.innerHTML = `
+    <table class="settings-table">
+      <thead>
+        <tr>
+          <th>Tag</th>
+          <th>Articles</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${state.savedTags
+          .slice()
+          .sort((left, right) => left.localeCompare(right))
+          .map(
+            (tag) => `
+            <tr class="settings-table__row">
+              <td class="settings-table__name">
+                <i class="fa-solid fa-tag" aria-hidden="true"></i>
+                ${escapeHtml(tag)}
+              </td>
+              <td class="settings-table__count">${tagCounts.get(tag) || 0}</td>
+              <td class="settings-table__actions">
+                <button class="link-button" data-rename-tag="${escapeHtml(tag)}">Rename</button>
+                <button class="link-button" data-delete-tag="${escapeHtml(tag)}">Delete</button>
+              </td>
+            </tr>
+          `,
+          )
+          .join("")}
+      </tbody>
+    </table>
+  `;
 }
 
 function renderProjectList(state, dom) {
   if (state.projects.length === 0) {
-    dom.projectSettingsList.innerHTML =
-      '<div class="empty-state empty-state--compact"><h3>No projects yet</h3><p>Create a project to organize your writing workspace.</p></div>';
+    dom.projectSettingsList.innerHTML = "";
     return;
   }
 
   const indexes = getDerivedIndexes(state);
 
-  dom.projectSettingsList.innerHTML = state.projects
-    .slice()
-    .sort((left, right) => left.name.localeCompare(right.name))
-    .map((project) => {
-      const stats = indexes.projectStatsById.get(project.id) || {
-        articleCount: 0,
-        highlightCount: 0,
-      };
+  dom.projectSettingsList.innerHTML = `
+    <table class="settings-table">
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Articles</th>
+          <th>Highlights</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${state.projects
+          .slice()
+          .sort((left, right) => left.name.localeCompare(right.name))
+          .map((project) => {
+            const stats = indexes.projectStatsById.get(project.id) || {
+              articleCount: 0,
+              highlightCount: 0,
+            };
 
-      return `
-        <article class="tag-card settings-entity-card">
-          <div class="tag-card__header settings-entity-card__header">
-            <div>
-              <h3 class="settings-entity-card__title">
+            return `
+            <tr class="settings-table__row">
+              <td class="settings-table__name">
                 <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
                 ${escapeHtml(project.name)}
-              </h3>
-              <div class="chip-row settings-entity-card__chips">
-                <span class="chip chip--project" title="${stats.articleCount} related articles" aria-label="${stats.articleCount} related articles"><i class="fa-solid fa-link" aria-hidden="true"></i> ${stats.articleCount}</span>
-                <span class="chip chip--count"><i class="fa-regular fa-comment" aria-hidden="true"></i> ${stats.highlightCount}</span>
-              </div>
-            </div>
-            <div class="tag-card__actions settings-entity-card__actions">
-              <button class="link-button" data-rename-project="${project.id}">Rename</button>
-              <button class="link-button" data-delete-project="${project.id}">Delete</button>
-            </div>
-          </div>
-        </article>
-      `;
-    })
-    .join("");
+              </td>
+              <td class="settings-table__count">${stats.articleCount}</td>
+              <td class="settings-table__count">${stats.highlightCount}</td>
+              <td class="settings-table__actions">
+                <button class="link-button" data-rename-project="${project.id}">Rename</button>
+                <button class="link-button" data-delete-project="${project.id}">Delete</button>
+              </td>
+            </tr>
+          `;
+          })
+          .join("")}
+      </tbody>
+    </table>
+  `;
 }
 
 export function renderArticleTaxonomyHelpers(state, dom) {
@@ -292,8 +308,7 @@ function renderAutoTagSettings(state, dom) {
     : [];
 
   if (rules.length === 0) {
-    dom.autoTagRulesList.innerHTML =
-      '<div class="empty-state empty-state--compact"><h3>No custom rules yet</h3><p>Add keyword to tag mappings, or import them as JSON.</p></div>';
+    dom.autoTagRulesList.innerHTML = "";
     return;
   }
 
@@ -302,24 +317,17 @@ function renderAutoTagSettings(state, dom) {
     .sort((left, right) => left.tag.localeCompare(right.tag))
     .map(
       (rule) => `
-      <article class="tag-card settings-entity-card">
-        <div class="tag-card__header settings-entity-card__header">
-          <div>
-            <h3 class="settings-entity-card__title">
-              <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
-              ${escapeHtml(rule.tag)}
-            </h3>
-            <p class="meta-text settings-entity-card__meta">Triggers on: ${escapeHtml(
-              (rule.keywords || []).join(", "),
-            )}</p>
-          </div>
-          <div class="tag-card__actions settings-entity-card__actions">
-            <button class="link-button" data-delete-autotag-rule="${escapeHtml(
-              rule.tag,
-            )}">Delete</button>
-          </div>
+      <div class="settings-rule-item">
+        <div class="settings-rule-item__info">
+          <span class="settings-rule-item__tag">${escapeHtml(rule.tag)}</span>
+          <span class="settings-rule-item__keywords">${escapeHtml(
+            (rule.keywords || []).join(", "),
+          )}</span>
         </div>
-      </article>
+        <button class="link-button" data-delete-autotag-rule="${escapeHtml(
+          rule.tag,
+        )}">Delete</button>
+      </div>
     `,
     )
     .join("");

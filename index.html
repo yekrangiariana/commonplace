@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪷</text></svg>"
+    />
     <title>Commonplace</title>
     <script>
       // Apply theme and accent color immediately to prevent flash
@@ -53,8 +57,11 @@
     <div class="app-shell">
       <header class="app-header">
         <div class="app-branding">
-          <h1 class="app-title">Commonplace</h1>
-          <p class="app-eyebrow">Collect, Connect, Compose</p>
+          <span class="app-icon">🪷</span>
+          <div class="app-branding-text">
+            <h1 class="app-title">Commonplace</h1>
+            <p class="app-eyebrow">Collect, Connect, Compose</p>
+          </div>
         </div>
         <nav class="tab-bar" aria-label="Primary">
           <button class="tab-button" id="add-article-open-button" type="button">
@@ -827,74 +834,94 @@
             <section class="panel-card panel-card--settings-detail">
               <section class="settings-panel" data-settings-panel="export">
                 <div class="section-heading section-heading--compact">
-                  <h2>Export &amp; data</h2>
+                  <h2>Export</h2>
                 </div>
 
                 <div class="stack-form">
-                  <div class="field-group">
-                    <span>Markdown export</span>
-                    <p class="meta-text">
-                      Export your library and projects as Markdown files to a
-                      local folder. Re-opening the app will auto-sync any
-                      changes.
-                    </p>
-                    <div class="button-row">
-                      <button
-                        class="button button--primary"
-                        id="export-markdown-folder-button"
-                        type="button"
+                  <div class="settings-action-row">
+                    <div class="settings-action-row__text">
+                      <strong>Markdown export</strong>
+                      <small
+                        >Export library and projects as Markdown files to a
+                        local folder.</small
                       >
-                        <i
-                          class="fa-solid fa-folder-open"
-                          aria-hidden="true"
-                        ></i>
-                        Export Markdown to folder
-                      </button>
                     </div>
-                    <p
-                      class="meta-text"
-                      id="export-markdown-status"
-                      aria-live="polite"
+                    <button
+                      class="button button--primary button--sm"
+                      id="export-markdown-folder-button"
+                      type="button"
                     >
-                      Creates Commonplace/library and Commonplace/projects in
-                      the folder you choose.
-                    </p>
+                      <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
+                      Export
+                    </button>
                   </div>
+                  <p
+                    class="meta-text"
+                    id="export-markdown-status"
+                    aria-live="polite"
+                  ></p>
+                </div>
 
-                  <div class="field-group" aria-live="polite">
-                    <span>Storage usage</span>
-                    <p class="meta-text" id="settings-storage-summary">
-                      Not calculated yet.
-                    </p>
-                    <p class="meta-text" id="settings-storage-breakdown"></p>
-                    <div class="button-row">
-                      <button
-                        class="button button--ghost"
-                        id="settings-storage-refresh-button"
-                        type="button"
-                      >
-                        <i class="fa-solid fa-database" aria-hidden="true"></i>
-                        Calculate storage usage
-                      </button>
+                <hr class="panel-divider" />
+
+                <div class="section-heading section-heading--compact">
+                  <h2>Storage</h2>
+                </div>
+
+                <div class="stack-form">
+                  <div class="settings-action-row">
+                    <div class="settings-action-row__text">
+                      <strong>Calculate usage</strong>
+                      <small>Check how much space your data is using.</small>
                     </div>
+                    <button
+                      class="button button--ghost button--sm"
+                      id="settings-storage-refresh-button"
+                      type="button"
+                    >
+                      <i class="fa-solid fa-database" aria-hidden="true"></i>
+                      Check
+                    </button>
                   </div>
+                  <div
+                    id="settings-storage-results"
+                    class="settings-storage-results"
+                    hidden
+                  >
+                    <div
+                      class="settings-storage-summary"
+                      id="settings-storage-summary"
+                    ></div>
+                    <div
+                      class="settings-storage-breakdown"
+                      id="settings-storage-breakdown"
+                    ></div>
+                  </div>
+                </div>
 
-                  <div class="field-group">
-                    <span>Danger zone</span>
-                    <p class="meta-text">
-                      This permanently removes all articles, projects, tags,
-                      highlights, and app preferences from this browser.
-                    </p>
-                    <div class="button-row">
-                      <button
-                        class="button button--danger"
-                        id="delete-all-data-button"
-                        type="button"
+                <hr class="panel-divider" />
+
+                <div class="section-heading section-heading--compact">
+                  <h2>Danger zone</h2>
+                </div>
+
+                <div class="stack-form">
+                  <div class="settings-action-row settings-action-row--danger">
+                    <div class="settings-action-row__text">
+                      <strong>Delete all data</strong>
+                      <small
+                        >Permanently removes articles, projects, tags,
+                        highlights, and preferences.</small
                       >
-                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
-                        Delete all saved data
-                      </button>
                     </div>
+                    <button
+                      class="button button--danger button--sm"
+                      id="delete-all-data-button"
+                      type="button"
+                    >
+                      <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                      Delete
+                    </button>
                   </div>
                 </div>
               </section>
@@ -905,196 +932,194 @@
                 hidden
               >
                 <div class="section-heading section-heading--compact">
-                  <h2>Create a project</h2>
+                  <h2>Projects</h2>
                 </div>
 
-                <form id="project-form" class="stack-form">
-                  <label class="field-group">
-                    <span>Name</span>
-                    <input
-                      id="project-name"
-                      name="name"
-                      type="text"
-                      placeholder="Essay on civic trust"
-                      required
-                    />
-                  </label>
+                <div class="stack-form">
+                  <div class="settings-action-row">
+                    <div class="settings-action-row__text">
+                      <strong>New project</strong>
+                      <small
+                        >Create a project to organize your writing
+                        workspace.</small
+                      >
+                    </div>
+                    <button
+                      type="button"
+                      class="button button--primary button--sm"
+                      id="open-add-project-modal"
+                    >
+                      <i class="fa-solid fa-folder-plus" aria-hidden="true"></i>
+                      Add
+                    </button>
+                  </div>
 
-                  <label class="field-group">
-                    <span>Description</span>
-                    <textarea
-                      id="project-description"
-                      name="description"
-                      rows="3"
-                      placeholder="What are you writing and why does it matter?"
-                    ></textarea>
-                  </label>
-
-                  <button type="submit" class="button button--primary">
-                    <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
-                    Save project
-                  </button>
-                </form>
-
-                <hr class="panel-divider" />
-
-                <div class="section-heading section-heading--compact">
-                  <h2>Edit projects</h2>
+                  <div
+                    class="project-settings-list"
+                    id="project-settings-list"
+                  ></div>
                 </div>
-
-                <div
-                  class="project-settings-list"
-                  id="project-settings-list"
-                ></div>
               </section>
 
               <section class="settings-panel" data-settings-panel="tags" hidden>
                 <div class="section-heading section-heading--compact">
-                  <h2>Tags &amp; auto-tag</h2>
+                  <h2>Tags</h2>
                 </div>
 
                 <div class="stack-form">
-                  <div class="field-group">
-                    <span>Add a tag</span>
-                    <form id="tag-form" class="stack-form">
-                      <input
-                        id="tag-name"
-                        name="tag"
-                        type="text"
-                        placeholder="analysis"
-                        required
-                      />
-                      <button type="submit" class="button button--primary">
-                        <i
-                          class="fa-solid fa-floppy-disk"
-                          aria-hidden="true"
-                        ></i>
-                        Save tag
-                      </button>
-                    </form>
-                  </div>
-
-                  <div class="field-group">
-                    <span>Saved tags</span>
-                    <div class="tag-list" id="tag-list"></div>
-                  </div>
-
-                  <hr class="panel-divider" />
-
-                  <div class="field-group">
-                    <span>Auto-tag</span>
-                    <p class="meta-text">
-                      Suggestions are generated during fetch by scanning article
-                      text. Keep this list short and focused for better
-                      precision.
-                    </p>
-                    <div
-                      class="settings-toggle-grid"
-                      role="group"
-                      aria-label="Enable auto-tag suggestions"
+                  <form id="tag-form" class="settings-inline-add">
+                    <input
+                      id="tag-name"
+                      name="tag"
+                      type="text"
+                      class="settings-inline-add__input"
+                      placeholder="New tag name…"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      class="button button--ghost button--sm"
                     >
-                      <label
-                        class="settings-toggle-card"
-                        for="auto-tag-enabled"
-                      >
-                        <input id="auto-tag-enabled" type="checkbox" checked />
+                      <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                      Add
+                    </button>
+                  </form>
+
+                  <div class="tag-list" id="tag-list"></div>
+                </div>
+
+                <hr class="panel-divider" />
+
+                <div class="section-heading section-heading--compact">
+                  <h2>Auto-tag</h2>
+                </div>
+
+                <div class="stack-form">
+                  <div class="settings-toggle-box">
+                    <label class="settings-toggle-row" for="auto-tag-enabled">
+                      <div class="settings-toggle-row__text">
                         <strong>Enable suggestions</strong>
                         <small
-                          >Generate tag suggestions after each fetch.</small
+                          >Scan article text during fetch and suggest
+                          tags.</small
                         >
-                      </label>
-                    </div>
-                  </div>
+                      </div>
+                      <input
+                        id="auto-tag-enabled"
+                        type="checkbox"
+                        class="toggle-switch"
+                        checked
+                      />
+                    </label>
 
-                  <div class="field-group">
-                    <span>Custom rules</span>
-                    <form
-                      id="auto-tag-rule-form"
-                      class="stack-form settings-inline-grid"
-                    >
-                      <label class="field-group">
-                        <span>Tag to suggest</span>
-                        <input
-                          id="auto-tag-rule-tag"
-                          type="text"
-                          placeholder="middle east"
-                          required
-                        />
-                      </label>
-                      <label class="field-group">
-                        <span>Keywords (comma separated)</span>
-                        <input
-                          id="auto-tag-rule-keywords"
-                          type="text"
-                          placeholder="gulf, levant, mena"
-                          required
-                        />
-                      </label>
-                      <button type="submit" class="button button--primary">
-                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
-                        Save rule
-                      </button>
-                    </form>
-
-                    <div
-                      id="auto-tag-rules-list"
-                      class="project-settings-list"
-                    ></div>
-                  </div>
-
-                  <div
-                    class="settings-toggle-grid"
-                    role="group"
-                    aria-label="Country defaults option"
-                  >
                     <label
-                      class="settings-toggle-card"
+                      class="settings-toggle-row settings-toggle-row--nested"
                       for="auto-tag-use-default-countries"
                     >
+                      <div class="settings-toggle-row__text">
+                        <strong>Country defaults</strong>
+                        <small
+                          >Include built-in country and nationality
+                          matching.</small
+                        >
+                      </div>
                       <input
                         id="auto-tag-use-default-countries"
                         type="checkbox"
+                        class="toggle-switch"
                         checked
                       />
-                      <strong>Use country defaults</strong>
-                      <small
-                        >Include built-in country and nationality
-                        matching.</small
-                      >
                     </label>
                   </div>
 
-                  <hr class="panel-divider" />
+                  <details class="settings-disclosure">
+                    <summary class="settings-disclosure__trigger">
+                      <i
+                        class="fa-solid fa-chevron-right settings-disclosure__icon"
+                        aria-hidden="true"
+                      ></i>
+                      <span>Custom rules</span>
+                    </summary>
+                    <div class="settings-disclosure__content">
+                      <div
+                        id="auto-tag-rules-list"
+                        class="settings-disclosure__list"
+                      ></div>
 
-                  <div class="field-group">
-                    <span>Import rules (JSON)</span>
-                    <p class="meta-text">
-                      Use an array of objects: <strong>tag</strong> +
-                      <strong>keywords</strong>.
-                    </p>
-                    <pre class="settings-code-block">
-[{"tag":"france","keywords":["france","french"]},
- {"tag":"energy","keywords":"oil, gas, lng"}]</pre
-                    >
-                    <textarea
-                      id="auto-tag-import-input"
-                      rows="8"
-                      placeholder='[{"tag":"france","keywords":["france","french"]}]'
-                    ></textarea>
-                    <div class="button-row">
+                      <details
+                        class="settings-disclosure settings-disclosure--nested"
+                        id="auto-tag-rule-details"
+                      >
+                        <summary
+                          class="settings-disclosure__trigger settings-disclosure__trigger--add"
+                        >
+                          <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                          <span>Add rule</span>
+                        </summary>
+                        <form
+                          id="auto-tag-rule-form"
+                          class="settings-disclosure__form"
+                        >
+                          <label class="field-group">
+                            <span>Tag</span>
+                            <input
+                              id="auto-tag-rule-tag"
+                              type="text"
+                              placeholder="middle east"
+                              required
+                            />
+                          </label>
+                          <label class="field-group">
+                            <span>Keywords</span>
+                            <input
+                              id="auto-tag-rule-keywords"
+                              type="text"
+                              placeholder="gulf, levant, mena"
+                              required
+                            />
+                          </label>
+                          <button
+                            type="submit"
+                            class="button button--primary button--sm"
+                          >
+                            Save
+                          </button>
+                        </form>
+                      </details>
+                    </div>
+                  </details>
+
+                  <details class="settings-disclosure">
+                    <summary class="settings-disclosure__trigger">
+                      <i
+                        class="fa-solid fa-chevron-right settings-disclosure__icon"
+                        aria-hidden="true"
+                      ></i>
+                      <span>Import rules</span>
+                    </summary>
+                    <div class="settings-disclosure__content">
+                      <p class="meta-text">
+                        JSON array:
+                        <code>[{"tag":"...", "keywords":["...", "..."]}]</code>
+                      </p>
+                      <textarea
+                        id="auto-tag-import-input"
+                        rows="4"
+                        placeholder='[{"tag":"france","keywords":["france","french"]}]'
+                      ></textarea>
                       <button
                         id="auto-tag-import-button"
-                        class="button button--ghost"
+                        class="button button--ghost button--sm"
                         type="button"
                       >
                         <i
                           class="fa-solid fa-file-import"
                           aria-hidden="true"
                         ></i>
-                        Import rules
+                        Import
                       </button>
                     </div>
-                  </div>
+                  </details>
                 </div>
               </section>
 
@@ -1104,151 +1129,164 @@
                 hidden
               >
                 <div class="section-heading section-heading--compact">
-                  <h2>Display options</h2>
+                  <h2>Appearance</h2>
                 </div>
 
-                <div class="field-group">
-                  <span>Reading font</span>
-                  <div
-                    class="display-option-grid"
-                    role="group"
-                    aria-label="Reading font options"
-                  >
-                    <button
-                      type="button"
-                      class="display-option-tile"
-                      data-display-font="mono"
+                <div class="stack-form">
+                  <div class="settings-select-row">
+                    <div class="settings-select-row__text">
+                      <strong>Theme</strong>
+                    </div>
+                    <div
+                      class="settings-segmented"
+                      role="group"
+                      aria-label="Theme"
                     >
-                      <strong>Mono</strong>
-                      <small>Roboto Mono</small>
-                    </button>
-                    <button
-                      type="button"
-                      class="display-option-tile"
-                      data-display-font="sans"
+                      <button
+                        type="button"
+                        class="settings-segmented__btn"
+                        data-display-theme="light"
+                      >
+                        <i class="fa-solid fa-sun" aria-hidden="true"></i> Light
+                      </button>
+                      <button
+                        type="button"
+                        class="settings-segmented__btn"
+                        data-display-theme="dark"
+                      >
+                        <i class="fa-solid fa-moon" aria-hidden="true"></i> Dark
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="settings-select-row">
+                    <div class="settings-select-row__text">
+                      <strong>Accent</strong>
+                    </div>
+                    <div
+                      class="settings-segmented settings-segmented--colors"
+                      role="group"
+                      aria-label="Accent color"
                     >
-                      <strong>Sans</strong>
-                      <small>Atkinson style</small>
-                    </button>
-                    <button
-                      type="button"
-                      class="display-option-tile"
-                      data-display-font="serif"
-                    >
-                      <strong>Serif</strong>
-                      <small>Book style</small>
-                    </button>
+                      <button
+                        type="button"
+                        class="settings-segmented__btn settings-segmented__btn--yellow"
+                        data-display-highlight="yellow"
+                        aria-label="Yellow"
+                      ></button>
+                      <button
+                        type="button"
+                        class="settings-segmented__btn settings-segmented__btn--green"
+                        data-display-highlight="green"
+                        aria-label="Green"
+                      ></button>
+                      <button
+                        type="button"
+                        class="settings-segmented__btn settings-segmented__btn--red"
+                        data-display-highlight="red"
+                        aria-label="Red"
+                      ></button>
+                    </div>
                   </div>
                 </div>
 
-                <div class="field-group">
-                  <span>Theme</span>
-                  <div
-                    class="display-option-grid display-option-grid--theme"
-                    role="group"
-                    aria-label="Theme options"
-                  >
-                    <button
-                      type="button"
-                      class="display-option-tile"
-                      data-display-theme="light"
-                    >
-                      <strong>
-                        <i class="fa-solid fa-sun" aria-hidden="true"></i>
-                        Light
-                      </strong>
-                    </button>
-                    <button
-                      type="button"
-                      class="display-option-tile"
-                      data-display-theme="dark"
-                    >
-                      <strong>
-                        <i class="fa-solid fa-moon" aria-hidden="true"></i>
-                        Dark
-                      </strong>
-                    </button>
-                  </div>
+                <hr class="panel-divider" />
+
+                <div class="section-heading section-heading--compact">
+                  <h2>Reading font</h2>
                 </div>
 
-                <div class="field-group">
-                  <span>Accent color</span>
-                  <div
-                    class="display-option-grid display-option-grid--accent"
-                    role="group"
-                    aria-label="Accent color options"
+                <div
+                  class="settings-font-grid"
+                  role="group"
+                  aria-label="Reading font"
+                >
+                  <button
+                    type="button"
+                    class="settings-font-tile"
+                    data-display-font="mono"
                   >
-                    <button
-                      type="button"
-                      class="display-option-tile"
-                      data-display-highlight="yellow"
+                    <span
+                      class="settings-font-tile__preview"
+                      style="font-family: var(--font-mono)"
+                      >Aa</span
                     >
-                      <strong>Yellow</strong>
-                    </button>
-                    <button
-                      type="button"
-                      class="display-option-tile"
-                      data-display-highlight="green"
+                    <span class="settings-font-tile__name">Mono</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="settings-font-tile"
+                    data-display-font="sans"
+                  >
+                    <span
+                      class="settings-font-tile__preview"
+                      style="font-family: var(--font-sans)"
+                      >Aa</span
                     >
-                      <strong>Green</strong>
-                    </button>
-                    <button
-                      type="button"
-                      class="display-option-tile"
-                      data-display-highlight="red"
+                    <span class="settings-font-tile__name">Sans</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="settings-font-tile"
+                    data-display-font="serif"
+                  >
+                    <span
+                      class="settings-font-tile__preview"
+                      style="font-family: var(--font-serif)"
+                      >Aa</span
                     >
-                      <strong>Red</strong>
-                    </button>
-                  </div>
+                    <span class="settings-font-tile__name">Serif</span>
+                  </button>
                 </div>
               </section>
 
               <section class="settings-panel" data-settings-panel="rss" hidden>
                 <div class="section-heading section-heading--compact">
-                  <h2>RSS options</h2>
+                  <h2>RSS</h2>
                 </div>
 
-                <div class="field-group">
-                  <span>Explore RSS cache retention</span>
-                  <select
-                    id="rss-retention-select"
-                    aria-label="RSS cache retention"
-                  >
-                    <option value="7">7 days</option>
-                    <option value="14">14 days</option>
-                    <option value="30">30 days</option>
-                    <option value="never">Never prune</option>
-                  </select>
-                  <p class="meta-text">
-                    Items older than this are removed from Explore if they are
-                    not in your bookmarks.
-                  </p>
-                </div>
+                <div class="stack-form">
+                  <div class="settings-select-row">
+                    <div class="settings-select-row__text">
+                      <strong>Cache retention</strong>
+                      <small
+                        >Items older than this are pruned from Explore.</small
+                      >
+                    </div>
+                    <select
+                      id="rss-retention-select"
+                      class="settings-select"
+                      aria-label="RSS cache retention"
+                    >
+                      <option value="7">7 days</option>
+                      <option value="14">14 days</option>
+                      <option value="30">30 days</option>
+                      <option value="never">Never</option>
+                    </select>
+                  </div>
 
-                <div class="field-group">
-                  <span>Auto refresh while app is open</span>
-                  <select
-                    id="rss-auto-refresh-select"
-                    aria-label="RSS auto refresh interval"
-                  >
-                    <option value="off">Off</option>
-                    <option value="1">Every 1 minute</option>
-                    <option value="5">Every 5 minutes</option>
-                    <option value="10">Every 10 minutes</option>
-                    <option value="15">Every 15 minutes</option>
-                    <option value="30">Every 30 minutes</option>
-                  </select>
-                  <p class="meta-text">
-                    Refreshes the active feed in Explore while this app tab is
-                    open and visible.
-                  </p>
-                </div>
+                  <div class="settings-select-row">
+                    <div class="settings-select-row__text">
+                      <strong>Auto refresh</strong>
+                      <small
+                        >Refresh the active feed while the app is open.</small
+                      >
+                    </div>
+                    <select
+                      id="rss-auto-refresh-select"
+                      class="settings-select"
+                      aria-label="RSS auto refresh interval"
+                    >
+                      <option value="off">Off</option>
+                      <option value="1">1 min</option>
+                      <option value="5">5 min</option>
+                      <option value="10">10 min</option>
+                      <option value="15">15 min</option>
+                      <option value="30">30 min</option>
+                    </select>
+                  </div>
 
-                <div class="field-group">
-                  <span>Selected feed last fetch</span>
-                  <p id="rss-settings-last-fetched" class="meta-text">
-                    Select a feed in Explore to see its last fetch time.
-                  </p>
+                  <p id="rss-settings-last-fetched" class="meta-text"></p>
                 </div>
               </section>
             </section>
