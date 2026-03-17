@@ -117,6 +117,11 @@ let pendingRssReaderSlug = null;
 let rssImagePrefetchTimerId = null;
 const rssImagePrefetchQueue = new Map();
 let rssOpenRequestVersion = 0;
+let savedRssScrollPosition = 0;
+let suspendedLibraryArticleId = null;
+let suspendedRssReaderArticle = false;
+let lastTabClickTime = 0;
+let lastTabClickTarget = null;
 let storageUsageRequestInFlight = false;
 let markdownExportInFlight = false;
 let markdownAutoSyncTimerId = null;
@@ -231,37 +236,33 @@ function bindEvents() {
   });
 
   // Add dialog swipe detection (mobile)
-  let scrollTimeout;
   dom.addDialogPanels?.addEventListener("scroll", () => {
-    clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(() => {
-      const scrollLeft = dom.addDialogPanels.scrollLeft;
-      const panelWidth = dom.addDialogPanels.scrollWidth / 3;
-      const index = Math.round(scrollLeft / panelWidth);
-      const tabs = ["feed", "article", "project"];
-      if (tabs[index] && tabs[index] !== currentAddTab) {
-        currentAddTab = tabs[index];
-        // Update UI without scrolling again
-        dom.addDialogTabs.forEach((tabBtn) => {
-          tabBtn.classList.toggle(
-            "is-active",
-            tabBtn.dataset.addTab === currentAddTab,
-          );
-        });
-        dom.addDialogPanelElements.forEach((panel) => {
-          panel.classList.toggle(
-            "is-active",
-            panel.dataset.addPanel === currentAddTab,
-          );
-        });
-        dom.addDialogIndicators.forEach((ind) => {
-          ind.classList.toggle(
-            "is-active",
-            ind.dataset.addIndicator === currentAddTab,
-          );
-        });
-      }
-    }, 50);
+    const scrollLeft = dom.addDialogPanels.scrollLeft;
+    const panelWidth = dom.addDialogPanels.scrollWidth / 3;
+    const index = Math.round(scrollLeft / panelWidth);
+    const tabs = ["feed", "article", "project"];
+    if (tabs[index] && tabs[index] !== currentAddTab) {
+      currentAddTab = tabs[index];
+      // Update UI without scrolling again
+      dom.addDialogTabs.forEach((tabBtn) => {
+        tabBtn.classList.toggle(
+          "is-active",
+          tabBtn.dataset.addTab === currentAddTab,
+        );
+      });
+      dom.addDialogPanelElements.forEach((panel) => {
+        panel.classList.toggle(
+          "is-active",
+          panel.dataset.addPanel === currentAddTab,
+        );
+      });
+      dom.addDialogIndicators.forEach((ind) => {
+        ind.classList.toggle(
+          "is-active",
+          ind.dataset.addIndicator === currentAddTab,
+        );
+      });
+    }
   });
 
   // Add feed form
@@ -557,7 +558,55 @@ function bindEvents() {
   dom.readerMeta.addEventListener("input", handleReaderMetaInput);
 
   dom.tabButtons.forEach((button) => {
-    button.addEventListener("click", () => switchTab(button.dataset.tabTarget));
+    button.addEventListener("click", () => {
+      const tabId = button.dataset.tabTarget;
+      const now = Date.now();
+      const isDoubleTap =
+        lastTabClickTarget === tabId && now - lastTabClickTime < 400;
+      lastTabClickTime = now;
+      lastTabClickTarget = tabId;
+
+      // Double tap on library: clear suspended article and go to list view
+      if (isDoubleTap && tabId === "library") {
+        suspendedLibraryArticleId = null;
+        state.selectedArticleId = null;
+        persistState(state);
+        switchTab("library");
+        return;
+      }
+
+      // Double tap on rss/explore: clear suspended reader and go to feed view
+      if (isDoubleTap && tabId === "rss") {
+        suspendedRssReaderArticle = false;
+        state.rssReaderArticle = null;
+        persistState(state);
+        switchTab("rss");
+        return;
+      }
+
+      // Single tap returning to library: restore reader with suspended article
+      if (tabId === "library" && suspendedLibraryArticleId) {
+        state.selectedArticleId = suspendedLibraryArticleId;
+        suspendedLibraryArticleId = null;
+        persistState(state);
+        switchTab("reader");
+        return;
+      }
+
+      // Single tap returning to rss: restore reader with suspended rss article
+      if (
+        tabId === "rss" &&
+        suspendedRssReaderArticle &&
+        state.rssReaderArticle
+      ) {
+        suspendedRssReaderArticle = false;
+        persistState(state);
+        switchTab("reader");
+        return;
+      }
+
+      switchTab(tabId);
+    });
   });
 
   dom.articleList.addEventListener(
@@ -2553,7 +2602,62 @@ function markProjectAsOpened(projectId) {
   touchProjects(state);
 }
 
+function saveRssScrollPosition() {
+  const isMobile = window.matchMedia("(max-width: 761px)").matches;
+  const scrollContainer = isMobile ? dom.appMain : dom.rssPanelMain;
+  if (scrollContainer) {
+    savedRssScrollPosition = scrollContainer.scrollTop;
+  }
+}
+
+function restoreRssScrollPosition() {
+  const isMobile = window.matchMedia("(max-width: 761px)").matches;
+  const scrollContainer = isMobile ? dom.appMain : dom.rssPanelMain;
+  if (scrollContainer && savedRssScrollPosition > 0) {
+    // Use requestAnimationFrame to ensure DOM has rendered
+    requestAnimationFrame(() => {
+      scrollContainer.scrollTop = savedRssScrollPosition;
+    });
+  }
+}
+
 function switchTab(tabId, shouldRender = true) {
+  // Save RSS scroll position before switching away
+  if (state.activeTab === "rss" && tabId !== "rss") {
+    saveRssScrollPosition();
+  }
+
+  // Save library article when leaving reader to go to another tab
+  if (
+    state.activeTab === "reader" &&
+    state.selectedArticleId &&
+    !state.rssReaderArticle &&
+    tabId !== "library" &&
+    tabId !== "reader"
+  ) {
+    suspendedLibraryArticleId = state.selectedArticleId;
+  }
+
+  // Save RSS reader article when leaving reader to go to another tab
+  if (
+    state.activeTab === "reader" &&
+    state.rssReaderArticle &&
+    tabId !== "rss" &&
+    tabId !== "reader"
+  ) {
+    suspendedRssReaderArticle = true;
+  }
+
+  // Clear suspended article when explicitly navigating to library
+  if (tabId === "library" && state.activeTab !== "reader") {
+    suspendedLibraryArticleId = null;
+  }
+
+  // Clear suspended RSS article when explicitly navigating to rss
+  if (tabId === "rss" && state.activeTab !== "reader") {
+    suspendedRssReaderArticle = false;
+  }
+
   closeAddModal();
   state.activeTab = tabId;
   persistState(state);
@@ -2561,11 +2665,21 @@ function switchTab(tabId, shouldRender = true) {
   if (shouldRender) {
     render();
     pushUrlFromState();
+
+    // Restore RSS scroll position when returning
+    if (tabId === "rss") {
+      restoreRssScrollPosition();
+    }
     return;
   }
 
   renderTabs();
   pushUrlFromState();
+
+  // Restore RSS scroll position when returning
+  if (tabId === "rss") {
+    restoreRssScrollPosition();
+  }
 }
 
 async function handleBrowserNavigation() {
@@ -3015,12 +3129,15 @@ function openAddModal(tabOverride) {
   const isMobile = window.matchMedia("(max-width: 761px)").matches;
   if (isMobile) {
     dom.addArticleDialog?.show();
-    // Reset scroll position after showing
+    // Set scroll position instantly (no animation) after showing
     setTimeout(() => {
       const panelIndex = ["feed", "article", "project"].indexOf(targetTab);
       if (dom.addDialogPanels) {
-        dom.addDialogPanels.scrollLeft =
-          dom.addDialogPanels.scrollWidth * (panelIndex / 3);
+        const scrollTarget = dom.addDialogPanels.scrollWidth * (panelIndex / 3);
+        dom.addDialogPanels.scrollTo({
+          left: scrollTarget,
+          behavior: "instant",
+        });
       }
     }, 0);
   } else {

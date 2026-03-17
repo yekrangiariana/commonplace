@@ -117,6 +117,8 @@ export const dom = {
   rssFolderList: document.querySelector("#rss-folder-list"),
   rssFeedList: document.querySelector("#rss-feed-list"),
   rssItems: document.querySelector("#rss-items"),
+  appMain: document.querySelector(".app-main"),
+  rssPanelMain: document.querySelector(".panel-card--rss-main"),
   // Add dialog unified modal
   addDialogTabs: [...document.querySelectorAll("[data-add-tab]")],
   addDialogPanels: document.querySelector("#add-dialog-panels"),
