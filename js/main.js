@@ -3330,7 +3330,9 @@ function applyReaderProjectsFromPopover() {
   renderAndSyncUrl();
 
   if (didSave) {
-    showTransientStatus("Saved this RSS article to library after adding project.");
+    showTransientStatus(
+      "Saved this RSS article to library after adding project.",
+    );
   } else {
     setStatus(
       `Added ${projectIds.length} project${projectIds.length === 1 ? "" : "s"} to this article.`,
