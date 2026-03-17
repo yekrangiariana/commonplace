@@ -1,33 +1,15 @@
-# Bookmark Manager Feature Inventory
-
-This document lists the app's significant, tangible product features in plain language so it can be handed to a marketing consultant, copywriter, or growth partner.
-
-## Product summary
-
-Bookmark Manager is a local-first research and reading workspace for saving articles, extracting readable text, highlighting key passages, organizing research into projects, and turning source material into draft writing.
-
-## Core value proposition
-
-- Save web articles into a clean reading environment.
-- Highlight and extract the parts that matter.
-- Organize everything with tags and projects.
-- Move from research collection to writing draft in one workflow.
-- Keep data stored locally in the browser instead of requiring a cloud account.
-
-## Significant user-facing features
-
-### 1. Article capture and ingestion
+## 1. Article capture and ingestion
 
 - Add articles by pasting a URL into the app.
 - Fetch article content into a reader-friendly format.
 - Pull article metadata automatically, including title, source, publish date, summary text, and article image when available.
 - Use a server-side fetch layer through Supabase so article retrieval is more reliable than browser-only scraping.
-- Normalize URLs during capture to avoid messy duplicates.
+- Normalise URLs during capture to avoid messy duplicates.
 - Add tags and attach projects while saving an article.
 - Get suggested tags and projects in the add-article flow.
 - Reuse auto-tag suggestions generated from the article content before saving.
 
-### 2. Clean reading experience
+## 2. Clean reading experience
 
 - Open saved articles inside an in-app reader.
 - Read extracted article text without the clutter of the original webpage.
@@ -36,7 +18,7 @@ Bookmark Manager is a local-first research and reading workspace for saving arti
 - Choose reading display preferences, including font style, theme, and highlight color.
 - Switch between light and dark theme.
 
-### 3. Highlighting and excerpt capture
+## 3. Highlighting and excerpt capture
 
 - Select text directly inside the article reader.
 - Create highlights across sentences and paragraphs.
@@ -47,7 +29,7 @@ Bookmark Manager is a local-first research and reading workspace for saving arti
 - Copy or share selected text directly from the reader selection menu.
 - Copy all highlights from an article to the clipboard in one action.
 
-### 4. Text-to-speech reading
+## 4. Text-to-speech reading
 
 - Listen to saved articles with built-in text-to-speech playback.
 - Choose from available device voices.
@@ -55,7 +37,7 @@ Bookmark Manager is a local-first research and reading workspace for saving arti
 - Pause, resume, and seek through the article.
 - See playback progress and estimated remaining time.
 
-### 5. Library management
+## 5. Library management
 
 - View all saved articles in a dedicated library.
 - Switch between list view, 2-column grid, and 3-column grid.
@@ -69,7 +51,7 @@ Bookmark Manager is a local-first research and reading workspace for saving arti
 - Delete articles directly from the library.
 - Use pagination to move through larger collections without overwhelming the interface.
 
-### 6. Tag system
+## 6. Tag system
 
 - Apply free-form tags to articles.
 - Save and reuse a growing tag library.
@@ -79,7 +61,7 @@ Bookmark Manager is a local-first research and reading workspace for saving arti
 - View how many articles use each tag.
 - Click article tags in the reader to filter the library instantly.
 
-### 7. Project-based research organization
+## 7. Project-based research organisation
 
 - Create projects to group articles around a writing goal, topic, or research stream.
 - Attach one article to multiple projects.
@@ -93,7 +75,7 @@ Bookmark Manager is a local-first research and reading workspace for saving arti
 - Preview each project's current draft from the project card.
 - Delete projects without leaving orphaned project links on articles.
 
-### 8. Project writing workspace
+## 8. Project writing workspace
 
 - Write draft content directly inside a project editor.
 - Use Markdown for structured writing.
@@ -104,10 +86,10 @@ Bookmark Manager is a local-first research and reading workspace for saving arti
 - Open a source article from the project sidebar and read highlighted passages in context.
 - Move from research excerpts into synthesis and drafting without leaving the app.
 
-### 9. RSS discovery and monitoring
+## 9. RSS discovery and monitoring
 
 - Subscribe to RSS feeds from websites, newsletters, or publications.
-- Organize feeds into custom folders.
+- Organise feeds into custom folders.
 - Refresh the active feed to pull in new items.
 - Browse RSS items inside the app instead of leaving to external readers.
 - Switch RSS browsing between list view, 2-column grid, and 3-column grid.
@@ -116,7 +98,7 @@ Bookmark Manager is a local-first research and reading workspace for saving arti
 - Save an RSS item into the permanent library when it deserves closer work.
 - Maintain a configurable RSS retention window, including an option to keep items indefinitely.
 
-### 10. Bulk actions and power-user workflows
+## 10. Bulk actions and power-user workflows
 
 - Use a custom context menu for library and project operations.
 - Enter bulk selection mode for articles.
@@ -128,7 +110,7 @@ Bookmark Manager is a local-first research and reading workspace for saving arti
 - Move multiple projects between workflow stages in one action.
 - Select all or clear selection quickly in bulk modes.
 
-### 11. Auto-tagging and smarter organization
+## 11. Auto-tagging and smarter organisation
 
 - Automatically suggest tags based on article text.
 - Enable or disable auto-tagging globally.
@@ -138,7 +120,7 @@ Bookmark Manager is a local-first research and reading workspace for saving arti
 - Review and delete custom rules in Settings.
 - Surface auto-tag suggestions directly in the article add flow.
 
-### 12. Export, persistence, and control of data
+## 12. Export, persistence, and control of data
 
 - Export all saved articles as JSON.
 - Export all projects as JSON.
@@ -147,7 +129,7 @@ Bookmark Manager is a local-first research and reading workspace for saving arti
 - Clear all stored app data when needed.
 - Use IndexedDB as the primary storage layer, with fallback support where needed.
 
-### 13. Media and performance conveniences
+## 13. Media and performance conveniences
 
 - Cache article images locally for faster browsing.
 - Load images lazily in the library.
@@ -155,15 +137,3 @@ Bookmark Manager is a local-first research and reading workspace for saving arti
 - Preserve responsive browsing with pagination and cached list state.
 
 ## Differentiators worth highlighting in marketing
-
-- Local-first workflow: articles, highlights, projects, and settings stay in the browser instead of requiring an account.
-- End-to-end research loop: capture, read, annotate, organize, and draft in one tool.
-- Project-aware research: articles are not just bookmarked, they are tied to active writing work.
-- Built for synthesis, not just storage: highlights flow into project workspaces where writing happens.
-- RSS plus bookmarking in one interface: discovery and deep reading live together.
-- Fast bulk organization: power-user context menus reduce the time spent on library maintenance.
-- Flexible personal taxonomy: tags, projects, stages, and auto-tag rules can all adapt to the user's workflow.
-
-## Short pitch version
-
-Bookmark Manager is a local-first research workspace that turns saved articles into usable writing material. Users can capture web articles, read them in a clean in-app reader, highlight key passages, organize research with tags and projects, follow sources through RSS, and draft project notes in Markdown, all inside one lightweight tool.

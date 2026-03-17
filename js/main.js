@@ -34,13 +34,6 @@ import {
   getRssReaderCache,
 } from "./storage.js";
 import { hydrateRuntimeConfig } from "./config.js";
-import {
-  loadAuthConfig,
-  isAuthRequired,
-  isAuthenticated,
-  initLoginModal,
-  showLoginModal,
-} from "./auth.js";
 import { fetchArticle } from "./services/articleFetch.js";
 import { fetchArticleViaReaderTool } from "./experimental/readerToolAutomation.js";
 import {
@@ -155,24 +148,6 @@ const VALID_SETTINGS_SECTIONS = new Set([
 init();
 
 async function init() {
-  // Check authentication first
-  await loadAuthConfig();
-
-  if (isAuthRequired() && !isAuthenticated()) {
-    // Show login modal and wait for successful login
-    showLoginModal();
-    initLoginModal(() => {
-      // Continue initialization after successful login
-      initializeApp();
-    });
-    return;
-  }
-
-  // If no auth required or already authenticated, proceed
-  initializeApp();
-}
-
-async function initializeApp() {
   await hydrateRuntimeConfig(runtimeConfig);
   await hydrateState(state);
   if (state.activeTab === "add") {

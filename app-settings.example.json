@@ -1,9 +1,0 @@
-{
-  "fetchServiceUrl": "https://YOUR_PROJECT_REF.supabase.co/functions/v1/fetch-article",
-  "supabaseAnonKey": "YOUR_SUPABASE_ANON_KEY",
-  "requestTimeoutMs": 25000,
-  "auth": {
-    "username": "YOUR_USERNAME",
-    "password": "YOUR_PASSWORD"
-  }
-}
