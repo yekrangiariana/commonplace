@@ -1,3 +1,4 @@
+import { runSplashTyping, dismissSplash } from "./splash.js";
 import {
   runtimeConfig,
   state,
@@ -153,6 +154,7 @@ const VALID_SETTINGS_SECTIONS = new Set([
 init();
 
 async function init() {
+  const splashDone = runSplashTyping();
   await hydrateRuntimeConfig(runtimeConfig);
   await hydrateState(state);
   if (state.activeTab === "add") {
@@ -208,6 +210,8 @@ async function init() {
   await refreshMarkdownExportBindingStatus();
   renderAndSyncUrl();
   consumeShareTarget();
+  await splashDone;
+  dismissSplash();
 }
 
 function consumeShareTarget() {
