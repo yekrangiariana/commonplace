@@ -1,0 +1,38 @@
+{
+  "name": "Commonplace",
+  "short_name": "Commonplace",
+  "description": "A personal reading and research workspace. Collect articles, highlight what matters, organise sources into projects, and turn research into writing.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#1a1a2e",
+  "background_color": "#1a1a2e",
+  "icons": [
+    {
+      "src": "./icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "./icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "./icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "GET",
+    "params": {
+      "url": "shared_url",
+      "title": "shared_title",
+      "text": "shared_text"
+    }
+  }
+}

@@ -207,6 +207,26 @@ async function init() {
   rssAutoRefreshController.start();
   await refreshMarkdownExportBindingStatus();
   renderAndSyncUrl();
+  consumeShareTarget();
+}
+
+function consumeShareTarget() {
+  const params = new URLSearchParams(window.location.search);
+  const sharedUrl =
+    params.get("shared_url") || params.get("shared_text") || "";
+  if (!sharedUrl) return;
+
+  // Strip the query string so it doesn't persist on refresh
+  const cleanUrl =
+    window.location.pathname + (window.location.hash || "#library");
+  window.history.replaceState(null, "", cleanUrl);
+
+  // Pre-fill the Add Article dialog with the shared URL
+  openAddModal("article");
+  if (dom.articleUrl) {
+    dom.articleUrl.value = sharedUrl;
+    dom.articleUrl.dispatchEvent(new Event("input", { bubbles: true }));
+  }
 }
 
 function bindEvents() {
