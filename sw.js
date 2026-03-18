@@ -1,4 +1,4 @@
-const CACHE_NAME = "commonplace-v4";
+const CACHE_NAME = "commonplace-v5";
 
 const PRECACHE_URLS = [
   "./index.html",
@@ -8,7 +8,6 @@ const PRECACHE_URLS = [
   "./css/mobile-responsive.css",
   "./css/splash.css",
   "./js/main.js",
-  "./js/splash.js",
   "./js/config.js",
   "./js/contextMenu.js",
   "./js/derivedIndexes.js",

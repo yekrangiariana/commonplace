@@ -1,4 +1,3 @@
-import { runSplashTyping, dismissSplash } from "./splash.js";
 import {
   runtimeConfig,
   state,
@@ -153,6 +152,15 @@ const VALID_SETTINGS_SECTIONS = new Set([
 
 init();
 
+function dismissSplash() {
+  const splash = document.getElementById("splash-screen");
+  if (!splash) return;
+  splash.classList.add("splash-hidden");
+  splash.addEventListener("transitionend", () => splash.remove(), {
+    once: true,
+  });
+}
+
 async function init() {
   // Safety: always dismiss splash even if init fails
   const splashTimeout = setTimeout(dismissSplash, 6000);
@@ -161,7 +169,7 @@ async function init() {
     await hydrateRuntimeConfig(runtimeConfig);
     await hydrateState(state);
     if (state.splashEnabled !== false) {
-      splashDone = runSplashTyping();
+      splashDone = new Promise((r) => setTimeout(r, 750));
     } else {
       dismissSplash();
     }
