@@ -458,6 +458,7 @@ function applyParsedState(state, parsedState) {
   )
     ? parsedState.displayHighlightColor
     : "green";
+  state.splashEnabled = parsedState.splashEnabled !== false;
   state.ttsVoiceId =
     typeof parsedState.ttsVoiceId === "string" ? parsedState.ttsVoiceId : "";
   state.ttsRate =
@@ -924,6 +925,7 @@ function readNormalizedState(db) {
         displayFont: meta?.displayFont || "mono",
         theme: meta?.theme || "light",
         displayHighlightColor: meta?.displayHighlightColor || "green",
+        splashEnabled: meta?.splashEnabled !== false,
         ttsVoiceId: meta?.ttsVoiceId || "",
         ttsRate:
           Number.isFinite(Number(meta?.ttsRate)) && Number(meta?.ttsRate) > 0
