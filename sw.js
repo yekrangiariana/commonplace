@@ -66,9 +66,7 @@ self.addEventListener("fetch", (event) => {
 
   // Let share-target navigations pass through to the page so query params are visible
   if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request).catch(() => caches.match("./index.html")),
-    );
+    event.respondWith(fetch(request).catch(() => caches.match("./index.html")));
     return;
   }
 

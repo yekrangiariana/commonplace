@@ -212,8 +212,7 @@ async function init() {
 
 function consumeShareTarget() {
   const params = new URLSearchParams(window.location.search);
-  const sharedUrl =
-    params.get("shared_url") || params.get("shared_text") || "";
+  const sharedUrl = params.get("shared_url") || params.get("shared_text") || "";
   if (!sharedUrl) return;
 
   // Strip the query string so it doesn't persist on refresh
