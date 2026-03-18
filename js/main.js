@@ -155,6 +155,9 @@ init();
 
 async function init() {
   const splashDone = runSplashTyping();
+  // Safety: always dismiss splash even if init fails
+  const splashTimeout = setTimeout(dismissSplash, 6000);
+  try {
   await hydrateRuntimeConfig(runtimeConfig);
   await hydrateState(state);
   if (state.activeTab === "add") {
@@ -211,7 +214,13 @@ async function init() {
   renderAndSyncUrl();
   consumeShareTarget();
   await splashDone;
+  clearTimeout(splashTimeout);
   dismissSplash();
+  } catch (err) {
+    console.error("Init error:", err);
+    clearTimeout(splashTimeout);
+    dismissSplash();
+  }
 }
 
 function consumeShareTarget() {
