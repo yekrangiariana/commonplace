@@ -567,6 +567,7 @@
   .article-list--view-1 .article-card,
   .rss-items--view-1 .rss-item-card {
     grid-template-columns: 80px minmax(0, 1fr);
+    padding-bottom: 5px;
   }
 
   .article-list--view-1 .article-card__image,
