@@ -304,6 +304,7 @@ function serializeMetaState(state) {
     displayFont: state.displayFont,
     theme: state.theme,
     displayHighlightColor: state.displayHighlightColor,
+    splashEnabled: state.splashEnabled,
     ttsVoiceId: state.ttsVoiceId,
     ttsRate: state.ttsRate,
     rssActiveFeedId: state.rssActiveFeedId,
@@ -350,6 +351,7 @@ function buildMetaSnapshot(snapshot) {
     displayFont: snapshot.displayFont || "mono",
     theme: snapshot.theme || "light",
     displayHighlightColor: snapshot.displayHighlightColor || "green",
+    splashEnabled: snapshot.splashEnabled !== false,
     ttsVoiceId: snapshot.ttsVoiceId || "",
     ttsRate:
       Number.isFinite(Number(snapshot.ttsRate)) && Number(snapshot.ttsRate) > 0

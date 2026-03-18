@@ -169,7 +169,7 @@ async function init() {
     await hydrateRuntimeConfig(runtimeConfig);
     await hydrateState(state);
     if (state.splashEnabled !== false) {
-      splashDone = new Promise((r) => setTimeout(r, 750));
+      splashDone = new Promise((r) => setTimeout(r, 1000));
     } else {
       dismissSplash();
     }
