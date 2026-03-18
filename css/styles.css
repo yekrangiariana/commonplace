@@ -942,7 +942,7 @@ a:visited {
 .rss-items--view-1 .rss-item-card {
   grid-template-columns: 100px minmax(0, 1fr);
   grid-template-rows: auto auto 1fr;
-  padding: 0;
+  padding-bottom: 5px;
   gap: 0;
   overflow: hidden;
 }
