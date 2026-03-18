@@ -3136,12 +3136,14 @@ function removeHighlight(highlightId) {
 
 function applyDisplayPreferences() {
   const root = document.documentElement;
-  const highlightColor = ["yellow", "green", "red"].includes(
+  const highlightColor = ["yellow", "green", "red", "orange"].includes(
     state.displayHighlightColor,
   )
     ? state.displayHighlightColor
     : "green";
-  const accentColor = ["yellow", "green", "red"].includes(highlightColor)
+  const accentColor = ["yellow", "green", "red", "orange"].includes(
+    highlightColor,
+  )
     ? highlightColor
     : "green";
 
@@ -3154,6 +3156,12 @@ function applyDisplayPreferences() {
   );
   root.setAttribute("data-highlight-color", accentColor);
   root.setAttribute("data-accent-color", accentColor);
+
+  // Keep the status-bar / title-bar colour in sync with the active theme
+  const themeColor = state.theme === "dark" ? "#181716" : "#f8f5ed";
+  document
+    .querySelectorAll('meta[name="theme-color"]')
+    .forEach((el) => (el.content = themeColor));
 }
 
 // Add dialog tab management

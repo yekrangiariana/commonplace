@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    Mobile Responsive Styles
-   Target: Mobile devices only (<= 480px)
+   Target: Mobile devices only (<= 761px)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @media (max-width: 761px) {
@@ -17,6 +17,8 @@
     min-height: 100dvh;
     border: none;
     overflow-x: hidden; /* Prevent horizontal page scroll */
+    /* Safe area: clear the top notch / status bar */
+    padding-top: env(safe-area-inset-top);
   }
 
   /* ─── Header Fixed to Bottom (Dock Style) ────────────────────────────────── */
@@ -34,6 +36,8 @@
     flex-direction: column;
     gap: 0;
     padding: 0;
+    /* Safe area: clear the home indicator on notched devices */
+    padding-bottom: env(safe-area-inset-bottom);
     border: none;
     border-radius: 0;
     background: var(--surface);

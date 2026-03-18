@@ -451,7 +451,7 @@ function applyParsedState(state, parsedState) {
   state.theme = ["light", "dark"].includes(parsedState.theme)
     ? parsedState.theme
     : "light";
-  state.displayHighlightColor = ["green", "red", "yellow"].includes(
+  state.displayHighlightColor = ["green", "red", "orange", "yellow"].includes(
     parsedState.displayHighlightColor,
   )
     ? parsedState.displayHighlightColor

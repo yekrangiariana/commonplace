@@ -2,13 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪷</text></svg>"
     />
     <link rel="manifest" href="./manifest.json" />
-    <meta name="theme-color" content="#1a1a2e" />
+    <meta name="theme-color" content="#f8f5ed" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#181716" media="(prefers-color-scheme: dark)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
@@ -25,7 +26,7 @@
           if (stored) {
             var state = JSON.parse(stored);
             var theme = state.theme === "dark" ? "dark" : "light";
-            var highlight = ["yellow", "green", "red"].includes(
+            var highlight = ["yellow", "green", "red", "orange"].includes(
               state.highlightColor,
             )
               ? state.highlightColor
@@ -43,6 +44,8 @@
               highlight,
             );
             document.documentElement.setAttribute("data-font", font);
+            var tc = theme === "dark" ? "#181716" : "#f8f5ed";
+            document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){ m.content = tc; });
           }
         } catch (e) {}
       })();
@@ -1194,6 +1197,12 @@
                         class="settings-segmented__btn settings-segmented__btn--red"
                         data-display-highlight="red"
                         aria-label="Red"
+                      ></button>
+                      <button
+                        type="button"
+                        class="settings-segmented__btn settings-segmented__btn--orange"
+                        data-display-highlight="orange"
+                        aria-label="Orange"
                       ></button>
                     </div>
                   </div>
