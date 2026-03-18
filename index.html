@@ -44,6 +44,9 @@
             );
             document.documentElement.setAttribute("data-font", font);
           }
+          if (localStorage.getItem("splashOff") === "1") {
+            document.documentElement.classList.add("splash-disabled");
+          }
         } catch (e) {}
       })();
     </script>

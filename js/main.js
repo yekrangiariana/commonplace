@@ -458,6 +458,13 @@ function bindEvents() {
   });
   dom.splashEnabled?.addEventListener("change", () => {
     state.splashEnabled = dom.splashEnabled.checked;
+    try {
+      if (state.splashEnabled) {
+        localStorage.removeItem("splashOff");
+      } else {
+        localStorage.setItem("splashOff", "1");
+      }
+    } catch {}
     persistState(state);
   });
   dom.rssRetentionSelect?.addEventListener("change", () => {

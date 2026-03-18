@@ -19,6 +19,10 @@
   pointer-events: none;
 }
 
+html.splash-disabled .splash-screen {
+  display: none;
+}
+
 .splash-branding {
   display: flex;
   flex-direction: row;
