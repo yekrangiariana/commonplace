@@ -3141,7 +3141,9 @@ function applyDisplayPreferences() {
   )
     ? state.displayHighlightColor
     : "green";
-  const accentColor = ["yellow", "green", "red", "orange"].includes(highlightColor)
+  const accentColor = ["yellow", "green", "red", "orange"].includes(
+    highlightColor,
+  )
     ? highlightColor
     : "green";
 
