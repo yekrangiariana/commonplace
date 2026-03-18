@@ -158,64 +158,64 @@ async function init() {
   // Safety: always dismiss splash even if init fails
   const splashTimeout = setTimeout(dismissSplash, 6000);
   try {
-  await hydrateRuntimeConfig(runtimeConfig);
-  await hydrateState(state);
-  if (state.activeTab === "add") {
-    state.activeTab = "library";
-  }
-  pruneRssItemsForRetention();
-  initImageCache(state.bookmarks).catch(() => {});
-  applyRouteFromUrl();
-  try {
-    await restorePendingRssArticle();
-  } catch {
-    // Continue initialization even if RSS restoration fails
-  }
-  applyDisplayPreferences();
-  bindEvents();
-  workspaceContextMenu = initWorkspaceContextMenu({
-    state,
-    setStatus,
-    persistState,
-    render,
-    switchTab,
-    createId,
-    openAddArticleModal: openAddModal,
-    openProjectsCreate: openProjectsCreateFromContextMenu,
-    openRssItem: handleRssOpenItem,
-    addRssItemToLibrary: handleRssAddItem,
-    markRssItemRead: markRssItemAsReadFromContextMenu,
-    openRssSubscribe: openRssSubscribePopover,
-    refreshRssActive: refreshActiveRssFeed,
-    scrollReaderToTop,
-  });
-  readerTtsPlayer = initReaderTtsPlayer({
-    state,
-    dom,
-    persistState,
-    setStatus,
-    getSelectedArticle: getActiveReaderArticle,
-  });
-  rssAutoRefreshController = createRssAutoRefreshController({
-    getIntervalMinutes: () => state.rssAutoRefreshMinutes,
-    getLastFetchedAtMs: () => {
-      const activeFeed = state.rssFeeds.find(
-        (feed) => feed.id === state.rssActiveFeedId,
-      );
-      return Date.parse(activeFeed?.lastFetchedAt || "") || 0;
-    },
-    canRefresh: () =>
-      Boolean(state.rssActiveFeedId) &&
-      state.rssFeeds.some((feed) => feed.id === state.rssActiveFeedId),
-    onRefresh: () => refreshActiveRssFeed({ silent: true, source: "auto" }),
-  });
-  rssAutoRefreshController.start();
-  await refreshMarkdownExportBindingStatus();
-  renderAndSyncUrl();
-  consumeShareTarget();
-  await splashDone;
-  clearTimeout(splashTimeout);
-  dismissSplash();
+    await hydrateRuntimeConfig(runtimeConfig);
+    await hydrateState(state);
+    if (state.activeTab === "add") {
+      state.activeTab = "library";
+    }
+    pruneRssItemsForRetention();
+    initImageCache(state.bookmarks).catch(() => {});
+    applyRouteFromUrl();
+    try {
+      await restorePendingRssArticle();
+    } catch {
+      // Continue initialization even if RSS restoration fails
+    }
+    applyDisplayPreferences();
+    bindEvents();
+    workspaceContextMenu = initWorkspaceContextMenu({
+      state,
+      setStatus,
+      persistState,
+      render,
+      switchTab,
+      createId,
+      openAddArticleModal: openAddModal,
+      openProjectsCreate: openProjectsCreateFromContextMenu,
+      openRssItem: handleRssOpenItem,
+      addRssItemToLibrary: handleRssAddItem,
+      markRssItemRead: markRssItemAsReadFromContextMenu,
+      openRssSubscribe: openRssSubscribePopover,
+      refreshRssActive: refreshActiveRssFeed,
+      scrollReaderToTop,
+    });
+    readerTtsPlayer = initReaderTtsPlayer({
+      state,
+      dom,
+      persistState,
+      setStatus,
+      getSelectedArticle: getActiveReaderArticle,
+    });
+    rssAutoRefreshController = createRssAutoRefreshController({
+      getIntervalMinutes: () => state.rssAutoRefreshMinutes,
+      getLastFetchedAtMs: () => {
+        const activeFeed = state.rssFeeds.find(
+          (feed) => feed.id === state.rssActiveFeedId,
+        );
+        return Date.parse(activeFeed?.lastFetchedAt || "") || 0;
+      },
+      canRefresh: () =>
+        Boolean(state.rssActiveFeedId) &&
+        state.rssFeeds.some((feed) => feed.id === state.rssActiveFeedId),
+      onRefresh: () => refreshActiveRssFeed({ silent: true, source: "auto" }),
+    });
+    rssAutoRefreshController.start();
+    await refreshMarkdownExportBindingStatus();
+    renderAndSyncUrl();
+    consumeShareTarget();
+    await splashDone;
+    clearTimeout(splashTimeout);
+    dismissSplash();
   } catch (err) {
     console.error("Init error:", err);
     clearTimeout(splashTimeout);
