@@ -618,7 +618,10 @@ export function initReaderTtsPlayer({
 
     currentText = text;
     currentStartChar = startChar;
-    cachedTotalDuration = estimateDurationSeconds(text, clampRate(state.ttsRate));
+    cachedTotalDuration = estimateDurationSeconds(
+      text,
+      clampRate(state.ttsRate),
+    );
 
     chunkQueue = splitIntoChunks(slicedText);
     chunkIndex = 0;
@@ -668,7 +671,10 @@ export function initReaderTtsPlayer({
 
     currentText = text;
     currentStartChar = startChar;
-    cachedTotalDuration = estimateDurationSeconds(text, clampRate(state.ttsRate));
+    cachedTotalDuration = estimateDurationSeconds(
+      text,
+      clampRate(state.ttsRate),
+    );
 
     chunkQueue = splitIntoChunks(slicedText);
     chunkIndex = 0;
