@@ -22,7 +22,8 @@ export function runSplashTyping() {
         cursor.before(text[charIndex]);
         charIndex++;
         // Slight random variance for natural feel
-        const delay = text[charIndex - 1] === " " ? 60 : 50 + Math.random() * 50;
+        const delay =
+          text[charIndex - 1] === " " ? 60 : 50 + Math.random() * 50;
         setTimeout(typeNext, delay);
       } else {
         // Done typing — hold briefly, remove cursor, then resolve

@@ -8,7 +8,9 @@
   align-items: center;
   justify-content: center;
   background: var(--bg);
-  transition: opacity 0.5s ease, visibility 0.5s ease;
+  transition:
+    opacity 0.5s ease,
+    visibility 0.5s ease;
 }
 
 .splash-screen.splash-hidden {
@@ -64,5 +66,7 @@
 }
 
 @keyframes splash-blink {
-  50% { opacity: 0; }
+  50% {
+    opacity: 0;
+  }
 }
