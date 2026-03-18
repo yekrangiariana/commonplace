@@ -65,7 +65,7 @@ export const state = {
   projectsStageFilter: null,
   projectsView: "2",
   projectsSort: "newest",
-  settingsSection: "export",
+  settingsSection: "display",
   autoTagEnabled: true,
   autoTagUseDefaultCountries: true,
   autoTagCustomRules: [],
