@@ -26,9 +26,9 @@
             var state = JSON.parse(stored);
             var theme = state.theme === "dark" ? "dark" : "light";
             var highlight = ["yellow", "green", "red", "orange"].includes(
-              state.highlightColor,
+              state.displayHighlightColor,
             )
-              ? state.highlightColor
+              ? state.displayHighlightColor
               : "green";
             var font = ["mono", "sans", "serif"].includes(state.displayFont)
               ? state.displayFont

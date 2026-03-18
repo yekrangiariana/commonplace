@@ -3136,12 +3136,12 @@ function removeHighlight(highlightId) {
 
 function applyDisplayPreferences() {
   const root = document.documentElement;
-  const highlightColor = ["yellow", "green", "red"].includes(
+  const highlightColor = ["yellow", "green", "red", "orange"].includes(
     state.displayHighlightColor,
   )
     ? state.displayHighlightColor
     : "green";
-  const accentColor = ["yellow", "green", "red"].includes(highlightColor)
+  const accentColor = ["yellow", "green", "red", "orange"].includes(highlightColor)
     ? highlightColor
     : "green";
 
