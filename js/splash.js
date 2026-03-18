@@ -21,20 +21,20 @@ export function runSplashTyping() {
         // Insert character before the cursor
         cursor.before(text[charIndex]);
         charIndex++;
-        // Slight random variance for natural feel
+        // Fast typing with slight variance for natural feel
         const delay =
-          text[charIndex - 1] === " " ? 60 : 50 + Math.random() * 50;
+          text[charIndex - 1] === " " ? 25 : 30 + Math.random() * 20;
         setTimeout(typeNext, delay);
       } else {
         // Done typing — hold briefly, remove cursor, then resolve
         setTimeout(() => {
           cursor.remove();
           resolve();
-        }, 500);
+        }, 300);
       }
     }
     // Brief pause before typing starts
-    setTimeout(typeNext, 400);
+    setTimeout(typeNext, 200);
   });
 }
 

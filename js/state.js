@@ -72,6 +72,7 @@ export const state = {
   displayFont: "mono",
   theme: "light",
   displayHighlightColor: "green",
+  splashEnabled: true,
   ttsVoiceId: "",
   ttsRate: 1,
   pendingSelection: null,

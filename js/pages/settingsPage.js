@@ -45,6 +45,10 @@ export function renderSettings(state, dom) {
     button.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
 
+  if (dom.splashEnabled) {
+    dom.splashEnabled.checked = state.splashEnabled !== false;
+  }
+
   if (dom.rssRetentionSelect) {
     const retentionValue =
       state.rssRetentionDays === "never"

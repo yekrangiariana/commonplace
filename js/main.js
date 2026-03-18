@@ -154,12 +154,17 @@ const VALID_SETTINGS_SECTIONS = new Set([
 init();
 
 async function init() {
-  const splashDone = runSplashTyping();
   // Safety: always dismiss splash even if init fails
   const splashTimeout = setTimeout(dismissSplash, 6000);
+  let splashDone = Promise.resolve();
   try {
     await hydrateRuntimeConfig(runtimeConfig);
     await hydrateState(state);
+    if (state.splashEnabled !== false) {
+      splashDone = runSplashTyping();
+    } else {
+      dismissSplash();
+    }
     if (state.activeTab === "add") {
       state.activeTab = "library";
     }
@@ -442,6 +447,10 @@ function bindEvents() {
       applyDisplayPreferences();
       renderSettings(state, dom);
     });
+  });
+  dom.splashEnabled?.addEventListener("change", () => {
+    state.splashEnabled = dom.splashEnabled.checked;
+    persistState(state);
   });
   dom.rssRetentionSelect?.addEventListener("change", () => {
     const raw = dom.rssRetentionSelect.value;

@@ -95,6 +95,7 @@ export const dom = {
   tagForm: document.querySelector("#tag-form"),
   tagName: document.querySelector("#tag-name"),
   tagList: document.querySelector("#tag-list"),
+  splashEnabled: document.querySelector("#splash-enabled"),
   autoTagEnabled: document.querySelector("#auto-tag-enabled"),
   autoTagUseDefaultCountries: document.querySelector(
     "#auto-tag-use-default-countries",
