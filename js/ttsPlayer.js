@@ -232,6 +232,7 @@ export function initReaderTtsPlayer({
   let chunkStartTime = 0;
   let chunkStartPercent = 0;
   let chunkEndPercent = 0;
+  let cachedTotalDuration = 0;
 
   let renderQueued = false;
   let renderVersion = 0;
@@ -275,13 +276,7 @@ export function initReaderTtsPlayer({
     const remainingEl = dom.readerMeta.querySelector("[data-tts-remaining]");
 
     if (remainingEl) {
-      const article = getSelectedArticle();
-      const speakableText = article ? getSpeakableText(article) : "";
-      const totalDuration = estimateDurationSeconds(
-        speakableText,
-        clampRate(state.ttsRate),
-      );
-      const secs = getRemainingSeconds(totalDuration);
+      const secs = getRemainingSeconds(cachedTotalDuration);
       remainingEl.textContent = `${formatSeconds(secs)} left`;
     }
   }
@@ -623,6 +618,7 @@ export function initReaderTtsPlayer({
 
     currentText = text;
     currentStartChar = startChar;
+    cachedTotalDuration = estimateDurationSeconds(text, clampRate(state.ttsRate));
 
     chunkQueue = splitIntoChunks(slicedText);
     chunkIndex = 0;
@@ -672,6 +668,7 @@ export function initReaderTtsPlayer({
 
     currentText = text;
     currentStartChar = startChar;
+    cachedTotalDuration = estimateDurationSeconds(text, clampRate(state.ttsRate));
 
     chunkQueue = splitIntoChunks(slicedText);
     chunkIndex = 0;
