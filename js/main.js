@@ -4435,7 +4435,12 @@ async function handleRssOpenItem(url) {
   const contextForRestore = rssReaderContext
     ? { feedId: rssReaderContext.feedId, itemCanonical: canonical }
     : null;
-  pendingRssOpenRecord = { slug, url: normalized, canonical, contextForRestore };
+  pendingRssOpenRecord = {
+    slug,
+    url: normalized,
+    canonical,
+    contextForRestore,
+  };
   persistRssOpenPending(pendingRssOpenRecord).catch(() => {});
 
   // Open reader immediately with a lightweight placeholder while network fetch runs.
@@ -4487,7 +4492,9 @@ async function handleRssOpenItem(url) {
     );
 
     // Cache the article by slug for URL-based restoration on refresh
-    putRssReaderCache(slug, state.rssReaderArticle, contextForRestore).catch(() => {});
+    putRssReaderCache(slug, state.rssReaderArticle, contextForRestore).catch(
+      () => {},
+    );
     pendingRssOpenRecord = null;
 
     persistState(state);
@@ -4605,7 +4612,12 @@ function buildRssBookmark(
   };
 }
 
-function buildRssReaderArticle(article, normalizedUrl, suggestedTags = [], contextMeta = null) {
+function buildRssReaderArticle(
+  article,
+  normalizedUrl,
+  suggestedTags = [],
+  contextMeta = null,
+) {
   return {
     id: createId("rss-reader"),
     url: normalizedUrl,
