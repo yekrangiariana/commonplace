@@ -32,8 +32,8 @@ import {
   estimatePersistedStorageUsage,
   putRssReaderCache,
   getRssReaderCache,
-  persistRssOpenPending,
-  getRssOpenPending,
+  deleteRssReaderCache,
+  pruneRssReaderCacheByRetention,
 } from "./storage.js";
 import { hydrateRuntimeConfig } from "./config.js";
 import { fetchArticle } from "./services/articleFetch.js";
@@ -116,7 +116,6 @@ const rssSortedItemsCache = new Map();
 let rssAutoRefreshController = null;
 let rssRefreshInFlight = null;
 let pendingRssReaderSlug = null;
-let pendingRssOpenRecord = null;
 let rssImagePrefetchTimerId = null;
 const rssImagePrefetchQueue = new Map();
 let rssOpenRequestVersion = 0;
@@ -164,41 +163,23 @@ function dismissSplash() {
   });
 }
 
-function isFirstLoadInSession() {
-  // Check if app was already initialized in this browser session
-  // sessionStorage persists across refreshes but clears when session ends
-  return !window.sessionStorage.getItem("__app_session_started");
-}
-
-function markSessionAsStarted() {
-  // Mark that app has loaded in this session so splash won't show on refresh
-  try {
-    window.sessionStorage.setItem("__app_session_started", "true");
-  } catch {
-    // sessionStorage might be blocked; fail silently
-  }
-}
-
 async function init() {
-  // Only show splash on genuine first load, not on page refresh
-  const isFirstLoad = isFirstLoadInSession();
-  const splashTimeout = isFirstLoad ? setTimeout(dismissSplash, 6000) : null;
+  // Safety: always dismiss splash even if init fails
+  const splashTimeout = setTimeout(dismissSplash, 6000);
   let splashDone = Promise.resolve();
   try {
     await hydrateRuntimeConfig(runtimeConfig);
     await hydrateState(state);
-    if (isFirstLoad && state.splashEnabled !== false) {
+    if (state.splashEnabled !== false) {
       splashDone = new Promise((r) => setTimeout(r, 1000));
-    } else if (isFirstLoad || !state.splashEnabled) {
-      dismissSplash();
     } else {
-      // Not first load and splash is disabled; remove immediately
       dismissSplash();
     }
     if (state.activeTab === "add") {
       state.activeTab = "library";
     }
     pruneRssItemsForRetention();
+    pruneRssReaderCacheByRetention(state).catch(() => {});
     initImageCache(state.bookmarks).catch(() => {});
     applyRouteFromUrl();
     try {
@@ -248,19 +229,12 @@ async function init() {
     await refreshMarkdownExportBindingStatus();
     renderAndSyncUrl();
     consumeShareTarget();
-    // Mark session as started so splash won't show on refresh
-    markSessionAsStarted();
     await splashDone;
-    if (splashTimeout !== null) {
-      clearTimeout(splashTimeout);
-    }
+    clearTimeout(splashTimeout);
     dismissSplash();
   } catch (err) {
     console.error("Init error:", err);
-    markSessionAsStarted();
-    if (splashTimeout !== null) {
-      clearTimeout(splashTimeout);
-    }
+    clearTimeout(splashTimeout);
     dismissSplash();
   }
 }
@@ -2618,6 +2592,21 @@ function setRssReaderContextByItemUrl(url) {
   rssReaderContext = null;
 }
 
+/**
+ * Finds an RSS item URL by its slug, searching all feeds.
+ * Used to re-fetch articles on page refresh when cache is empty.
+ */
+function findRssItemUrlBySlug(slug) {
+  for (const feed of state.rssFeeds || []) {
+    for (const item of feed.items || []) {
+      if (extractUrlSlug(item.url) === slug) {
+        return item.url;
+      }
+    }
+  }
+  return null;
+}
+
 function getNextRssItemContext() {
   if (!rssReaderContext) {
     return null;
@@ -2720,6 +2709,8 @@ function ensureHighlightedRssReaderArticleInLibrary() {
     touchBookmarks(state);
     state.selectedArticleId = existing.id;
     state.rssReaderArticle = null;
+    // Clean up the transient cache entry now that article is in library
+    deleteRssReaderCache(extractUrlSlug(article.url)).catch(() => {});
     return true;
   }
 
@@ -2734,6 +2725,8 @@ function ensureHighlightedRssReaderArticleInLibrary() {
   state.selectedArticleId = bookmark.id;
   state.rssReaderArticle = null;
   touchBookmarks(state);
+  // Clean up the transient cache entry now that article is in library
+  deleteRssReaderCache(extractUrlSlug(article.url)).catch(() => {});
 
   if (bookmark.imageUrl) {
     fetchAndCacheImage(bookmark.id, bookmark.imageUrl).catch(() => {});
@@ -4430,19 +4423,6 @@ async function handleRssOpenItem(url) {
     return;
   }
 
-  // Capture context before fetch for O(1) restore on refresh; store immediately.
-  const slug = extractUrlSlug(normalized);
-  const contextForRestore = rssReaderContext
-    ? { feedId: rssReaderContext.feedId, itemCanonical: canonical }
-    : null;
-  pendingRssOpenRecord = {
-    slug,
-    url: normalized,
-    canonical,
-    contextForRestore,
-  };
-  persistRssOpenPending(pendingRssOpenRecord).catch(() => {});
-
   // Open reader immediately with a lightweight placeholder while network fetch runs.
   state.selectedArticleId = null;
   state.rssReaderArticle = {
@@ -4462,7 +4442,6 @@ async function handleRssOpenItem(url) {
     lastOpenedAt: new Date().toISOString(),
     highlights: [],
     isTransientRss: true,
-    rssContextMeta: contextForRestore,
   };
   markRssItemAsOpened(url);
   persistState(state);
@@ -4488,14 +4467,15 @@ async function handleRssOpenItem(url) {
       article,
       normalized,
       suggestedTags,
-      contextForRestore,
     );
 
     // Cache the article by slug for URL-based restoration on refresh
-    putRssReaderCache(slug, state.rssReaderArticle, contextForRestore).catch(
-      () => {},
-    );
-    pendingRssOpenRecord = null;
+    // Include feed context so "Next in Feed" works after page refresh
+    const slug = extractUrlSlug(normalized);
+    putRssReaderCache(slug, {
+      ...state.rssReaderArticle,
+      _feedContext: rssReaderContext,
+    }).catch(() => {});
 
     persistState(state);
     clearRssStatus();
@@ -4612,12 +4592,7 @@ function buildRssBookmark(
   };
 }
 
-function buildRssReaderArticle(
-  article,
-  normalizedUrl,
-  suggestedTags = [],
-  contextMeta = null,
-) {
+function buildRssReaderArticle(article, normalizedUrl, suggestedTags = []) {
   return {
     id: createId("rss-reader"),
     url: normalizedUrl,
@@ -4635,14 +4610,12 @@ function buildRssReaderArticle(
     lastOpenedAt: new Date().toISOString(),
     highlights: [],
     isTransientRss: true,
-    rssContextMeta: contextMeta,
   };
 }
 
 /**
  * Restores an RSS reader article from cache using its slug.
  * Called after route parsing when #reader/rss/<slug> is detected.
- * Optimized to rebuild context O(1) from persisted metadata.
  */
 async function restorePendingRssArticle() {
   if (!pendingRssReaderSlug) {
@@ -4669,53 +4642,31 @@ async function restorePendingRssArticle() {
 
   if (cached) {
     state.selectedArticleId = null;
-    state.rssReaderArticle = cached;
-    // Restore context O(1) from persisted metadata instead of scanning feeds
-    if (cached.rssContextMeta?.feedId && cached.rssContextMeta?.itemCanonical) {
-      setRssReaderContextDirectly(
-        cached.rssContextMeta.feedId,
-        cached.rssContextMeta.itemCanonical,
-      );
+    // Restore feed context for "Next in Feed" navigation
+    if (cached._feedContext) {
+      rssReaderContext = cached._feedContext;
+    } else if (cached.url) {
+      setRssReaderContextByItemUrl(cached.url);
     }
+    // Remove internal _feedContext before setting state
+    const { _feedContext, ...articleWithoutContext } = cached;
+    state.rssReaderArticle = articleWithoutContext;
     persistState(state);
     render();
     scrollReaderToTop();
     return;
   }
 
-  // Cache miss: check if fetch is still in progress (in-flight resilience)
-  const pending = await getRssOpenPending();
-  if (pending && pending.slug === slug) {
-    // Retry fetch for this URL
-    state.selectedArticleId = null;
-    state.rssReaderArticle = {
-      id: createId("rss-reader"),
-      url: pending.url,
-      title: "Retrying article fetch...",
-      description: "",
-      source: "",
-      publishedAt: "",
-      previewText: "",
-      imageUrl: "",
-      tags: [],
-      projectIds: [],
-      blocks: [{ type: "paragraph", text: "Fetching article content..." }],
-      fetchedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      lastOpenedAt: new Date().toISOString(),
-      highlights: [],
-      isTransientRss: true,
-      rssContextMeta: pending.contextForRestore,
-    };
-    persistState(state);
-    render();
-    scrollReaderToTop();
-    // Queue a retry fetch asynchronously
-    handleRssOpenItem(pending.url).catch(() => {});
+  // Not in cache - try to find URL from feeds and re-fetch
+  const urlFromFeeds = findRssItemUrlBySlug(slug);
+
+  if (urlFromFeeds) {
+    // Re-fetch the article using the found URL
+    handleRssOpenItem(urlFromFeeds);
     return;
   }
 
-  // Not in cache, not pending, and no library match - show error
+  // No cache and URL not found in feeds - show error
   state.selectedArticleId = null;
   state.rssReaderArticle = {
     id: createId("rss-reader"),
@@ -4745,20 +4696,6 @@ async function restorePendingRssArticle() {
   // Sync URL to #reader since there's no valid RSS article
   syncUrlFromState({ replace: true });
   scrollReaderToTop();
-}
-
-/**
- * Sets RSS reader context directly by feedId and itemCanonical (O(1) lookup).
- * Bypass scanning feeds; used when restoring from persisted metadata.
- */
-function setRssReaderContextDirectly(feedId, itemCanonical) {
-  const feed = state.rssFeeds?.find((f) => f.id === feedId);
-  if (feed) {
-    rssReaderContext = {
-      feedId,
-      itemCanonicalUrl: itemCanonical,
-    };
-  }
 }
 
 function goToNextRssPage() {

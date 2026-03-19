@@ -1360,10 +1360,9 @@ export async function removeImageFromCache(articleId) {
 
 /**
  * Store an RSS reader article in the cache by its URL slug.
- * Includes context metadata (feedId, itemCanonical) for O(1) context restore on refresh.
- * Persists to IDB_RSS_READER_CACHE_STORE.
+ * Used to restore transient RSS articles after page refresh.
  */
-export async function putRssReaderCache(slug, article, contextMeta = null) {
+export async function putRssReaderCache(slug, article) {
   const db = await openDatabase();
 
   if (!db || !slug || !article) {
@@ -1373,13 +1372,7 @@ export async function putRssReaderCache(slug, article, contextMeta = null) {
   return new Promise((resolve) => {
     const tx = db.transaction(IDB_RSS_READER_CACHE_STORE, "readwrite");
 
-    tx.objectStore(IDB_RSS_READER_CACHE_STORE).put({
-      slug,
-      article: {
-        ...article,
-        rssContextMeta: contextMeta,
-      },
-    });
+    tx.objectStore(IDB_RSS_READER_CACHE_STORE).put({ slug, article });
     tx.oncomplete = () => resolve();
     tx.onerror = () => resolve();
   });
@@ -1387,7 +1380,7 @@ export async function putRssReaderCache(slug, article, contextMeta = null) {
 
 /**
  * Retrieve a cached RSS reader article by its URL slug.
- * Returns the article object with rssContextMeta intact, or null if not found.
+ * Returns the article object or null if not found.
  */
 export async function getRssReaderCache(slug) {
   const db = await openDatabase();
@@ -1406,38 +1399,94 @@ export async function getRssReaderCache(slug) {
 }
 
 /**
- * Store a pending RSS open record for in-flight fetch resilience.
- * If refresh happens during fetch, we can retry from this record.
+ * Delete a cached RSS reader article by its URL slug.
+ * Called when an RSS article is saved to the library.
  */
-export async function persistRssOpenPending(pending) {
-  if (typeof window.sessionStorage !== "object") {
-    // Fallback if sessionStorage unavailable
+export async function deleteRssReaderCache(slug) {
+  const db = await openDatabase();
+
+  if (!db || !slug) {
     return;
   }
-  try {
-    window.sessionStorage.setItem(
-      "__rss_open_pending",
-      JSON.stringify(pending),
-    );
-  } catch {
-    // Session storage may be full or blocked; fail silently
-  }
+
+  return new Promise((resolve) => {
+    const tx = db.transaction(IDB_RSS_READER_CACHE_STORE, "readwrite");
+
+    tx.objectStore(IDB_RSS_READER_CACHE_STORE).delete(slug);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => resolve();
+  });
 }
 
 /**
- * Retrieve pending RSS open record from session storage.
- * Used during restore to retry in-flight fetches that were interrupted.
+ * Prune RSS reader cache entries older than the retention period.
+ * Preserves entries whose URLs match saved bookmarks.
+ * Should be called during app initialization.
  */
-export async function getRssOpenPending() {
-  if (typeof window.sessionStorage !== "object") {
-    return null;
+export async function pruneRssReaderCacheByRetention(state) {
+  if (state.rssRetentionDays === "never") {
+    return 0;
   }
-  try {
-    const data = window.sessionStorage.getItem("__rss_open_pending");
-    return data ? JSON.parse(data) : null;
-  } catch {
-    return null;
+
+  const retentionDays = Number(state.rssRetentionDays);
+
+  if (!Number.isFinite(retentionDays) || retentionDays <= 0) {
+    return 0;
   }
+
+  const db = await openDatabase();
+
+  if (!db) {
+    return 0;
+  }
+
+  const cutoffMs = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+  const bookmarkedUrls = new Set(
+    (state.bookmarks || [])
+      .map((bookmark) => canonicalizeUrlForCompare(bookmark.url))
+      .filter(Boolean),
+  );
+
+  return new Promise((resolve) => {
+    const tx = db.transaction(IDB_RSS_READER_CACHE_STORE, "readwrite");
+    const store = tx.objectStore(IDB_RSS_READER_CACHE_STORE);
+    const request = store.openCursor();
+    let removedCount = 0;
+
+    request.onsuccess = (event) => {
+      const cursor = event.target.result;
+
+      if (!cursor) {
+        return;
+      }
+
+      const entry = cursor.value;
+      const article = entry?.article;
+
+      if (article) {
+        const canonicalUrl = canonicalizeUrlForCompare(article.url);
+
+        // Keep if URL matches a saved bookmark
+        if (canonicalUrl && bookmarkedUrls.has(canonicalUrl)) {
+          cursor.continue();
+          return;
+        }
+
+        // Check fetchedAt or createdAt timestamp
+        const fetchedMs = Date.parse(article.fetchedAt || article.createdAt || "");
+
+        if (Number.isFinite(fetchedMs) && fetchedMs < cutoffMs) {
+          cursor.delete();
+          removedCount++;
+        }
+      }
+
+      cursor.continue();
+    };
+
+    tx.oncomplete = () => resolve(removedCount);
+    tx.onerror = () => resolve(0);
+  });
 }
 
 async function readLegacyKvState(db) {
