@@ -32,6 +32,8 @@ import {
   estimatePersistedStorageUsage,
   putRssReaderCache,
   getRssReaderCache,
+  persistRssOpenPending,
+  getRssOpenPending,
 } from "./storage.js";
 import { hydrateRuntimeConfig } from "./config.js";
 import { fetchArticle } from "./services/articleFetch.js";
@@ -114,6 +116,7 @@ const rssSortedItemsCache = new Map();
 let rssAutoRefreshController = null;
 let rssRefreshInFlight = null;
 let pendingRssReaderSlug = null;
+let pendingRssOpenRecord = null;
 let rssImagePrefetchTimerId = null;
 const rssImagePrefetchQueue = new Map();
 let rssOpenRequestVersion = 0;
@@ -161,16 +164,35 @@ function dismissSplash() {
   });
 }
 
+function isFirstLoadInSession() {
+  // Check if app was already initialized in this browser session
+  // sessionStorage persists across refreshes but clears when session ends
+  return !window.sessionStorage.getItem("__app_session_started");
+}
+
+function markSessionAsStarted() {
+  // Mark that app has loaded in this session so splash won't show on refresh
+  try {
+    window.sessionStorage.setItem("__app_session_started", "true");
+  } catch {
+    // sessionStorage might be blocked; fail silently
+  }
+}
+
 async function init() {
-  // Safety: always dismiss splash even if init fails
-  const splashTimeout = setTimeout(dismissSplash, 6000);
+  // Only show splash on genuine first load, not on page refresh
+  const isFirstLoad = isFirstLoadInSession();
+  const splashTimeout = isFirstLoad ? setTimeout(dismissSplash, 6000) : null;
   let splashDone = Promise.resolve();
   try {
     await hydrateRuntimeConfig(runtimeConfig);
     await hydrateState(state);
-    if (state.splashEnabled !== false) {
+    if (isFirstLoad && state.splashEnabled !== false) {
       splashDone = new Promise((r) => setTimeout(r, 1000));
+    } else if (isFirstLoad || !state.splashEnabled) {
+      dismissSplash();
     } else {
+      // Not first load and splash is disabled; remove immediately
       dismissSplash();
     }
     if (state.activeTab === "add") {
@@ -226,12 +248,19 @@ async function init() {
     await refreshMarkdownExportBindingStatus();
     renderAndSyncUrl();
     consumeShareTarget();
+    // Mark session as started so splash won't show on refresh
+    markSessionAsStarted();
     await splashDone;
-    clearTimeout(splashTimeout);
+    if (splashTimeout !== null) {
+      clearTimeout(splashTimeout);
+    }
     dismissSplash();
   } catch (err) {
     console.error("Init error:", err);
-    clearTimeout(splashTimeout);
+    markSessionAsStarted();
+    if (splashTimeout !== null) {
+      clearTimeout(splashTimeout);
+    }
     dismissSplash();
   }
 }
@@ -4401,6 +4430,14 @@ async function handleRssOpenItem(url) {
     return;
   }
 
+  // Capture context before fetch for O(1) restore on refresh; store immediately.
+  const slug = extractUrlSlug(normalized);
+  const contextForRestore = rssReaderContext
+    ? { feedId: rssReaderContext.feedId, itemCanonical: canonical }
+    : null;
+  pendingRssOpenRecord = { slug, url: normalized, canonical, contextForRestore };
+  persistRssOpenPending(pendingRssOpenRecord).catch(() => {});
+
   // Open reader immediately with a lightweight placeholder while network fetch runs.
   state.selectedArticleId = null;
   state.rssReaderArticle = {
@@ -4420,6 +4457,7 @@ async function handleRssOpenItem(url) {
     lastOpenedAt: new Date().toISOString(),
     highlights: [],
     isTransientRss: true,
+    rssContextMeta: contextForRestore,
   };
   markRssItemAsOpened(url);
   persistState(state);
@@ -4445,11 +4483,12 @@ async function handleRssOpenItem(url) {
       article,
       normalized,
       suggestedTags,
+      contextForRestore,
     );
 
     // Cache the article by slug for URL-based restoration on refresh
-    const slug = extractUrlSlug(normalized);
-    putRssReaderCache(slug, state.rssReaderArticle).catch(() => {});
+    putRssReaderCache(slug, state.rssReaderArticle, contextForRestore).catch(() => {});
+    pendingRssOpenRecord = null;
 
     persistState(state);
     clearRssStatus();
@@ -4566,7 +4605,7 @@ function buildRssBookmark(
   };
 }
 
-function buildRssReaderArticle(article, normalizedUrl, suggestedTags = []) {
+function buildRssReaderArticle(article, normalizedUrl, suggestedTags = [], contextMeta = null) {
   return {
     id: createId("rss-reader"),
     url: normalizedUrl,
@@ -4584,12 +4623,14 @@ function buildRssReaderArticle(article, normalizedUrl, suggestedTags = []) {
     lastOpenedAt: new Date().toISOString(),
     highlights: [],
     isTransientRss: true,
+    rssContextMeta: contextMeta,
   };
 }
 
 /**
  * Restores an RSS reader article from cache using its slug.
  * Called after route parsing when #reader/rss/<slug> is detected.
+ * Optimized to rebuild context O(1) from persisted metadata.
  */
 async function restorePendingRssArticle() {
   if (!pendingRssReaderSlug) {
@@ -4617,13 +4658,52 @@ async function restorePendingRssArticle() {
   if (cached) {
     state.selectedArticleId = null;
     state.rssReaderArticle = cached;
+    // Restore context O(1) from persisted metadata instead of scanning feeds
+    if (cached.rssContextMeta?.feedId && cached.rssContextMeta?.itemCanonical) {
+      setRssReaderContextDirectly(
+        cached.rssContextMeta.feedId,
+        cached.rssContextMeta.itemCanonical,
+      );
+    }
     persistState(state);
     render();
     scrollReaderToTop();
     return;
   }
 
-  // Not in cache and no URL available - show error
+  // Cache miss: check if fetch is still in progress (in-flight resilience)
+  const pending = await getRssOpenPending();
+  if (pending && pending.slug === slug) {
+    // Retry fetch for this URL
+    state.selectedArticleId = null;
+    state.rssReaderArticle = {
+      id: createId("rss-reader"),
+      url: pending.url,
+      title: "Retrying article fetch...",
+      description: "",
+      source: "",
+      publishedAt: "",
+      previewText: "",
+      imageUrl: "",
+      tags: [],
+      projectIds: [],
+      blocks: [{ type: "paragraph", text: "Fetching article content..." }],
+      fetchedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      lastOpenedAt: new Date().toISOString(),
+      highlights: [],
+      isTransientRss: true,
+      rssContextMeta: pending.contextForRestore,
+    };
+    persistState(state);
+    render();
+    scrollReaderToTop();
+    // Queue a retry fetch asynchronously
+    handleRssOpenItem(pending.url).catch(() => {});
+    return;
+  }
+
+  // Not in cache, not pending, and no library match - show error
   state.selectedArticleId = null;
   state.rssReaderArticle = {
     id: createId("rss-reader"),
@@ -4653,6 +4733,20 @@ async function restorePendingRssArticle() {
   // Sync URL to #reader since there's no valid RSS article
   syncUrlFromState({ replace: true });
   scrollReaderToTop();
+}
+
+/**
+ * Sets RSS reader context directly by feedId and itemCanonical (O(1) lookup).
+ * Bypass scanning feeds; used when restoring from persisted metadata.
+ */
+function setRssReaderContextDirectly(feedId, itemCanonical) {
+  const feed = state.rssFeeds?.find((f) => f.id === feedId);
+  if (feed) {
+    rssReaderContext = {
+      feedId,
+      itemCanonicalUrl: itemCanonical,
+    };
+  }
 }
 
 function goToNextRssPage() {
