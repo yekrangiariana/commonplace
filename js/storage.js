@@ -1473,7 +1473,9 @@ export async function pruneRssReaderCacheByRetention(state) {
         }
 
         // Check fetchedAt or createdAt timestamp
-        const fetchedMs = Date.parse(article.fetchedAt || article.createdAt || "");
+        const fetchedMs = Date.parse(
+          article.fetchedAt || article.createdAt || "",
+        );
 
         if (Number.isFinite(fetchedMs) && fetchedMs < cutoffMs) {
           cursor.delete();
