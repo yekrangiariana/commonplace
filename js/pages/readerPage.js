@@ -227,12 +227,30 @@ export function renderReader(state, dom, activeArticle) {
       </div>
     `;
 
+  const editButtonMarkup = isTransientRss
+    ? ""
+    : `
+      <button type="button" class="chip chip--helper chip--meta-action" data-reader-edit-content>
+        <i class="fa-solid fa-pen" aria-hidden="true"></i>
+        Edit
+      </button>
+      <button type="button" class="chip chip--helper chip--meta-action chip--success" data-reader-save-content hidden>
+        <i class="fa-solid fa-check" aria-hidden="true"></i>
+        Save
+      </button>
+      <button type="button" class="chip chip--helper chip--meta-action" data-reader-cancel-edit hidden>
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        Cancel
+      </button>
+    `;
+
   dom.readerMeta.innerHTML = `
     <p class="reader-byline">${getReaderByline(activeArticle)}</p>
     <div class="chip-row reader-meta-row">
       ${tagsMarkup}
       ${projectChips}
       ${tagProjectActionsMarkup}
+      ${editButtonMarkup}
       ${transientSaveButtonMarkup}
     </div>
     <div class="tts-player-host" data-reader-tts-player-host></div>

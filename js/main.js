@@ -4541,6 +4541,21 @@ async function handleRssOpenItem(url) {
     return;
   }
 
+  // Check if RSS item already has fetched article content stored
+  const rssItem = findRssItemByUrl(normalized);
+  if (rssItem?.fetchedArticle) {
+    state.selectedArticleId = null;
+    state.rssReaderArticle = {
+      ...rssItem.fetchedArticle,
+      lastOpenedAt: new Date().toISOString(),
+    };
+    markRssItemAsOpened(url);
+    persistState(state);
+    switchTab("reader");
+    scrollReaderToTop();
+    return;
+  }
+
   // Open reader immediately with a lightweight placeholder while network fetch runs.
   state.selectedArticleId = null;
   state.rssReaderArticle = {
@@ -4586,6 +4601,9 @@ async function handleRssOpenItem(url) {
       normalized,
       suggestedTags,
     );
+
+    // Store the fetched article content on the RSS item for instant access later
+    storeArticleOnRssItem(normalized, state.rssReaderArticle);
 
     // Cache the article by slug for URL-based restoration on refresh
     // Include feed context so "Next in Feed" works after page refresh
@@ -4760,7 +4778,28 @@ async function restorePendingRssArticle() {
     return;
   }
 
-  // Try to restore from cache
+  // Try to find the RSS item by slug and check for stored article content
+  const urlFromFeeds = findRssItemUrlBySlug(slug);
+  if (urlFromFeeds) {
+    const rssItem = findRssItemByUrl(urlFromFeeds);
+    if (rssItem?.fetchedArticle) {
+      state.selectedArticleId = null;
+      setRssReaderContextByItemUrl(urlFromFeeds);
+      if (rssReaderContext) {
+        readerSideTab = "next";
+      }
+      state.rssReaderArticle = {
+        ...rssItem.fetchedArticle,
+        lastOpenedAt: new Date().toISOString(),
+      };
+      persistState(state);
+      render();
+      scrollReaderToTop();
+      return;
+    }
+  }
+
+  // Try to restore from rssReaderCache (legacy/fallback)
   const cached = await getRssReaderCache(slug);
 
   if (cached) {
@@ -4784,16 +4823,14 @@ async function restorePendingRssArticle() {
     return;
   }
 
-  // Not in cache - try to find URL from feeds and re-fetch
-  const urlFromFeeds = findRssItemUrlBySlug(slug);
-
+  // Not in rssReaderCache - try to find URL from feeds and re-fetch
   if (urlFromFeeds) {
     // Re-fetch the article using the found URL
     handleRssOpenItem(urlFromFeeds);
     return;
   }
 
-  // No cache and URL not found in feeds - show error
+  // URL not found in feeds - show error
   state.selectedArticleId = null;
   state.rssReaderArticle = {
     id: createId("rss-reader"),
@@ -4809,7 +4846,7 @@ async function restorePendingRssArticle() {
     blocks: [
       {
         type: "paragraph",
-        text: "This article is no longer in the cache. Please open it again from the Explore tab.",
+        text: "This article is no longer available. It may have been removed based on your retention settings. Please open it again from the Explore tab.",
       },
     ],
     fetchedAt: new Date().toISOString(),
@@ -5308,6 +5345,41 @@ function findRssItemByUrl(url) {
   }
 
   return null;
+}
+
+/**
+ * Store fetched article content on an RSS item for instant access later.
+ * The article will be pruned along with the RSS item based on retention settings.
+ */
+function storeArticleOnRssItem(url, article) {
+  const canonical = canonicalizeArticleUrl(url);
+  let didUpdate = false;
+
+  state.rssFeeds = state.rssFeeds.map((feed) => {
+    const nextItems = (feed.items || []).map((item) => {
+      const itemCanonical =
+        item.canonicalUrl || canonicalizeArticleUrl(item.url || "");
+
+      if (itemCanonical !== canonical) {
+        return item;
+      }
+
+      didUpdate = true;
+      return {
+        ...item,
+        fetchedArticle: article,
+      };
+    });
+
+    return {
+      ...feed,
+      items: nextItems,
+    };
+  });
+
+  if (didUpdate) {
+    touchRss(state);
+  }
 }
 
 function saveRssReaderArticleToLibrary() {
