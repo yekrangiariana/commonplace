@@ -1585,6 +1585,10 @@ html[data-theme="dark"] .selection-menu {
   letter-spacing: 0.6px;
 }
 
+.chip[hidden] {
+  display: none;
+}
+
 .chip--tag {
   background: var(--surface-muted);
   color: var(--text-light);
@@ -1772,6 +1776,14 @@ html[data-theme="dark"] .selection-menu {
 .reader-surface ::selection {
   background: color-mix(in srgb, var(--success) 45%, transparent);
   color: var(--text);
+}
+
+.reader-surface--editing {
+  background: var(--paper-bg);
+  border: 2px dashed var(--success);
+  border-radius: 4px;
+  padding: 12px;
+  outline: none;
 }
 
 .reader-block {

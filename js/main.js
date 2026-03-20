@@ -6,6 +6,7 @@ import {
   touchRss,
 } from "./state.js";
 import { dom } from "./dom.js";
+import { getDerivedIndexes } from "./derivedIndexes.js";
 import {
   flattenBlocks,
   normalizeUrl,
@@ -37,6 +38,12 @@ import {
 } from "./storage.js";
 import { hydrateRuntimeConfig } from "./config.js";
 import { fetchArticle } from "./services/articleFetch.js";
+import {
+  fetchTweet,
+  isTweetUrl,
+  normalizeTweetUrl,
+  createTweetPreview,
+} from "./services/tweetFetch.js";
 import { fetchArticleViaReaderTool } from "./experimental/readerToolAutomation.js";
 import {
   handleSelectionChange,
@@ -288,6 +295,16 @@ function consumeShareTarget() {
     window.location.pathname + (window.location.hash || "#library");
   window.history.replaceState(null, "", cleanUrl);
 
+  // Check if the shared URL is a tweet
+  if (isTweetUrl(sharedUrl)) {
+    openAddModal("tweet");
+    if (dom.addTweetUrl) {
+      dom.addTweetUrl.value = sharedUrl;
+      dom.addTweetUrl.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    return;
+  }
+
   // Pre-fill the Add Article dialog with the shared URL
   openAddModal("article");
   if (dom.articleUrl) {
@@ -370,6 +387,9 @@ function bindEvents() {
 
   // Add project form
   dom.addProjectForm?.addEventListener("submit", handleAddProjectSubmit);
+
+  // Add tweet form
+  dom.addTweetForm?.addEventListener("submit", handleTweetSubmit);
 
   dom.openAddProjectModalButton?.addEventListener("click", () => {
     openAddModal("project");
@@ -555,6 +575,10 @@ function bindEvents() {
 
   dom.articleProjects.addEventListener("input", () => {
     renderArticleTaxonomyHelpers(state, dom);
+  });
+
+  dom.addTweetTags?.addEventListener("input", () => {
+    renderTweetTagSuggestions();
   });
 
   dom.articleUrl.addEventListener("change", () => {
@@ -1668,6 +1692,13 @@ function handleDocumentClick(event) {
     return;
   }
 
+  const tweetTagToggleTrigger = event.target.closest("[data-toggle-tweet-tag]");
+
+  if (tweetTagToggleTrigger) {
+    toggleTweetTag(tweetTagToggleTrigger.dataset.toggleTweetTag);
+    return;
+  }
+
   const inputProjectToggleTrigger = event.target.closest(
     "[data-toggle-input-project]",
   );
@@ -1842,6 +1873,21 @@ function handleDocumentClick(event) {
 
   if (event.target.closest("[data-reader-save-rss]")) {
     saveRssReaderArticleToLibrary();
+    return;
+  }
+
+  if (event.target.closest("[data-reader-edit-content]")) {
+    enterReaderEditMode();
+    return;
+  }
+
+  if (event.target.closest("[data-reader-save-content]")) {
+    saveReaderEditedContent();
+    return;
+  }
+
+  if (event.target.closest("[data-reader-cancel-edit]")) {
+    cancelReaderEditMode();
     return;
   }
 
@@ -3263,8 +3309,8 @@ function switchAddDialogTab(tab) {
   // Scroll to panel on mobile
   const isMobile = window.matchMedia("(max-width: 761px)").matches;
   if (isMobile && dom.addDialogPanels) {
-    const panelIndex = ["feed", "article", "project"].indexOf(tab);
-    const scrollTarget = dom.addDialogPanels.scrollWidth * (panelIndex / 3);
+    const panelIndex = ["feed", "article", "project", "tweet"].indexOf(tab);
+    const scrollTarget = dom.addDialogPanels.scrollWidth * (panelIndex / 4);
     dom.addDialogPanels.scrollTo({ left: scrollTarget, behavior: "smooth" });
   }
 
@@ -3276,6 +3322,8 @@ function switchAddDialogTab(tab) {
       dom.articleUrl?.focus();
     } else if (tab === "project") {
       dom.addProjectName?.focus();
+    } else if (tab === "tweet") {
+      dom.addTweetUrl?.focus();
     }
   }, 100);
 }
@@ -3300,6 +3348,7 @@ function openAddModal(tabOverride) {
 
   renderArticleTaxonomyHelpers(state, dom);
   renderAddFeedFolderSuggestions();
+  renderTweetTagSuggestions();
 
   // Use show() on mobile to allow header interaction, showModal() on desktop for centering
   const isMobile = window.matchMedia("(max-width: 761px)").matches;
@@ -3307,9 +3356,11 @@ function openAddModal(tabOverride) {
     dom.addArticleDialog?.show();
     // Set scroll position instantly (no animation) after showing
     setTimeout(() => {
-      const panelIndex = ["feed", "article", "project"].indexOf(targetTab);
+      const panelIndex = ["feed", "article", "project", "tweet"].indexOf(
+        targetTab,
+      );
       if (dom.addDialogPanels) {
-        const scrollTarget = dom.addDialogPanels.scrollWidth * (panelIndex / 3);
+        const scrollTarget = dom.addDialogPanels.scrollWidth * (panelIndex / 4);
         dom.addDialogPanels.scrollTo({
           left: scrollTarget,
           behavior: "instant",
@@ -3374,6 +3425,32 @@ function renderAddFeedFolderSuggestions() {
         `<button type="button" class="chip chip--helper" data-add-feed-folder="${escapeHtml(folder)}">${escapeHtml(folder)}</button>`,
     )
     .join("");
+}
+
+function renderTweetTagSuggestions() {
+  if (!dom.addTweetAvailableTags) return;
+
+  const indexes = getDerivedIndexes(state);
+  const savedTags = indexes.availableTags || [];
+  const currentTags = new Set(
+    splitCommaSeparated(dom.addTweetTags?.value || ""),
+  );
+
+  if (savedTags.length === 0) {
+    dom.addTweetAvailableTags.innerHTML = "";
+    return;
+  }
+
+  dom.addTweetAvailableTags.innerHTML = `
+    <div class="chip-row">
+      ${savedTags
+        .map((tag) => {
+          const isSelected = currentTags.has(tag);
+          return `<button type="button" class="chip chip--helper ${isSelected ? "chip--filter-active" : ""}" data-toggle-tweet-tag="${escapeHtml(tag)}" aria-pressed="${isSelected ? "true" : "false"}">${escapeHtml(tag)}</button>`;
+        })
+        .join("")}
+    </div>
+  `;
 }
 
 async function handleAddFeedSubmit(event) {
@@ -3466,6 +3543,114 @@ function handleAddProjectSubmit(event) {
   closeAddModal();
   showTransientStatus(`Created project "${name}".`);
   renderAndSyncUrl();
+}
+
+async function handleTweetSubmit(event) {
+  event.preventDefault();
+
+  const url = dom.addTweetUrl?.value?.trim() || "";
+
+  if (!url) {
+    return;
+  }
+
+  if (!isTweetUrl(url)) {
+    showTransientStatus("Enter a valid Twitter/X post URL.");
+    return;
+  }
+
+  const normalizedUrl = normalizeTweetUrl(url);
+
+  // Check for duplicate
+  const existingTweet = state.bookmarks.find(
+    (b) => b.url === normalizedUrl || b.url === url,
+  );
+  if (existingTweet) {
+    showTransientStatus("That tweet is already in your library.");
+    return;
+  }
+
+  const submitButton = dom.addTweetForm?.querySelector('button[type="submit"]');
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Fetching...';
+  }
+
+  try {
+    showTransientStatus("Fetching tweet...");
+    const tweet = await fetchTweet(normalizedUrl, {
+      timeoutMs: runtimeConfig.requestTimeoutMs,
+    });
+
+    // Build blocks for the tweet
+    const tweetBlocks = [
+      {
+        type: "paragraph",
+        text: tweet.text,
+        segments: tweet.segments,
+      },
+    ];
+
+    // Apply auto-tagging based on tweet content
+    const autoTags = getAutoTagSuggestionsForArticle(
+      { blocks: tweetBlocks },
+      {
+        autoTagEnabled: state.autoTagEnabled,
+        autoTagUseDefaultCountries: state.autoTagUseDefaultCountries,
+        autoTagCustomRules: state.autoTagCustomRules,
+      },
+    );
+
+    // Parse user tags and always include "tweet" tag, plus auto tags
+    const userTags = splitCommaSeparated(dom.addTweetTags?.value || "");
+    const tags = syncSavedTags(state, [
+      ...new Set(["tweet", ...userTags, ...autoTags]),
+    ]);
+
+    // Create the bookmark with tweet data
+    const bookmark = {
+      id: createId("article"),
+      url: normalizedUrl,
+      title: `Tweet by ${tweet.authorName}`,
+      description: tweet.text,
+      source: tweet.authorUrl,
+      publishedAt: "",
+      previewText: createTweetPreview(tweet.text, 180),
+      imageUrl: "",
+      tags,
+      projectIds: [],
+      blocks: tweetBlocks,
+      tweetHtml: tweet.html, // Store original embed HTML for rich display
+      fetchedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      lastOpenedAt: new Date().toISOString(),
+      highlights: [],
+    };
+
+    state.bookmarks.unshift(bookmark);
+    state.selectedArticleId = bookmark.id;
+    state.libraryTagFilters = [];
+    state.libraryProjectFilters = [];
+    touchBookmarks(state);
+    persistState(state);
+    dom.addTweetForm?.reset();
+    closeAddModal();
+    switchTab("library", false);
+    renderLibraryFilters(state, dom);
+    renderArticleList(state, dom);
+    showTransientStatus(`Saved tweet by ${tweet.authorName}.`);
+  } catch (error) {
+    showTransientStatus(
+      error.message || "Could not fetch that tweet. Try again.",
+    );
+  } finally {
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.innerHTML =
+        '<i class="fa-brands fa-x-twitter" aria-hidden="true"></i> Save tweet';
+    }
+  }
 }
 
 function openProjectsCreateFromContextMenu() {
@@ -3587,6 +3772,24 @@ function toggleInputTag(tag) {
 
   syncPendingAutoTagSelectionFromInput();
   renderArticleTaxonomyHelpers(state, dom);
+}
+
+function toggleTweetTag(tag) {
+  const normalized = normalizeTag(tag || "");
+
+  if (!normalized || !dom.addTweetTags) {
+    return;
+  }
+
+  const currentTags = new Set(splitCommaSeparated(dom.addTweetTags.value));
+
+  if (currentTags.has(normalized)) {
+    removeTokenValue(dom.addTweetTags, normalized);
+  } else {
+    appendTokenValue(dom.addTweetTags, normalized);
+  }
+
+  renderTweetTagSuggestions();
 }
 
 function syncPendingAutoTagSelectionFromInput() {
@@ -5428,6 +5631,161 @@ function saveRssReaderArticleToLibrary() {
 
   renderAndSyncUrl();
   showTransientStatus(`Saved \"${bookmark.title}\" to the library.`);
+}
+
+// Reader edit mode
+let readerEditOriginalHtml = null;
+
+function handleReaderEditKeydown(event) {
+  // Escape cancels
+  if (event.key === "Escape") {
+    event.preventDefault();
+    cancelReaderEditMode();
+    return;
+  }
+  // Cmd/Ctrl+Enter saves
+  if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+    event.preventDefault();
+    saveReaderEditedContent();
+    return;
+  }
+}
+
+function enterReaderEditMode() {
+  const article = getActiveReaderArticle();
+  if (!article || article.isTransientRss) return;
+
+  // Store original HTML for cancel
+  readerEditOriginalHtml = dom.readerSurface.innerHTML;
+
+  // Make content editable
+  dom.readerSurface.contentEditable = "true";
+  dom.readerSurface.classList.add("reader-surface--editing");
+
+  // Toggle buttons
+  const editBtn = dom.readerMeta.querySelector("[data-reader-edit-content]");
+  const saveBtn = dom.readerMeta.querySelector("[data-reader-save-content]");
+  const cancelBtn = dom.readerMeta.querySelector("[data-reader-cancel-edit]");
+
+  if (editBtn) editBtn.hidden = true;
+  if (saveBtn) saveBtn.hidden = false;
+  if (cancelBtn) cancelBtn.hidden = false;
+
+  // Hide other action buttons while editing
+  const tagBtn = dom.readerMeta.querySelector("[data-reader-open-tags]");
+  const projectBtn = dom.readerMeta.querySelector(
+    "[data-reader-open-projects]",
+  );
+  if (tagBtn) tagBtn.closest(".reader-meta-action-wrap").hidden = true;
+  if (projectBtn) projectBtn.closest(".reader-meta-action-wrap").hidden = true;
+
+  // Add keyboard shortcuts
+  dom.readerSurface.addEventListener("keydown", handleReaderEditKeydown);
+
+  // Focus the content
+  dom.readerSurface.focus();
+}
+
+function saveReaderEditedContent() {
+  const article = getActiveReaderArticle();
+  if (!article || article.isTransientRss) return;
+
+  // Parse the edited HTML back to blocks
+  const newBlocks = parseEditedHtmlToBlocks(dom.readerSurface);
+
+  // Check if content actually changed
+  const oldText = article.blocks.map((b) => b.text).join("\n\n");
+  const newText = newBlocks.map((b) => b.text).join("\n\n");
+  const contentChanged = oldText !== newText;
+
+  // Update the bookmark
+  const bookmark = state.bookmarks.find((b) => b.id === article.id);
+  if (bookmark) {
+    bookmark.blocks = newBlocks;
+
+    // Clear highlights if content changed significantly (offsets won't match)
+    if (contentChanged && bookmark.highlights?.length > 0) {
+      bookmark.highlights = [];
+      showTransientStatus(
+        "Content updated. Highlights cleared due to changes.",
+      );
+    } else {
+      showTransientStatus("Content updated.");
+    }
+
+    // Update preview text
+    bookmark.previewText = previewText(flattenBlocks(newBlocks), 180);
+
+    touchBookmarks(state);
+    persistState(state);
+  }
+
+  exitReaderEditMode();
+  renderReader(state, dom, getActiveReaderArticle());
+}
+
+function cancelReaderEditMode() {
+  // Restore original HTML
+  if (readerEditOriginalHtml !== null) {
+    dom.readerSurface.innerHTML = readerEditOriginalHtml;
+  }
+  exitReaderEditMode();
+}
+
+function exitReaderEditMode() {
+  readerEditOriginalHtml = null;
+
+  // Remove keyboard shortcuts
+  dom.readerSurface.removeEventListener("keydown", handleReaderEditKeydown);
+
+  // Exit contenteditable
+  dom.readerSurface.contentEditable = "false";
+  dom.readerSurface.classList.remove("reader-surface--editing");
+
+  // Toggle buttons back
+  const editBtn = dom.readerMeta.querySelector("[data-reader-edit-content]");
+  const saveBtn = dom.readerMeta.querySelector("[data-reader-save-content]");
+  const cancelBtn = dom.readerMeta.querySelector("[data-reader-cancel-edit]");
+
+  if (editBtn) editBtn.hidden = false;
+  if (saveBtn) saveBtn.hidden = true;
+  if (cancelBtn) cancelBtn.hidden = true;
+
+  // Show other action buttons
+  const tagBtn = dom.readerMeta.querySelector("[data-reader-open-tags]");
+  const projectBtn = dom.readerMeta.querySelector(
+    "[data-reader-open-projects]",
+  );
+  if (tagBtn) tagBtn.closest(".reader-meta-action-wrap").hidden = false;
+  if (projectBtn) projectBtn.closest(".reader-meta-action-wrap").hidden = false;
+}
+
+function parseEditedHtmlToBlocks(container) {
+  const blocks = [];
+
+  // Walk through child elements
+  for (const child of container.children) {
+    const tagName = child.tagName.toLowerCase();
+    const text = child.textContent?.trim() || "";
+
+    if (!text) continue;
+
+    if (tagName === "h1" || tagName === "h2" || tagName === "h3") {
+      blocks.push({ type: "heading", text });
+    } else {
+      blocks.push({ type: "paragraph", text });
+    }
+  }
+
+  // If no block elements found, treat entire content as one paragraph
+  if (blocks.length === 0) {
+    const text = container.textContent?.trim() || "";
+    if (text) {
+      blocks.push({ type: "paragraph", text });
+    }
+  }
+
+  return blocks;
 }
 
 function setRssRefreshButtonRefreshing(isRefreshing, current = 0, total = 0) {

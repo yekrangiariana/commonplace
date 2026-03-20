@@ -137,4 +137,9 @@ export const dom = {
   addProjectForm: document.querySelector("#add-project-form"),
   addProjectName: document.querySelector("#add-project-name"),
   addProjectDescription: document.querySelector("#add-project-description"),
+  // Tweet form
+  addTweetForm: document.querySelector("#add-tweet-form"),
+  addTweetUrl: document.querySelector("#add-tweet-url"),
+  addTweetTags: document.querySelector("#add-tweet-tags"),
+  addTweetAvailableTags: document.querySelector("#add-tweet-available-tags"),
 };

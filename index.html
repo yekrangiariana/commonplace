@@ -1424,6 +1424,10 @@
               <i class="fa-solid fa-folder" aria-hidden="true"></i>
               <span>Project</span>
             </button>
+            <button type="button" class="add-dialog-tab" data-add-tab="tweet">
+              <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
+              <span>Tweet</span>
+            </button>
           </nav>
           <button
             type="button"
@@ -1564,6 +1568,42 @@
               </div>
             </form>
           </div>
+
+          <!-- Tweet Panel -->
+          <div class="add-dialog-panel" data-add-panel="tweet">
+            <form id="add-tweet-form" class="stack-form">
+              <label class="field-group">
+                <span>Tweet URL</span>
+                <input
+                  id="add-tweet-url"
+                  name="url"
+                  type="url"
+                  placeholder="https://x.com/user/status/123456"
+                  required
+                />
+              </label>
+              <label class="field-group">
+                <span>Tags</span>
+                <input
+                  id="add-tweet-tags"
+                  name="tags"
+                  type="text"
+                  placeholder="research, quote, thread"
+                />
+              </label>
+              <div
+                id="add-tweet-available-tags"
+                class="field-suggestions"
+                aria-live="polite"
+              ></div>
+              <div class="button-row">
+                <button type="submit" class="button button--primary">
+                  <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
+                  Save tweet
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
 
         <div class="add-dialog-indicators" id="add-dialog-indicators">
@@ -1584,6 +1624,12 @@
             class="add-dialog-indicator"
             data-add-indicator="project"
             aria-label="Project"
+          ></button>
+          <button
+            type="button"
+            class="add-dialog-indicator"
+            data-add-indicator="tweet"
+            aria-label="Tweet"
           ></button>
         </div>
 
