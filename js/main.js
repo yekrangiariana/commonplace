@@ -3579,7 +3579,7 @@ async function handleTweetSubmit(event) {
 
   try {
     showTransientStatus("Fetching tweet...");
-    const tweet = await fetchTweet(normalizedUrl, {
+    const tweet = await fetchTweet(runtimeConfig, normalizedUrl, {
       timeoutMs: runtimeConfig.requestTimeoutMs,
     });
 

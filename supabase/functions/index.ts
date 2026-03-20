@@ -9,6 +9,7 @@ const corsHeaders = {
 
 type FetchRequest = {
   url?: string;
+  type?: "article" | "tweet";
 };
 
 const FORWARDED_HEADERS = {
@@ -36,36 +37,13 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Missing url" }, 400);
     }
 
-    const targetUrl = normalizeUrl(rawUrl);
-    ensureSafeHttpUrl(targetUrl);
-
-    const upstream = await fetch(targetUrl, {
-      method: "GET",
-      redirect: "follow",
-      headers: FORWARDED_HEADERS,
-    });
-
-    const contentType = upstream.headers.get("content-type") || "";
-    const html = await upstream.text();
-
-    if (!upstream.ok) {
-      return json(
-        {
-          error: `Upstream fetch failed with ${upstream.status}`,
-          upstreamStatus: upstream.status,
-          contentType,
-          preview: html.slice(0, 600),
-        },
-        502,
-      );
+    // Route based on request type
+    if (body.type === "tweet") {
+      return await handleTweetFetch(rawUrl);
     }
 
-    return json({
-      finalUrl: upstream.url || targetUrl,
-      contentType,
-      title: extractTitle(html),
-      html,
-    });
+    // Default: article fetch
+    return await handleArticleFetch(rawUrl);
   } catch (error) {
     return json(
       {
@@ -75,6 +53,106 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
+
+async function handleArticleFetch(rawUrl: string) {
+  const targetUrl = normalizeUrl(rawUrl);
+  ensureSafeHttpUrl(targetUrl);
+
+  const upstream = await fetch(targetUrl, {
+    method: "GET",
+    redirect: "follow",
+    headers: FORWARDED_HEADERS,
+  });
+
+  const contentType = upstream.headers.get("content-type") || "";
+  const html = await upstream.text();
+
+  if (!upstream.ok) {
+    return json(
+      {
+        error: `Upstream fetch failed with ${upstream.status}`,
+        upstreamStatus: upstream.status,
+        contentType,
+        preview: html.slice(0, 600),
+      },
+      502,
+    );
+  }
+
+  return json({
+    finalUrl: upstream.url || targetUrl,
+    contentType,
+    title: extractTitle(html),
+    html,
+  });
+}
+
+async function handleTweetFetch(rawUrl: string) {
+  // Extract username and status ID from URL
+  const { username, statusId } = parseTweetUrl(rawUrl);
+  
+  if (!username || !statusId) {
+    return json({ error: "Invalid tweet URL" }, 400);
+  }
+
+  // Use fxtwitter API - returns full untruncated content
+  const fxUrl = `https://api.fxtwitter.com/${username}/status/${statusId}`;
+  
+  const response = await fetch(fxUrl, {
+    headers: {
+      accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      return json(
+        { error: "Tweet not found. It may have been deleted or is private." },
+        404,
+      );
+    }
+    return json(
+      { error: `Twitter API error (${response.status})` },
+      response.status,
+    );
+  }
+
+  const data = await response.json();
+  
+  if (!data.tweet) {
+    return json(
+      { error: data.message || "Tweet not found" },
+      404,
+    );
+  }
+
+  const tweet = data.tweet;
+  
+  return json({
+    url: tweet.url || `https://twitter.com/${username}/status/${statusId}`,
+    author_name: tweet.author?.name || "Unknown",
+    author_screen_name: tweet.author?.screen_name || username,
+    author_url: tweet.author?.url || `https://twitter.com/${username}`,
+    author_avatar: tweet.author?.avatar_url || "",
+    text: tweet.text || "",
+    created_at: tweet.created_at || "",
+    likes: tweet.likes || 0,
+    retweets: tweet.retweets || 0,
+    replies: tweet.replies || 0,
+    media: tweet.media?.photos || [],
+  });
+}
+
+function parseTweetUrl(url: string): { username: string | null; statusId: string | null } {
+  try {
+    const parsed = new URL(url);
+    const match = parsed.pathname.match(/^\/([^/]+)\/status\/(\d+)/);
+    if (!match) return { username: null, statusId: null };
+    return { username: match[1], statusId: match[2] };
+  } catch {
+    return { username: null, statusId: null };
+  }
+}
 
 function normalizeUrl(value: string): string {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;

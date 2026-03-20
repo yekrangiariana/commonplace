@@ -1,9 +1,7 @@
 /**
  * Fetches tweet data using Twitter's oEmbed API.
- * This is CORS-friendly and does not require authentication.
+ * Uses the fetch service proxy to avoid CORS issues.
  */
-
-const TWITTER_OEMBED_ENDPOINT = "https://publish.twitter.com/oembed";
 
 /**
  * Checks if a URL is a Twitter/X post URL.
@@ -55,49 +53,68 @@ export function normalizeTweetUrl(url) {
 }
 
 /**
- * Fetches tweet data from Twitter's oEmbed API.
+ * Fetches tweet data via the edge function proxy (uses fxtwitter API).
+ * @param {Object} runtimeConfig - The runtime configuration.
  * @param {string} tweetUrl - The tweet URL to fetch.
  * @param {Object} options - Fetch options.
  * @param {number} [options.timeoutMs=10000] - Request timeout in milliseconds.
  * @returns {Promise<Object>} The tweet data.
  */
-export async function fetchTweet(tweetUrl, { timeoutMs = 10000 } = {}) {
+export async function fetchTweet(
+  runtimeConfig,
+  tweetUrl,
+  { timeoutMs = 10000 } = {},
+) {
+  if (!runtimeConfig.fetchServiceUrl) {
+    throw new Error(
+      "Fetch service is not configured. Add app-settings.json and set fetchServiceUrl.",
+    );
+  }
+
   const normalizedUrl = normalizeTweetUrl(tweetUrl);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const oembedUrl = new URL(TWITTER_OEMBED_ENDPOINT);
-    oembedUrl.searchParams.set("url", normalizedUrl);
-    oembedUrl.searchParams.set("omit_script", "true"); // Don't include Twitter's JS widget
-    oembedUrl.searchParams.set("dnt", "true"); // Do Not Track
+    const headers = {
+      "Content-Type": "application/json",
+    };
 
-    const response = await fetch(oembedUrl.toString(), {
+    if (runtimeConfig.supabaseAnonKey) {
+      headers.apikey = runtimeConfig.supabaseAnonKey;
+      headers.Authorization = `Bearer ${runtimeConfig.supabaseAnonKey}`;
+    }
+
+    const response = await fetch(runtimeConfig.fetchServiceUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ url: normalizedUrl, type: "tweet" }),
       signal: controller.signal,
     });
 
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error(
-          "Tweet not found. It may have been deleted or is private.",
-        );
-      }
-      throw new Error(`Failed to fetch tweet (${response.status}).`);
-    }
-
     const data = await response.json();
 
-    // Parse the tweet content from the HTML
-    const { text, segments } = extractTweetContent(data.html);
+    if (!response.ok) {
+      throw new Error(
+        data.error || `Failed to fetch tweet (${response.status}).`,
+      );
+    }
+
+    // fxtwitter returns text directly - no HTML parsing needed
+    const text = data.text || "";
 
     return {
-      url: normalizedUrl,
+      url: data.url || normalizedUrl,
       authorName: data.author_name || "Unknown",
+      authorScreenName: data.author_screen_name || "",
       authorUrl: data.author_url || "",
+      authorAvatar: data.author_avatar || "",
       text,
-      segments,
-      html: data.html,
+      segments: [{ text }], // Simple single segment
+      createdAt: data.created_at || "",
+      likes: data.likes || 0,
+      retweets: data.retweets || 0,
     };
   } catch (error) {
     if (error.name === "AbortError") {
@@ -107,122 +124,6 @@ export async function fetchTweet(tweetUrl, { timeoutMs = 10000 } = {}) {
   } finally {
     clearTimeout(timeout);
   }
-}
-
-/**
- * Extracts the text content and links from Twitter's oEmbed HTML.
- * @param {string} html - The oEmbed HTML.
- * @returns {{ text: string, segments: Array<{ text: string, href?: string }> }}
- */
-function extractTweetContent(html) {
-  if (!html) return { text: "", segments: [] };
-
-  // Create a temporary element to parse the HTML
-  const temp = document.createElement("div");
-  temp.innerHTML = html;
-
-  // The tweet content is in <p> tags within the blockquote
-  const blockquote = temp.querySelector("blockquote");
-  if (!blockquote) return { text: "", segments: [] };
-
-  // Get all paragraph elements (tweets can have multiple)
-  const paragraphs = blockquote.querySelectorAll("p");
-  if (paragraphs.length === 0) return { text: "", segments: [] };
-
-  const allSegments = [];
-  let fullText = "";
-
-  paragraphs.forEach((paragraph, pIndex) => {
-    // Add paragraph separator for multiple paragraphs
-    if (pIndex > 0) {
-      allSegments.push({ text: "\n\n" });
-      fullText += "\n\n";
-    }
-
-    // Walk through child nodes to preserve links
-    paragraph.childNodes.forEach((node) => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        const text = node.textContent || "";
-        if (text) {
-          allSegments.push({ text });
-          fullText += text;
-        }
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node;
-        if (element.tagName === "A") {
-          const href = element.getAttribute("href") || "";
-          const text = element.textContent || "";
-          if (text) {
-            allSegments.push({ text, href });
-            fullText += text;
-          }
-        } else if (element.tagName === "BR") {
-          allSegments.push({ text: "\n" });
-          fullText += "\n";
-        } else {
-          // For other elements, just get text content
-          const text = element.textContent || "";
-          if (text) {
-            allSegments.push({ text });
-            fullText += text;
-          }
-        }
-      }
-    });
-  });
-
-  return trimSegments(fullText, allSegments);
-}
-
-/**
- * Trims leading/trailing whitespace from segments to match trimmed text.
- * Ensures segments concatenate exactly to the text for highlight positioning.
- */
-function trimSegments(fullText, segments) {
-  const trimmedText = fullText.trim();
-  if (!trimmedText || segments.length === 0) {
-    return { text: trimmedText, segments: [] };
-  }
-
-  // Find how much was trimmed from start and end
-  const startTrim = fullText.length - fullText.trimStart().length;
-  const endTrim = fullText.length - fullText.trimEnd().length;
-
-  // Rebuild segments, skipping trimmed characters
-  let charIndex = 0;
-  const trimmedSegments = [];
-
-  for (const segment of segments) {
-    const segStart = charIndex;
-    const segEnd = charIndex + segment.text.length;
-    charIndex = segEnd;
-
-    // Skip segments entirely before trim start
-    if (segEnd <= startTrim) continue;
-
-    // Skip segments entirely after trim end
-    if (segStart >= fullText.length - endTrim) continue;
-
-    // Calculate which part of this segment to keep
-    const keepStart = Math.max(0, startTrim - segStart);
-    const keepEnd = Math.min(
-      segment.text.length,
-      fullText.length - endTrim - segStart,
-    );
-
-    if (keepEnd > keepStart) {
-      const keptText = segment.text.slice(keepStart, keepEnd);
-      if (keptText) {
-        trimmedSegments.push(
-          segment.href
-            ? { text: keptText, href: segment.href }
-            : { text: keptText },
-        );
-      }
-    }
-  }
-
-  return { text: trimmedText, segments: trimmedSegments };
 }
 
 /**
