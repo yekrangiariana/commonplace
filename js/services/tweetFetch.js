@@ -79,7 +79,9 @@ export async function fetchTweet(tweetUrl, { timeoutMs = 10000 } = {}) {
 
     if (!response.ok) {
       if (response.status === 404) {
-        throw new Error("Tweet not found. It may have been deleted or is private.");
+        throw new Error(
+          "Tweet not found. It may have been deleted or is private.",
+        );
       }
       throw new Error(`Failed to fetch tweet (${response.status}).`);
     }
@@ -203,13 +205,18 @@ function trimSegments(fullText, segments) {
 
     // Calculate which part of this segment to keep
     const keepStart = Math.max(0, startTrim - segStart);
-    const keepEnd = Math.min(segment.text.length, fullText.length - endTrim - segStart);
+    const keepEnd = Math.min(
+      segment.text.length,
+      fullText.length - endTrim - segStart,
+    );
 
     if (keepEnd > keepStart) {
       const keptText = segment.text.slice(keepStart, keepEnd);
       if (keptText) {
         trimmedSegments.push(
-          segment.href ? { text: keptText, href: segment.href } : { text: keptText }
+          segment.href
+            ? { text: keptText, href: segment.href }
+            : { text: keptText },
         );
       }
     }
