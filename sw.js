@@ -1,4 +1,4 @@
-const CACHE_NAME = "commonplace-v7";
+const CACHE_NAME = "commonplace-v9";
 
 const PRECACHE_URLS = [
   "./index.html",
@@ -61,7 +61,7 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Fetch — network-first for navigations and API calls, cache-first for assets
+// Fetch — stale-while-revalidate for local assets
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
@@ -71,13 +71,36 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Network-first for external/API requests
+  // Skip external/API requests (let browser handle normally)
   if (!request.url.startsWith(self.location.origin)) {
     return;
   }
 
-  // Cache-first for local assets
+  // Always fetch app-settings.json fresh (user config, never cached)
+  if (request.url.endsWith("app-settings.json")) {
+    return;
+  }
+
+  // Stale-while-revalidate for local assets:
+  // 1. Return cached version immediately (fast!)
+  // 2. Fetch fresh version in background
+  // 3. Update cache for next load
   event.respondWith(
-    caches.match(request).then((cached) => cached || fetch(request)),
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.match(request).then((cachedResponse) => {
+        const fetchPromise = fetch(request)
+          .then((networkResponse) => {
+            // Only cache successful responses
+            if (networkResponse.ok) {
+              cache.put(request, networkResponse.clone());
+            }
+            return networkResponse;
+          })
+          .catch(() => cachedResponse); // Offline fallback
+
+        // Return cached immediately, or wait for network if not cached
+        return cachedResponse || fetchPromise;
+      }),
+    ),
   );
 });
