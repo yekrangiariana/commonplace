@@ -158,23 +158,48 @@ function dismissSplash() {
   const splash = document.getElementById("splash-screen");
   if (!splash) return;
   splash.classList.add("splash-hidden");
-  splash.addEventListener("transitionend", () => splash.remove(), {
-    once: true,
-  });
+  // Remove after transition, with fallback timeout in case transitionend doesn't fire
+  const removeTimeout = setTimeout(() => splash.remove(), 1000);
+  splash.addEventListener(
+    "transitionend",
+    () => {
+      clearTimeout(removeTimeout);
+      splash.remove();
+    },
+    { once: true },
+  );
 }
 
 async function init() {
   // Safety: always dismiss splash even if init fails
   const splashTimeout = setTimeout(dismissSplash, 6000);
   let splashDone = Promise.resolve();
+  let didClearData = false;
+
   try {
-    await hydrateRuntimeConfig(runtimeConfig);
-    await hydrateState(state);
-    if (state.splashEnabled !== false) {
-      splashDone = new Promise((r) => setTimeout(r, 1000));
-    } else {
+    // Handle pending data clear FIRST, before any DB connections are opened
+    if (window.localStorage.getItem("pendingClearAllData") === "1") {
+      window.localStorage.removeItem("pendingClearAllData");
+      didClearData = true;
+      await clearAllPersistedData();
+      // Dismiss splash immediately for instant feedback
       dismissSplash();
     }
+
+    await hydrateRuntimeConfig(runtimeConfig);
+
+    // Only hydrate state from DB if we didn't just clear it
+    if (!didClearData) {
+      await hydrateState(state);
+    }
+
+    // Only show splash delay if not clearing data and splash is enabled
+    if (!didClearData && state.splashEnabled !== false) {
+      splashDone = new Promise((r) => setTimeout(r, 1000));
+    } else if (!didClearData) {
+      dismissSplash();
+    }
+
     if (state.activeTab === "add") {
       state.activeTab = "library";
     }
@@ -226,14 +251,28 @@ async function init() {
       onRefresh: () => refreshActiveRssFeed({ silent: true, source: "auto" }),
     });
     rssAutoRefreshController.start();
-    await refreshMarkdownExportBindingStatus();
+
+    // Render UI first, before non-critical async operations
     renderAndSyncUrl();
     consumeShareTarget();
+
+    // Non-critical: check markdown export status (with timeout protection)
+    Promise.race([
+      refreshMarkdownExportBindingStatus(),
+      new Promise((resolve) => setTimeout(resolve, 3000)),
+    ]).catch(() => {});
+
     await splashDone;
     clearTimeout(splashTimeout);
     dismissSplash();
   } catch (err) {
     console.error("Init error:", err);
+    // Attempt to render even on error so UI is visible
+    try {
+      renderAndSyncUrl();
+    } catch {
+      // Last resort: just show the library tab
+    }
     clearTimeout(splashTimeout);
     dismissSplash();
   }
@@ -855,8 +894,9 @@ async function handleDeleteAllData() {
     return;
   }
 
-  await clearAllPersistedData();
-  window.location.hash = "#library";
+  // Set flag for deletion on next page load (avoids blocked database issues)
+  window.localStorage.setItem("pendingClearAllData", "1");
+  window.location.href = window.location.pathname + "#library";
   window.location.reload();
 }
 

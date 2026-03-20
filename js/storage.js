@@ -64,12 +64,22 @@ export async function clearAllPersistedData() {
     return;
   }
 
-  await new Promise((resolve) => {
-    const request = window.indexedDB.deleteDatabase(IDB_DB_NAME);
-    request.onsuccess = () => resolve();
-    request.onerror = () => resolve();
-    request.onblocked = () => resolve();
-  });
+  // Delete database with timeout protection
+  await Promise.race([
+    new Promise((resolve) => {
+      const request = window.indexedDB.deleteDatabase(IDB_DB_NAME);
+      request.onsuccess = () => resolve();
+      request.onerror = () => resolve();
+      request.onblocked = () => {
+        // Database is blocked by another connection
+        // This shouldn't happen if called before any connections are opened
+        console.warn("Database delete blocked - forcing resolve");
+        resolve();
+      };
+    }),
+    // Timeout after 3 seconds to prevent hanging
+    new Promise((resolve) => setTimeout(resolve, 3000)),
+  ]);
 }
 
 export async function estimatePersistedStorageUsage() {
@@ -1369,8 +1379,19 @@ export async function putRssReaderCache(slug, article) {
     return;
   }
 
+  // Guard: ensure the store exists
+  if (!db.objectStoreNames.contains(IDB_RSS_READER_CACHE_STORE)) {
+    return;
+  }
+
   return new Promise((resolve) => {
-    const tx = db.transaction(IDB_RSS_READER_CACHE_STORE, "readwrite");
+    let tx;
+    try {
+      tx = db.transaction(IDB_RSS_READER_CACHE_STORE, "readwrite");
+    } catch {
+      resolve();
+      return;
+    }
 
     tx.objectStore(IDB_RSS_READER_CACHE_STORE).put({ slug, article });
     tx.oncomplete = () => resolve();
@@ -1389,8 +1410,19 @@ export async function getRssReaderCache(slug) {
     return null;
   }
 
+  // Guard: ensure the store exists
+  if (!db.objectStoreNames.contains(IDB_RSS_READER_CACHE_STORE)) {
+    return null;
+  }
+
   return new Promise((resolve) => {
-    const tx = db.transaction(IDB_RSS_READER_CACHE_STORE, "readonly");
+    let tx;
+    try {
+      tx = db.transaction(IDB_RSS_READER_CACHE_STORE, "readonly");
+    } catch {
+      resolve(null);
+      return;
+    }
     const request = tx.objectStore(IDB_RSS_READER_CACHE_STORE).get(slug);
 
     request.onsuccess = () => resolve(request.result?.article ?? null);
@@ -1409,8 +1441,19 @@ export async function deleteRssReaderCache(slug) {
     return;
   }
 
+  // Guard: ensure the store exists
+  if (!db.objectStoreNames.contains(IDB_RSS_READER_CACHE_STORE)) {
+    return;
+  }
+
   return new Promise((resolve) => {
-    const tx = db.transaction(IDB_RSS_READER_CACHE_STORE, "readwrite");
+    let tx;
+    try {
+      tx = db.transaction(IDB_RSS_READER_CACHE_STORE, "readwrite");
+    } catch {
+      resolve();
+      return;
+    }
 
     tx.objectStore(IDB_RSS_READER_CACHE_STORE).delete(slug);
     tx.oncomplete = () => resolve();
@@ -1440,6 +1483,11 @@ export async function pruneRssReaderCacheByRetention(state) {
     return 0;
   }
 
+  // Guard: ensure the store exists before trying to access it
+  if (!db.objectStoreNames.contains(IDB_RSS_READER_CACHE_STORE)) {
+    return 0;
+  }
+
   const cutoffMs = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
   const bookmarkedUrls = new Set(
     (state.bookmarks || [])
@@ -1448,7 +1496,13 @@ export async function pruneRssReaderCacheByRetention(state) {
   );
 
   return new Promise((resolve) => {
-    const tx = db.transaction(IDB_RSS_READER_CACHE_STORE, "readwrite");
+    let tx;
+    try {
+      tx = db.transaction(IDB_RSS_READER_CACHE_STORE, "readwrite");
+    } catch {
+      resolve(0);
+      return;
+    }
     const store = tx.objectStore(IDB_RSS_READER_CACHE_STORE);
     const request = store.openCursor();
     let removedCount = 0;
