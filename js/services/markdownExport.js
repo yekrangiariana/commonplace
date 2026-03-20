@@ -6,7 +6,7 @@ const PROJECTS_DIR_NAME = "projects";
 const MANIFEST_FILE_NAME = ".bookmark-manager-export-index.json";
 const MANIFEST_VERSION = 1;
 const EXPORT_DB_NAME = "bookmark-manager-db";
-const EXPORT_DB_VERSION = 5;  // Must match IDB_DB_VERSION in storage.js
+const EXPORT_DB_VERSION = 5; // Must match IDB_DB_VERSION in storage.js
 const EXPORT_KV_STORE = "kv";
 const EXPORT_HANDLE_KEY = "markdownExportRootHandle";
 
