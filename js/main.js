@@ -3972,8 +3972,7 @@ function getRssRefreshButtonTitle() {
 }
 
 function handleDeleteFeed(feedId) {
-  const removedFeed =
-    state.rssFeeds.find((feed) => feed.id === feedId) || null;
+  const removedFeed = state.rssFeeds.find((feed) => feed.id === feedId) || null;
 
   if (
     !window.confirm(
@@ -4401,7 +4400,9 @@ async function refreshAllRssFeeds(options = {}) {
       rssAutoRefreshController?.sync();
 
       if (!silent && totalNewItems > 0) {
-        showTransientStatus(`Found ${totalNewItems} new item${totalNewItems === 1 ? "" : "s"}.`);
+        showTransientStatus(
+          `Found ${totalNewItems} new item${totalNewItems === 1 ? "" : "s"}.`,
+        );
       }
     }
 
@@ -5368,8 +5369,7 @@ function setRssRefreshButtonRefreshing(isRefreshing, current = 0, total = 0) {
     btn.disabled = true;
     btn.title = getRssRefreshButtonTitle();
     const progressText = total > 0 ? ` ${current}/${total}` : "";
-    btn.innerHTML =
-      `<i class="fa-solid fa-rotate rss-icon-spinning" aria-hidden="true"></i> Refreshing${progressText}`;
+    btn.innerHTML = `<i class="fa-solid fa-rotate rss-icon-spinning" aria-hidden="true"></i> Refreshing${progressText}`;
     return;
   }
 

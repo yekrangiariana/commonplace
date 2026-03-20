@@ -178,7 +178,9 @@ function renderFeedList(state, dom) {
     <div class="settings-feed-list">
       ${state.rssFeeds
         .slice()
-        .sort((left, right) => (left.title || left.url).localeCompare(right.title || right.url))
+        .sort((left, right) =>
+          (left.title || left.url).localeCompare(right.title || right.url),
+        )
         .map((feed) => {
           const itemCount = Array.isArray(feed.items) ? feed.items.length : 0;
           const lastFetched = formatRelativeTime(feed.lastFetchedAt);
