@@ -17,6 +17,9 @@ export async function hydrateRuntimeConfig(runtimeConfig) {
       settings.appVersion || runtimeConfig.appVersion
     ).trim();
     runtimeConfig.appDescription = (settings.appDescription || "").trim();
+    runtimeConfig.suggestedFeeds = Array.isArray(settings.suggestedFeeds)
+      ? settings.suggestedFeeds
+      : [];
   } catch {
     // Optional settings file. Missing file keeps defaults.
   }

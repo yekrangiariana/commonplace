@@ -187,6 +187,7 @@ async function init() {
     }
 
     await hydrateRuntimeConfig(runtimeConfig);
+    renderFeedSuggestions();
 
     // Only hydrate state from DB if we didn't just clear it
     if (!didClearData) {
@@ -227,7 +228,7 @@ async function init() {
       addRssItemToLibrary: handleRssAddItem,
       markRssItemRead: markRssItemAsReadFromContextMenu,
       openRssSubscribe: openRssSubscribePopover,
-      refreshRssActive: refreshActiveRssFeed,
+      refreshRssActive: refreshAllRssFeeds,
       scrollReaderToTop,
     });
     readerTtsPlayer = initReaderTtsPlayer({
@@ -240,15 +241,14 @@ async function init() {
     rssAutoRefreshController = createRssAutoRefreshController({
       getIntervalMinutes: () => state.rssAutoRefreshMinutes,
       getLastFetchedAtMs: () => {
-        const activeFeed = state.rssFeeds.find(
-          (feed) => feed.id === state.rssActiveFeedId,
-        );
-        return Date.parse(activeFeed?.lastFetchedAt || "") || 0;
+        // Get the oldest fetch time among all feeds
+        const fetchTimes = state.rssFeeds
+          .map((feed) => Date.parse(feed.lastFetchedAt || "") || 0)
+          .filter((t) => t > 0);
+        return fetchTimes.length > 0 ? Math.min(...fetchTimes) : 0;
       },
-      canRefresh: () =>
-        Boolean(state.rssActiveFeedId) &&
-        state.rssFeeds.some((feed) => feed.id === state.rssActiveFeedId),
-      onRefresh: () => refreshActiveRssFeed({ silent: true, source: "auto" }),
+      canRefresh: () => state.rssFeeds.length > 0,
+      onRefresh: () => refreshAllRssFeeds({ silent: true, source: "auto" }),
     });
     rssAutoRefreshController.start();
 
@@ -391,7 +391,7 @@ function bindEvents() {
     "click",
     closeRssSubscribePopover,
   );
-  dom.rssRefreshActiveButton?.addEventListener("click", refreshActiveRssFeed);
+  dom.rssRefreshActiveButton?.addEventListener("click", refreshAllRssFeeds);
 
   dom.libraryTagClear.addEventListener("click", () => {
     state.libraryTagFilters = [];
@@ -425,6 +425,10 @@ function bindEvents() {
       setStatus,
       onChanged: () => {
         const didSave = ensureHighlightedRssReaderArticleInLibrary();
+        // If article was already in library (not saved just now), mark bookmarks dirty
+        if (!didSave && state.selectedArticleId) {
+          touchBookmarks(state);
+        }
         persistState(state);
         renderAndSyncUrl();
 
@@ -769,7 +773,7 @@ function bindEvents() {
         const pullDistance = e.touches[0].clientY - startY;
         if (pullDistance > 80 && rssPanel.scrollTop === 0) {
           pulling = false;
-          refreshActiveRssFeed();
+          refreshAllRssFeeds();
         }
       },
       { passive: true },
@@ -1638,6 +1642,16 @@ function handleDocumentClick(event) {
     return;
   }
 
+  const deleteSettingsFeedTrigger = event.target.closest(
+    "[data-delete-settings-feed]",
+  );
+
+  if (deleteSettingsFeedTrigger) {
+    const feedId = deleteSettingsFeedTrigger.dataset.deleteSettingsFeed;
+    handleDeleteFeed(feedId);
+    return;
+  }
+
   const deleteAutoTagRuleTrigger = event.target.closest(
     "[data-delete-autotag-rule]",
   );
@@ -1946,56 +1960,7 @@ function handleDocumentClick(event) {
 
   if (rssRemoveFeedTrigger) {
     const feedId = rssRemoveFeedTrigger.dataset.rssRemoveFeed;
-    const removedFeed =
-      state.rssFeeds.find((feed) => feed.id === feedId) || null;
-
-    if (
-      !window.confirm(
-        `Delete RSS feed \"${removedFeed?.title || removedFeed?.url || "this feed"}\"? This removes the feed and its fetched items from Explore.`,
-      )
-    ) {
-      return;
-    }
-
-    state.rssFeeds = state.rssFeeds.filter((f) => f.id !== feedId);
-    state.rssSelectedFeedIds = (state.rssSelectedFeedIds || []).filter(
-      (id) => id !== feedId,
-    );
-    touchRss(state);
-
-    if (removedFeed?.items?.length) {
-      const activeImageIds = collectActiveRssImageCacheIds();
-
-      for (const item of removedFeed.items) {
-        const cacheId = getRssItemImageCacheId(item);
-
-        if (cacheId && !activeImageIds.has(cacheId)) {
-          evictCachedImage(cacheId).catch(() => {});
-        }
-      }
-    }
-
-    const hasFolder = state.rssFeeds.some(
-      (feed) => normalizeRssFolderName(feed.folder) === state.rssFolderFilter,
-    );
-
-    if (
-      state.rssFolderFilter &&
-      state.rssFolderFilter !== "__today__" &&
-      !hasFolder
-    ) {
-      state.rssFolderFilter = "";
-    }
-
-    const visibleFeeds = getVisibleRssFeeds();
-
-    if (!visibleFeeds.some((feed) => feed.id === state.rssActiveFeedId)) {
-      state.rssActiveFeedId = visibleFeeds[0]?.id || null;
-    }
-
-    persistState(state);
-    renderRssPanel();
-    rssAutoRefreshController?.sync();
+    handleDeleteFeed(feedId);
     return;
   }
 
@@ -2495,6 +2460,12 @@ function renderReaderRssContext(activeArticle) {
     return;
   }
 
+  // Restore rssReaderContext from bookmark's _rssOrigin if not already set
+  if (!rssReaderContext && activeArticle?._rssOrigin) {
+    rssReaderContext = activeArticle._rssOrigin;
+    readerSideTab = "next";
+  }
+
   dom.readerSurface.querySelector(".reader-rss-next-footer")?.remove();
 
   const setActiveReaderSideTab = (tab) => {
@@ -2746,6 +2717,10 @@ function ensureHighlightedRssReaderArticleInLibrary() {
       ]),
     ];
     existing.lastOpenedAt = new Date().toISOString();
+    // Store RSS origin so "Next in Feed" survives refresh
+    if (rssReaderContext && !existing._rssOrigin) {
+      existing._rssOrigin = { ...rssReaderContext };
+    }
     touchBookmarks(state);
     state.selectedArticleId = existing.id;
     state.rssReaderArticle = null;
@@ -2760,6 +2735,10 @@ function ensureHighlightedRssReaderArticleInLibrary() {
   bookmark.highlights = Array.isArray(article.highlights)
     ? article.highlights.slice()
     : [];
+  // Store RSS origin so "Next in Feed" survives refresh
+  if (rssReaderContext) {
+    bookmark._rssOrigin = { ...rssReaderContext };
+  }
 
   state.bookmarks.unshift(bookmark);
   state.selectedArticleId = bookmark.id;
@@ -3349,6 +3328,35 @@ function closeAddModal() {
   document.body.classList.remove("add-dialog-open");
 }
 
+function renderFeedSuggestions() {
+  const feeds = runtimeConfig.suggestedFeeds || [];
+  if (feeds.length === 0) {
+    if (dom.rssFeedSuggestions) dom.rssFeedSuggestions.innerHTML = "";
+    if (dom.addFeedSuggestions) dom.addFeedSuggestions.innerHTML = "";
+    return;
+  }
+
+  // Explore page popover uses data-rss-suggest
+  if (dom.rssFeedSuggestions) {
+    dom.rssFeedSuggestions.innerHTML = feeds
+      .map(
+        (f) =>
+          `<button type="button" class="chip chip--helper" data-rss-suggest="${escapeHtml(f.url)}">${escapeHtml(f.name)}</button>`,
+      )
+      .join("");
+  }
+
+  // Add dialog uses data-add-feed-suggest
+  if (dom.addFeedSuggestions) {
+    dom.addFeedSuggestions.innerHTML = feeds
+      .map(
+        (f) =>
+          `<button type="button" class="chip chip--helper" data-add-feed-suggest="${escapeHtml(f.url)}">${escapeHtml(f.name)}</button>`,
+      )
+      .join("");
+  }
+}
+
 function renderAddFeedFolderSuggestions() {
   if (!dom.addFeedFolderSuggestions) return;
 
@@ -3419,7 +3427,7 @@ async function handleAddFeedSubmit(event) {
     dom.addFeedForm?.reset();
     closeAddModal();
     showTransientStatus(`Subscribed to "${feed.title}".`);
-    renderRssPanel();
+    switchTab("rss");
     rssAutoRefreshController?.sync();
   } catch (error) {
     showTransientStatus(error.message || "Could not load feed.");
@@ -3960,7 +3968,60 @@ function closeReaderPopovers() {
 // ─── RSS ─────────────────────────────────────────────────────────────────────
 
 function getRssRefreshButtonTitle() {
-  return "Fetch newest items from active feed";
+  return "Refresh all feeds";
+}
+
+function handleDeleteFeed(feedId) {
+  const removedFeed =
+    state.rssFeeds.find((feed) => feed.id === feedId) || null;
+
+  if (
+    !window.confirm(
+      `Delete RSS feed "${removedFeed?.title || removedFeed?.url || "this feed"}"? This removes the feed and its fetched items from Explore.`,
+    )
+  ) {
+    return;
+  }
+
+  state.rssFeeds = state.rssFeeds.filter((f) => f.id !== feedId);
+  state.rssSelectedFeedIds = (state.rssSelectedFeedIds || []).filter(
+    (id) => id !== feedId,
+  );
+  touchRss(state);
+
+  if (removedFeed?.items?.length) {
+    const activeImageIds = collectActiveRssImageCacheIds();
+
+    for (const item of removedFeed.items) {
+      const cacheId = getRssItemImageCacheId(item);
+
+      if (cacheId && !activeImageIds.has(cacheId)) {
+        evictCachedImage(cacheId).catch(() => {});
+      }
+    }
+  }
+
+  const hasFolder = state.rssFeeds.some(
+    (feed) => normalizeRssFolderName(feed.folder) === state.rssFolderFilter,
+  );
+
+  if (
+    state.rssFolderFilter &&
+    state.rssFolderFilter !== "__today__" &&
+    !hasFolder
+  ) {
+    state.rssFolderFilter = "";
+  }
+
+  const visibleFeeds = getVisibleRssFeeds();
+
+  if (!visibleFeeds.some((feed) => feed.id === state.rssActiveFeedId)) {
+    state.rssActiveFeedId = visibleFeeds[0]?.id || null;
+  }
+
+  persistState(state);
+  renderAndSyncUrl();
+  rssAutoRefreshController?.sync();
 }
 
 function renderRssPanel() {
@@ -4261,84 +4322,95 @@ async function handleRssSubscribeSubmit(event) {
   }
 }
 
-async function refreshActiveRssFeed(options = {}) {
+async function refreshAllRssFeeds(options = {}) {
   const silent = options.silent === true;
   const source = options.source || "manual";
-  const activeFeed = state.rssFeeds.find(
-    (feed) => feed.id === state.rssActiveFeedId,
-  );
 
-  if (!activeFeed) {
+  if (state.rssFeeds.length === 0) {
     if (!silent) {
-      showRssStatus("Select a feed first.");
+      showRssStatus("No feeds to refresh.");
     }
     return;
   }
 
-  if (rssRefreshInFlight && rssRefreshInFlight.feedId === activeFeed.id) {
+  if (rssRefreshInFlight) {
     return rssRefreshInFlight.promise;
   }
 
   if (!silent) {
-    setRssRefreshButtonRefreshing(true);
+    setRssRefreshButtonRefreshing(true, 0, state.rssFeeds.length);
   }
 
   const refreshPromise = (async () => {
-    try {
-      const latest = await fetchRssFeed(runtimeConfig, activeFeed.url);
-      const previousByUrl = new Map(
-        (activeFeed.items || []).map((item) => [
-          item.canonicalUrl || canonicalizeArticleUrl(item.url),
-          item,
-        ]),
-      );
+    let successCount = 0;
+    let totalNewItems = 0;
 
-      const nextItems = (latest.items || []).map((item) => {
-        const canonicalUrl = canonicalizeArticleUrl(item.url);
-        const previous = previousByUrl.get(canonicalUrl);
+    for (let i = 0; i < state.rssFeeds.length; i++) {
+      const feed = state.rssFeeds[i];
 
-        return {
-          ...item,
-          canonicalUrl,
-          lastOpenedAt: previous?.lastOpenedAt || "",
-        };
-      });
-      const fetchedCount = nextItems.length;
-      const newCount = nextItems.reduce((count, item) => {
-        if (previousByUrl.has(item.canonicalUrl)) {
-          return count;
-        }
+      if (!silent) {
+        setRssRefreshButtonRefreshing(true, i + 1, state.rssFeeds.length);
+      }
 
-        return count + 1;
-      }, 0);
+      try {
+        const latest = await fetchRssFeed(runtimeConfig, feed.url);
+        const previousByUrl = new Map(
+          (feed.items || []).map((item) => [
+            item.canonicalUrl || canonicalizeArticleUrl(item.url),
+            item,
+          ]),
+        );
 
-      activeFeed.title = latest.title || activeFeed.title;
-      activeFeed.items = nextItems;
-      activeFeed.lastFetchedAt = new Date().toISOString();
-      activeFeed.lastFetchItemCount = fetchedCount;
-      activeFeed.lastFetchNewItemCount = newCount;
-      activeFeed.lastFetchSource = source;
-      activeFeed.itemsVersion = Number(activeFeed.itemsVersion || 0) + 1;
+        const nextItems = (latest.items || []).map((item) => {
+          const canonicalUrl = canonicalizeArticleUrl(item.url);
+          const previous = previousByUrl.get(canonicalUrl);
+
+          return {
+            ...item,
+            canonicalUrl,
+            lastOpenedAt: previous?.lastOpenedAt || "",
+          };
+        });
+        const fetchedCount = nextItems.length;
+        const newCount = nextItems.reduce((count, item) => {
+          if (previousByUrl.has(item.canonicalUrl)) {
+            return count;
+          }
+          return count + 1;
+        }, 0);
+
+        feed.title = latest.title || feed.title;
+        feed.items = nextItems;
+        feed.lastFetchedAt = new Date().toISOString();
+        feed.lastFetchItemCount = fetchedCount;
+        feed.lastFetchNewItemCount = newCount;
+        feed.lastFetchSource = source;
+        feed.itemsVersion = Number(feed.itemsVersion || 0) + 1;
+        successCount++;
+        totalNewItems += newCount;
+      } catch (error) {
+        // Continue with other feeds even if one fails
+      }
+    }
+
+    if (successCount > 0) {
       pruneRssItemsForRetention();
       touchRss(state);
       persistState(state);
       renderRssPanel();
       rssAutoRefreshController?.sync();
-    } catch (error) {
-      if (!silent) {
-        showTransientStatus(error.message || "Could not refresh this feed.");
-      }
-    } finally {
-      setRssRefreshButtonRefreshing(false);
 
-      if (rssRefreshInFlight?.feedId === activeFeed.id) {
-        rssRefreshInFlight = null;
+      if (!silent && totalNewItems > 0) {
+        showTransientStatus(`Found ${totalNewItems} new item${totalNewItems === 1 ? "" : "s"}.`);
       }
     }
+
+    setRssRefreshButtonRefreshing(false);
+    rssRefreshInFlight = null;
   })();
 
   rssRefreshInFlight = {
-    feedId: activeFeed.id,
+    feedId: "__all__",
     promise: refreshPromise,
   };
 
@@ -4453,6 +4525,11 @@ async function handleRssOpenItem(url) {
   );
 
   if (existing) {
+    // Store RSS origin so "Next in Feed" survives refresh
+    if (rssReaderContext && !existing._rssOrigin) {
+      existing._rssOrigin = { ...rssReaderContext };
+      touchBookmarks(state);
+    }
     state.selectedArticleId = existing.id;
     state.rssReaderArticle = null;
     markArticleAsOpened(existing.id);
@@ -4669,6 +4746,11 @@ async function restorePendingRssArticle() {
   const existing = state.bookmarks.find((b) => extractUrlSlug(b.url) === slug);
 
   if (existing) {
+    // Restore RSS context from bookmark if available
+    if (existing._rssOrigin) {
+      rssReaderContext = existing._rssOrigin;
+      readerSideTab = "next";
+    }
     state.selectedArticleId = existing.id;
     state.rssReaderArticle = null;
     persistState(state);
@@ -4685,8 +4767,12 @@ async function restorePendingRssArticle() {
     // Restore feed context for "Next in Feed" navigation
     if (cached._feedContext) {
       rssReaderContext = cached._feedContext;
+      readerSideTab = "next";
     } else if (cached.url) {
       setRssReaderContextByItemUrl(cached.url);
+      if (rssReaderContext) {
+        readerSideTab = "next";
+      }
     }
     // Remove internal _feedContext before setting state
     const { _feedContext, ...articleWithoutContext } = cached;
@@ -5253,6 +5339,10 @@ function saveRssReaderArticleToLibrary() {
       applyAutoTags: false,
     },
   );
+  // Store RSS origin so "Next in Feed" survives refresh
+  if (rssReaderContext) {
+    bookmark._rssOrigin = { ...rssReaderContext };
+  }
   state.bookmarks.unshift(bookmark);
   state.selectedArticleId = bookmark.id;
   state.rssReaderArticle = null;
@@ -5267,7 +5357,7 @@ function saveRssReaderArticleToLibrary() {
   showTransientStatus(`Saved \"${bookmark.title}\" to the library.`);
 }
 
-function setRssRefreshButtonRefreshing(isRefreshing) {
+function setRssRefreshButtonRefreshing(isRefreshing, current = 0, total = 0) {
   const btn = dom.rssRefreshActiveButton;
 
   if (!btn) {
@@ -5277,8 +5367,9 @@ function setRssRefreshButtonRefreshing(isRefreshing) {
   if (isRefreshing) {
     btn.disabled = true;
     btn.title = getRssRefreshButtonTitle();
+    const progressText = total > 0 ? ` ${current}/${total}` : "";
     btn.innerHTML =
-      '<i class="fa-solid fa-rotate rss-icon-spinning" aria-hidden="true"></i> Refreshing';
+      `<i class="fa-solid fa-rotate rss-icon-spinning" aria-hidden="true"></i> Refreshing${progressText}`;
     return;
   }
 

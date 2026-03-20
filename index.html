@@ -166,57 +166,7 @@
                         />
                         <div id="rss-folder-suggestions" class="chip-row"></div>
                         <p class="meta-text">Popular feeds</p>
-                        <div class="chip-row">
-                          <button
-                            type="button"
-                            class="chip chip--helper"
-                            data-rss-suggest="http://feeds.bbci.co.uk/news/rss.xml"
-                          >
-                            BBC News
-                          </button>
-                          <button
-                            type="button"
-                            class="chip chip--helper"
-                            data-rss-suggest="https://www.theguardian.com/world/rss"
-                          >
-                            The Guardian
-                          </button>
-                          <button
-                            type="button"
-                            class="chip chip--helper"
-                            data-rss-suggest="http://feeds.reuters.com/reuters/topNews"
-                          >
-                            Reuters
-                          </button>
-                          <button
-                            type="button"
-                            class="chip chip--helper"
-                            data-rss-suggest="https://www.aljazeera.com/xml/rss/all.xml"
-                          >
-                            Al Jazeera
-                          </button>
-                          <button
-                            type="button"
-                            class="chip chip--helper"
-                            data-rss-suggest="https://feeds.npr.org/1001/rss.xml"
-                          >
-                            NPR News
-                          </button>
-                          <button
-                            type="button"
-                            class="chip chip--helper"
-                            data-rss-suggest="https://news.ycombinator.com/rss"
-                          >
-                            Hacker News
-                          </button>
-                          <button
-                            type="button"
-                            class="chip chip--helper"
-                            data-rss-suggest="https://www.wired.com/feed/rss"
-                          >
-                            Wired
-                          </button>
-                        </div>
+                        <div id="rss-feed-suggestions" class="chip-row"></div>
                         <div class="reader-popover-actions">
                           <button
                             type="button"
@@ -240,7 +190,7 @@
                     type="button"
                     class="button button--ghost button--small"
                     data-rss-refresh-active
-                    title="Fetch newest items from active feed"
+                    title="Refresh all feeds"
                   >
                     <i class="fa-solid fa-rotate" aria-hidden="true"></i>
                     Refresh
@@ -1368,7 +1318,7 @@
                     <div class="settings-select-row__text">
                       <strong>Auto refresh</strong>
                       <small
-                        >Refresh the active feed while the app is open.</small
+                        >Refresh all feeds while the app is open.</small
                       >
                     </div>
                     <select
@@ -1385,7 +1335,10 @@
                     </select>
                   </div>
 
-                  <p id="rss-settings-last-fetched" class="meta-text"></p>
+                  <div class="section-heading section-heading--compact" style="margin-top: 1.5rem;">
+                    <h3>Subscribed Feeds</h3>
+                  </div>
+                  <div id="rss-feed-settings-list"></div>
                 </div>
               </section>
             </section>
@@ -1511,29 +1464,7 @@
                 class="field-suggestions"
               ></div>
               <p class="meta-text">Popular feeds</p>
-              <div class="chip-row">
-                <button
-                  type="button"
-                  class="chip chip--helper"
-                  data-add-feed-suggest="http://feeds.bbci.co.uk/news/rss.xml"
-                >
-                  BBC News
-                </button>
-                <button
-                  type="button"
-                  class="chip chip--helper"
-                  data-add-feed-suggest="https://www.theguardian.com/world/rss"
-                >
-                  The Guardian
-                </button>
-                <button
-                  type="button"
-                  class="chip chip--helper"
-                  data-add-feed-suggest="https://hnrss.org/frontpage"
-                >
-                  Hacker News
-                </button>
-              </div>
+              <div id="add-feed-suggestions" class="chip-row"></div>
               <div class="button-row">
                 <button type="submit" class="button button--primary">
                   <i class="fa-solid fa-rss" aria-hidden="true"></i>

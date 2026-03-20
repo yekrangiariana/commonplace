@@ -89,7 +89,7 @@ export const dom = {
   ],
   rssRetentionSelect: document.querySelector("#rss-retention-select"),
   rssAutoRefreshSelect: document.querySelector("#rss-auto-refresh-select"),
-  rssSettingsLastFetched: document.querySelector("#rss-settings-last-fetched"),
+  rssFeedSettingsList: document.querySelector("#rss-feed-settings-list"),
   aboutAppVersion: document.querySelector("#about-app-version"),
   aboutAppDescription: document.querySelector("#about-app-description"),
   tagForm: document.querySelector("#tag-form"),
@@ -132,6 +132,8 @@ export const dom = {
   addFeedFolderSuggestions: document.querySelector(
     "#add-feed-folder-suggestions",
   ),
+  addFeedSuggestions: document.querySelector("#add-feed-suggestions"),
+  rssFeedSuggestions: document.querySelector("#rss-feed-suggestions"),
   addProjectForm: document.querySelector("#add-project-form"),
   addProjectName: document.querySelector("#add-project-name"),
   addProjectDescription: document.querySelector("#add-project-description"),

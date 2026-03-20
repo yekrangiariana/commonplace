@@ -7,6 +7,7 @@ export const runtimeConfig = {
   requestTimeoutMs: DEFAULT_FETCH_TIMEOUT_MS,
   appVersion: "1.0.0",
   appDescription: "",
+  suggestedFeeds: [],
 };
 
 function nextRuntimeVersion(value) {

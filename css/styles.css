@@ -2966,6 +2966,66 @@ html[data-theme="dark"][data-highlight-color="orange"] .reader-highlight {
   text-overflow: ellipsis;
 }
 
+/* Feed list in RSS settings */
+.settings-feed-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-feed-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  font-size: var(--font-size-sm);
+  border-bottom: var(--border-light);
+}
+
+.settings-feed-item:last-child {
+  border-bottom: none;
+}
+
+.settings-feed-item__main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.settings-feed-item__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-feed-item__title i {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.settings-feed-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.settings-feed-item__meta span::before {
+  content: "·";
+  margin-right: 12px;
+}
+
+.settings-feed-item__meta span:first-child::before {
+  display: none;
+}
+
 .display-option-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

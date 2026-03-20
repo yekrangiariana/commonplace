@@ -131,10 +131,10 @@ export function initWorkspaceContextMenu({
       },
       {
         type: "button",
-        label: "Refresh active feed",
+        label: "Refresh all feeds",
         action: "rss-refresh-active",
         value: state.rssActiveFeedId || "",
-        disabled: !hasActiveFeed,
+        disabled: state.rssFeeds.length === 0,
       },
     ];
   }
@@ -762,7 +762,7 @@ export function initWorkspaceContextMenu({
           },
           {
             type: "button",
-            label: "Refresh this feed",
+            label: "Refresh all feeds",
             action: "rss-feed-refresh",
             value: feedId,
           },

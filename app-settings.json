@@ -3,5 +3,17 @@
   "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsbmt3YXVrbHp5cWlqbnZ1eXRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0ODc0NzgsImV4cCI6MjA4OTA2MzQ3OH0.r7zkN9cXfR1q5CJlu0xlBmuWIremzgKHuM5eMtbU8ls",
   "requestTimeoutMs": 25000,
   "appVersion": "1.0.4",
-  "appDescription": "A personal reading and research workspace for journalists and writers. Collect articles, highlight what matters, organise sources into projects and turn research into writing."
+  "appDescription": "A personal reading and research workspace for journalists and writers. Collect articles, highlight what matters, organise sources into projects and turn research into writing.",
+  "suggestedFeeds": [
+    { "name": "BBC News", "url": "http://feeds.bbci.co.uk/news/rss.xml" },
+    { "name": "The Guardian", "url": "https://www.theguardian.com/world/rss" },
+    { "name": "Reuters", "url": "http://feeds.reuters.com/reuters/topNews" },
+    {
+      "name": "Al Jazeera",
+      "url": "https://www.aljazeera.com/xml/rss/all.xml"
+    },
+    { "name": "NPR News", "url": "https://feeds.npr.org/1001/rss.xml" },
+    { "name": "Hacker News", "url": "https://news.ycombinator.com/rss" },
+    { "name": "Wired", "url": "https://www.wired.com/feed/rss" }
+  ]
 }

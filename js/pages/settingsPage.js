@@ -4,6 +4,22 @@ import { splitCommaSeparated, splitProjectNames } from "../taxonomy.js";
 import { normalizeRssAutoRefreshMinutes } from "../services/rssAutoRefresh.js";
 import { runtimeConfig } from "../state.js";
 
+function formatRelativeTime(isoDate) {
+  if (!isoDate) return "never";
+  const date = new Date(isoDate);
+  const now = Date.now();
+  const diffMs = now - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMin < 1) return "just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString("en", { month: "short", day: "numeric" });
+}
+
 const SETTINGS_SECTIONS = [
   "export",
   "projects",
@@ -64,20 +80,6 @@ export function renderSettings(state, dom) {
     dom.rssAutoRefreshSelect.value = String(autoRefreshValue);
   }
 
-  if (dom.rssSettingsLastFetched) {
-    const activeFeed = state.rssFeeds.find(
-      (feed) => feed.id === state.rssActiveFeedId,
-    );
-    const fetchedAtEpoch = Date.parse(activeFeed?.lastFetchedAt || "");
-    const fetchedAtText = Number.isFinite(fetchedAtEpoch)
-      ? formatDate(activeFeed.lastFetchedAt)
-      : "Never";
-
-    dom.rssSettingsLastFetched.textContent = activeFeed
-      ? `${activeFeed.title || activeFeed.url} last fetched: ${fetchedAtText}`
-      : "Select a feed in Explore to see its last fetch time.";
-  }
-
   if (dom.exportMarkdownStatus && activeSection === "export") {
     const supported = typeof window.showDirectoryPicker === "function";
 
@@ -89,6 +91,7 @@ export function renderSettings(state, dom) {
 
   renderProjectList(state, dom);
   renderTagList(state, dom);
+  renderFeedList(state, dom);
   renderAutoTagSettings(state, dom);
   renderArticleTaxonomyHelpers(state, dom);
   renderAboutSection(dom);
@@ -157,6 +160,49 @@ function renderTagList(state, dom) {
           .join("")}
       </tbody>
     </table>
+  `;
+}
+
+function renderFeedList(state, dom) {
+  if (!dom.rssFeedSettingsList) {
+    return;
+  }
+
+  if (state.rssFeeds.length === 0) {
+    dom.rssFeedSettingsList.innerHTML =
+      '<div class="empty-state empty-state--compact"><h3>No feeds yet</h3><p>Add RSS feeds from the + button to see them here.</p></div>';
+    return;
+  }
+
+  dom.rssFeedSettingsList.innerHTML = `
+    <div class="settings-feed-list">
+      ${state.rssFeeds
+        .slice()
+        .sort((left, right) => (left.title || left.url).localeCompare(right.title || right.url))
+        .map((feed) => {
+          const itemCount = Array.isArray(feed.items) ? feed.items.length : 0;
+          const lastFetched = formatRelativeTime(feed.lastFetchedAt);
+          const folder = feed.folder || null;
+
+          return `
+          <div class="settings-feed-item">
+            <div class="settings-feed-item__main">
+              <div class="settings-feed-item__title" title="${escapeHtml(feed.url)}">
+                <i class="fa-solid fa-rss" aria-hidden="true"></i>
+                ${escapeHtml(feed.title || feed.url)}
+              </div>
+              <div class="settings-feed-item__meta">
+                <span>${itemCount} items</span>
+                ${folder ? `<span>${escapeHtml(folder)}</span>` : ""}
+                <span>Updated ${lastFetched}</span>
+              </div>
+            </div>
+            <button class="link-button" data-delete-settings-feed="${escapeHtml(feed.id)}">Delete</button>
+          </div>
+        `;
+        })
+        .join("")}
+    </div>
   `;
 }
 
