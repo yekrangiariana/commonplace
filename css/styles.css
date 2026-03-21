@@ -1790,6 +1790,7 @@ html[data-theme="dark"] .selection-menu {
   margin: 0 0 1rem;
   font-size: var(--font-size-base);
   line-height: 1.8;
+  white-space: pre-wrap; /* Preserve line breaks in tweets */
 }
 
 .reader-link {

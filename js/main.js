@@ -3583,14 +3583,8 @@ async function handleTweetSubmit(event) {
       timeoutMs: runtimeConfig.requestTimeoutMs,
     });
 
-    // Build blocks for the tweet
-    const tweetBlocks = [
-      {
-        type: "paragraph",
-        text: tweet.text,
-        segments: tweet.segments,
-      },
-    ];
+    // Use blocks from tweet (preserves paragraph structure)
+    const tweetBlocks = tweet.blocks;
 
     // Apply auto-tagging based on tweet content
     const autoTags = getAutoTagSuggestionsForArticle(

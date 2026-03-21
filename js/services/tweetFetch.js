@@ -101,8 +101,13 @@ export async function fetchTweet(
       );
     }
 
-    // fxtwitter returns text directly - no HTML parsing needed
+    // fxtwitter returns text directly - keep it exactly as-is
     const text = data.text || "";
+
+    // Single block preserves the tweet text exactly
+    const blocks = text.trim()
+      ? [{ type: "paragraph", text: text.trim() }]
+      : [];
 
     return {
       url: data.url || normalizedUrl,
@@ -111,7 +116,7 @@ export async function fetchTweet(
       authorUrl: data.author_url || "",
       authorAvatar: data.author_avatar || "",
       text,
-      segments: [{ text }], // Simple single segment
+      blocks,
       createdAt: data.created_at || "",
       likes: data.likes || 0,
       retweets: data.retweets || 0,
