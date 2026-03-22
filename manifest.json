@@ -11,12 +11,12 @@
   "icons": [
     {
       "src": "./lotus.png",
-      "sizes": "512x512",
+      "sizes": "256x256",
       "type": "image/png"
     },
     {
       "src": "./lotus.png",
-      "sizes": "512x512",
+      "sizes": "256x256",
       "type": "image/png",
       "purpose": "maskable"
     }
