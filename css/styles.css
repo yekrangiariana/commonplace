@@ -212,6 +212,7 @@ html[data-theme="dark"][data-highlight-color="orange"] {
 
 html {
   font-size: 16px;
+  background: var(--bg);
 }
 
 body {
@@ -220,6 +221,7 @@ body {
   font-family: var(--app-font-family);
   color: var(--text);
   background: var(--bg);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 button,
@@ -311,8 +313,9 @@ button:disabled {
 }
 
 .app-icon {
-  font-size: 1.5rem;
-  line-height: 1;
+  width: 1.5rem;
+  height: 1.5rem;
+  object-fit: contain;
 }
 
 .app-title {

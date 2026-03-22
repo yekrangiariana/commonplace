@@ -32,8 +32,9 @@ html.splash-disabled .splash-screen {
 }
 
 .splash-icon {
-  font-size: clamp(3rem, 8vw, 5rem);
-  line-height: 1;
+  width: clamp(3rem, 8vw, 5rem);
+  height: clamp(3rem, 8vw, 5rem);
+  object-fit: contain;
 }
 
 .splash-branding-text {
