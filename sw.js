@@ -1,4 +1,4 @@
-const CACHE_NAME = "commonplace-v9";
+const CACHE_NAME = "commonplace-v10";
 
 const PRECACHE_URLS = [
   "./index.html",
@@ -31,6 +31,7 @@ const PRECACHE_URLS = [
   "./js/services/markdownExport.js",
   "./js/services/rssAutoRefresh.js",
   "./js/services/rssFetch.js",
+  "./js/services/tweetFetch.js",
   "./js/experimental/readerToolAutomation.js",
   "./manifest.json",
 ];

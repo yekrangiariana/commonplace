@@ -21,7 +21,7 @@
       // Apply theme and accent color immediately to prevent flash
       (function () {
         try {
-          var stored = localStorage.getItem("bookmarkManagerState");
+          var stored = localStorage.getItem("bookmark-manager-state-v1");
           if (stored) {
             var state = JSON.parse(stored);
             var theme = state.theme === "dark" ? "dark" : "light";

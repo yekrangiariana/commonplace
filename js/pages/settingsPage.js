@@ -270,16 +270,20 @@ export function renderArticleTaxonomyHelpers(state, dom) {
     ? state.pendingAutoTagSuggestions
     : [];
 
-  dom.availableTags.innerHTML = buildTagsSuggestionMarkup({
-    savedTags: availableTags,
-    autoTagSuggestions,
-    currentInputTags: splitCommaSeparated(dom.articleTags?.value || ""),
-  });
+  if (dom.availableTags) {
+    dom.availableTags.innerHTML = buildTagsSuggestionMarkup({
+      savedTags: availableTags,
+      autoTagSuggestions,
+      currentInputTags: splitCommaSeparated(dom.articleTags?.value || ""),
+    });
+  }
 
-  dom.availableProjects.innerHTML = buildSuggestionMarkup({
-    values: availableProjectNames,
-    currentInputProjects: splitProjectNames(dom.articleProjects?.value || ""),
-  });
+  if (dom.availableProjects) {
+    dom.availableProjects.innerHTML = buildSuggestionMarkup({
+      values: availableProjectNames,
+      currentInputProjects: splitProjectNames(dom.articleProjects?.value || ""),
+    });
+  }
 }
 
 function buildSuggestionMarkup({ values, currentInputProjects }) {

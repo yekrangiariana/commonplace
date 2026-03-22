@@ -261,7 +261,11 @@ async function init() {
 
     // Render UI first, before non-critical async operations
     renderAndSyncUrl();
-    consumeShareTarget();
+    try {
+      consumeShareTarget();
+    } catch (shareErr) {
+      console.error("Share target error:", shareErr);
+    }
 
     // Non-critical: check markdown export status (with timeout protection)
     Promise.race([
