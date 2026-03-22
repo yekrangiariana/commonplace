@@ -10,13 +10,13 @@
   "background_color": "#181716",
   "icons": [
     {
-      "src": "./lotus.png",
-      "sizes": "256x256",
+      "src": "./lotus-pwa.png",
+      "sizes": "294x294",
       "type": "image/png"
     },
     {
-      "src": "./lotus.png",
-      "sizes": "256x256",
+      "src": "./lotus-pwa.png",
+      "sizes": "294x294",
       "type": "image/png",
       "purpose": "maskable"
     }
