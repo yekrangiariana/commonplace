@@ -587,7 +587,8 @@ export function isMobileDevice() {
 }
 
 // ZIP export for mobile devices
-const JSZIP_CDN_URL = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+const JSZIP_CDN_URL =
+  "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
 
 let JSZipModule = null;
 

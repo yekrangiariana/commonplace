@@ -1001,8 +1001,7 @@ async function refreshMarkdownExportBindingStatus() {
       const lastExport = localStorage.getItem(MOBILE_EXPORT_TIMESTAMP_KEY);
       if (lastExport) {
         const relativeTime = formatRelativeTime(lastExport);
-        dom.exportMarkdownStatus.textContent =
-          `On mobile, export downloads as a ZIP file. Last exported ${relativeTime}.`;
+        dom.exportMarkdownStatus.textContent = `On mobile, export downloads as a ZIP file. Last exported ${relativeTime}.`;
       } else {
         dom.exportMarkdownStatus.textContent =
           "On mobile, export downloads as a ZIP file.";
