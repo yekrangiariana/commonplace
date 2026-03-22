@@ -1,24 +1,8 @@
-import { escapeHtml, formatDate } from "../utils.js";
+import { escapeHtml, formatDate, formatRelativeTime } from "../utils.js";
 import { getDerivedIndexes } from "../derivedIndexes.js";
 import { splitCommaSeparated, splitProjectNames } from "../taxonomy.js";
 import { normalizeRssAutoRefreshMinutes } from "../services/rssAutoRefresh.js";
 import { runtimeConfig } from "../state.js";
-
-function formatRelativeTime(isoDate) {
-  if (!isoDate) return "never";
-  const date = new Date(isoDate);
-  const now = Date.now();
-  const diffMs = now - date.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMin < 1) return "just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString("en", { month: "short", day: "numeric" });
-}
 
 const SETTINGS_SECTIONS = [
   "export",

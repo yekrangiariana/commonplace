@@ -14,6 +14,7 @@ import {
   previewText,
   escapeHtml,
   formatDate,
+  formatRelativeTime,
 } from "./utils.js";
 import {
   normalizeTag,
@@ -103,8 +104,10 @@ import {
 import {
   exportMarkdownToFolder,
   exportMarkdownToSavedFolder,
+  exportMarkdownAsZip,
   getSavedMarkdownExportStatus,
   isMarkdownFolderExportSupported,
+  isMobileDevice,
 } from "./services/markdownExport.js";
 
 let statusTimeoutId = null;
@@ -141,6 +144,7 @@ let markdownAutoSyncedProjectsVersion = 0;
 let experimentalReaderFetchInFlight = false;
 
 const MARKDOWN_AUTO_SYNC_DEBOUNCE_MS = 2500;
+const MOBILE_EXPORT_TIMESTAMP_KEY = "commonplace-mobile-export-timestamp";
 
 const RSS_PAGINATION_SCOPE = "rss";
 
@@ -933,6 +937,12 @@ async function handleDeleteAllData() {
 }
 
 async function handleMarkdownFolderExport() {
+  // Use ZIP download on mobile devices to avoid Android FSAA issues
+  if (isMobileDevice()) {
+    await runMobileZipExport();
+    return;
+  }
+
   await runMarkdownSync({
     reason: "manual",
     allowFolderPicker: true,
@@ -941,7 +951,66 @@ async function handleMarkdownFolderExport() {
   });
 }
 
+async function runMobileZipExport() {
+  if (dom.exportMarkdownFolderButton) {
+    dom.exportMarkdownFolderButton.disabled = true;
+  }
+
+  try {
+    const result = await exportMarkdownAsZip(state, {
+      onProgress: (progress) => {
+        if (!dom.exportMarkdownStatus) return;
+
+        if (progress.stage === "loading-zip-library") {
+          dom.exportMarkdownStatus.textContent = "Loading...";
+        } else if (progress.stage === "building-content") {
+          dom.exportMarkdownStatus.textContent = "Building content...";
+        } else if (progress.stage === "adding-files") {
+          dom.exportMarkdownStatus.textContent = `Adding files: ${progress.completed}/${progress.total}`;
+        } else if (progress.stage === "generating-zip") {
+          dom.exportMarkdownStatus.textContent = "Generating ZIP...";
+        } else if (progress.stage === "downloading") {
+          dom.exportMarkdownStatus.textContent = "Starting download...";
+        }
+      },
+    });
+
+    // Save export timestamp
+    localStorage.setItem(MOBILE_EXPORT_TIMESTAMP_KEY, new Date().toISOString());
+
+    if (dom.exportMarkdownStatus) {
+      dom.exportMarkdownStatus.textContent = `Exported ${result.library.total} articles and ${result.projects.total} projects to ${result.fileName}`;
+    }
+  } catch (error) {
+    console.error("ZIP export failed:", error);
+    if (dom.exportMarkdownStatus) {
+      dom.exportMarkdownStatus.textContent = `Export failed: ${error.message}`;
+    }
+  } finally {
+    if (dom.exportMarkdownFolderButton) {
+      dom.exportMarkdownFolderButton.disabled = false;
+    }
+  }
+}
+
 async function refreshMarkdownExportBindingStatus() {
+  // On mobile, show ZIP export messaging instead of folder sync
+  if (isMobileDevice()) {
+    markdownAutoSyncReady = false;
+    if (dom.exportMarkdownStatus) {
+      const lastExport = localStorage.getItem(MOBILE_EXPORT_TIMESTAMP_KEY);
+      if (lastExport) {
+        const relativeTime = formatRelativeTime(lastExport);
+        dom.exportMarkdownStatus.textContent =
+          `On mobile, export downloads as a ZIP file. Last exported ${relativeTime}.`;
+      } else {
+        dom.exportMarkdownStatus.textContent =
+          "On mobile, export downloads as a ZIP file.";
+      }
+    }
+    return;
+  }
+
   if (!isMarkdownFolderExportSupported()) {
     markdownAutoSyncReady = false;
     return;

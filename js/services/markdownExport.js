@@ -580,3 +580,109 @@ async function ensureRootDirectoryWritePermission(rootDir, options = {}) {
   const next = await rootDir.requestPermission(permissionOptions);
   return next === "granted";
 }
+
+// Mobile detection
+export function isMobileDevice() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+// ZIP export for mobile devices
+const JSZIP_CDN_URL = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+
+let JSZipModule = null;
+
+async function loadJSZip() {
+  if (JSZipModule) {
+    return JSZipModule;
+  }
+
+  if (window.JSZip) {
+    JSZipModule = window.JSZip;
+    return JSZipModule;
+  }
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = JSZIP_CDN_URL;
+    script.onload = () => {
+      JSZipModule = window.JSZip;
+      resolve(JSZipModule);
+    };
+    script.onerror = () => reject(new Error("Failed to load JSZip library"));
+    document.head.appendChild(script);
+  });
+}
+
+export async function exportMarkdownAsZip(state, options = {}) {
+  const onProgress =
+    typeof options.onProgress === "function" ? options.onProgress : null;
+
+  onProgress?.({ stage: "loading-zip-library" });
+
+  const JSZip = await loadJSZip();
+  const zip = new JSZip();
+
+  const libraryFolder = zip.folder(LIBRARY_DIR_NAME);
+  const projectsFolder = zip.folder(PROJECTS_DIR_NAME);
+
+  onProgress?.({ stage: "building-content" });
+
+  const libraryRecords = buildLibraryExportMap(state);
+  const projectRecords = buildProjectsExportMap(state);
+
+  const libraryEntries = Object.values(libraryRecords);
+  const projectEntries = Object.values(projectRecords);
+
+  onProgress?.({
+    stage: "adding-files",
+    total: libraryEntries.length + projectEntries.length,
+    completed: 0,
+  });
+
+  let completed = 0;
+
+  for (const record of libraryEntries) {
+    libraryFolder.file(record.fileName, record.content);
+    completed += 1;
+    if (completed % 50 === 0) {
+      onProgress?.({
+        stage: "adding-files",
+        total: libraryEntries.length + projectEntries.length,
+        completed,
+      });
+    }
+  }
+
+  for (const record of projectEntries) {
+    projectsFolder.file(record.fileName, record.content);
+    completed += 1;
+  }
+
+  onProgress?.({ stage: "generating-zip" });
+
+  const blob = await zip.generateAsync({
+    type: "blob",
+    compression: "DEFLATE",
+    compressionOptions: { level: 6 },
+  });
+
+  onProgress?.({ stage: "downloading" });
+
+  const timestamp = new Date().toISOString().slice(0, 10);
+  const fileName = `commonplace-export-${timestamp}.zip`;
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  return {
+    fileName,
+    library: { total: libraryEntries.length },
+    projects: { total: projectEntries.length },
+  };
+}
