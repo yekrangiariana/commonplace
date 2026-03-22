@@ -8,16 +8,7 @@
     />
     <link rel="icon" type="image/png" href="./lotus.png" />
     <link rel="manifest" href="./manifest.json" />
-    <meta
-      name="theme-color"
-      content="#181716"
-      media="(prefers-color-scheme: dark)"
-    />
-    <meta
-      name="theme-color"
-      content="#f8f5ed"
-      media="(prefers-color-scheme: light)"
-    />
+    <meta name="theme-color" id="theme-color-meta" content="#f8f5ed" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
@@ -52,6 +43,11 @@
               highlight,
             );
             document.documentElement.setAttribute("data-font", font);
+            // Update theme-color meta for status bar / notch
+            var themeColorMeta = document.getElementById("theme-color-meta");
+            if (themeColorMeta) {
+              themeColorMeta.content = theme === "dark" ? "#181716" : "#f8f5ed";
+            }
           }
           if (localStorage.getItem("splashOff") === "1") {
             document.documentElement.classList.add("splash-disabled");

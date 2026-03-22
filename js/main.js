@@ -3280,6 +3280,12 @@ function applyDisplayPreferences() {
   );
   root.setAttribute("data-highlight-color", accentColor);
   root.setAttribute("data-accent-color", accentColor);
+
+  // Update theme-color meta for status bar / notch area
+  const themeColorMeta = document.getElementById("theme-color-meta");
+  if (themeColorMeta) {
+    themeColorMeta.content = state.theme === "dark" ? "#181716" : "#f8f5ed";
+  }
 }
 
 // Add dialog tab management
