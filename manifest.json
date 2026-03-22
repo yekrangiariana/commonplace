@@ -1,7 +1,7 @@
 {
   "name": "Commonplace",
   "short_name": "Commonplace",
-  "description": "A personal reading and research workspace. Collect articles, highlight what matters, organise sources into projects, and turn research into writing.",
+  "description": "A personal reading and research workspace. Collect articles, highlight what matters, organise sources into projects and turn research into writing.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
