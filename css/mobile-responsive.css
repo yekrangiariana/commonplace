@@ -1037,6 +1037,22 @@
       padding-bottom: calc(72px + env(safe-area-inset-bottom));
     }
   }
+
+  /* Add safe area insets for iOS and Android on mobile */
+  body {
+    padding: 16px; /* Default padding as fallback */
+    padding-top: env(safe-area-inset-top, 16px);
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+    padding-left: env(safe-area-inset-left, 16px);
+    padding-right: env(safe-area-inset-right, 16px);
+  }
+
+  /* Specific adjustments for iOS */
+  @supports (-webkit-touch-callout: none) {
+    body {
+      padding-top: env(safe-area-inset-top);
+    }
+  }
 }
 
 /* Disable hover effects on touch devices */

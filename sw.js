@@ -1,4 +1,4 @@
-const CACHE_NAME = "commonplace-v13";
+const CACHE_NAME = "commonplace-v14";
 
 const PRECACHE_URLS = [
   "./index.html",

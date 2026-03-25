@@ -1022,15 +1022,23 @@ async function refreshMarkdownExportBindingStatus() {
 
   if (markdownAutoSyncReady) {
     if (dom.exportMarkdownStatus) {
-      dom.exportMarkdownStatus.textContent = `Linked folder: ${status.rootFolderName}. Auto-sync is on.`;
+      dom.exportMarkdownStatus.textContent = `Syncing to folder: ${status.rootFolderName}. Auto-sync is on.`;
+    }
+    if (dom.exportMarkdownFolderButton) {
+      dom.exportMarkdownFolderButton.innerHTML = `<i class="fa-solid fa-sync" aria-hidden="true"></i> Sync Now`;
     }
     return;
+  }
+
+  // Reset button to default state when not linked
+  if (dom.exportMarkdownFolderButton) {
+    dom.exportMarkdownFolderButton.innerHTML = `<i class="fa-solid fa-folder-open" aria-hidden="true"></i> Export`;
   }
 
   if (status.hasSavedHandle && !status.canWrite) {
     if (dom.exportMarkdownStatus) {
       dom.exportMarkdownStatus.textContent =
-        "Export folder linked, but permission is missing. Click Export Markdown to folder to reconnect.";
+        "Export folder linked, but permission is missing. Click Export to reconnect.";
     }
   }
 }
