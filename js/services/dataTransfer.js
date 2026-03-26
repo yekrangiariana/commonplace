@@ -53,13 +53,19 @@ export function initDataTransfer() {
     selectAll();
     updateFilterButtonStates("all");
   });
-  dialog.querySelector("[data-select-none]")?.addEventListener("click", selectNone);
+  dialog
+    .querySelector("[data-select-none]")
+    ?.addEventListener("click", selectNone);
 
   // Export button
-  dialog.querySelector("[data-export-action]")?.addEventListener("click", handleExport);
+  dialog
+    .querySelector("[data-export-action]")
+    ?.addEventListener("click", handleExport);
 
   // Import button (handles both read and import)
-  dialog.querySelector("[data-import-action]")?.addEventListener("click", handleImportAction);
+  dialog
+    .querySelector("[data-import-action]")
+    ?.addEventListener("click", handleImportAction);
 
   // Close on backdrop click
   dialog.addEventListener("click", (e) => {
@@ -85,14 +91,17 @@ export function openExportDialog() {
 
   // Show export UI, hide import UI
   dialog.querySelector(".data-transfer-export-view")?.removeAttribute("hidden");
-  dialog.querySelector(".data-transfer-import-view")?.setAttribute("hidden", "");
-  
+  dialog
+    .querySelector(".data-transfer-import-view")
+    ?.setAttribute("hidden", "");
+
   // Show export button, hide import button
   dialog.querySelector("[data-export-action]")?.removeAttribute("hidden");
   dialog.querySelector("[data-import-action]")?.setAttribute("hidden", "");
 
   // Update header
-  dialog.querySelector(".data-transfer-dialog__title").textContent = "Export Bookmarks";
+  dialog.querySelector(".data-transfer-dialog__title").textContent =
+    "Export Bookmarks";
 
   renderBookmarkList();
   updateSelectionCount();
@@ -111,21 +120,25 @@ export function openImportDialog() {
   clipboardReadComplete = false;
 
   // Show import UI, hide export UI
-  dialog.querySelector(".data-transfer-export-view")?.setAttribute("hidden", "");
+  dialog
+    .querySelector(".data-transfer-export-view")
+    ?.setAttribute("hidden", "");
   dialog.querySelector(".data-transfer-import-view")?.removeAttribute("hidden");
-  
+
   // Show import button, hide export button
   dialog.querySelector("[data-export-action]")?.setAttribute("hidden", "");
   dialog.querySelector("[data-import-action]")?.removeAttribute("hidden");
-  
+
   // Reset import button to initial state
   const importBtn = dialog.querySelector("[data-import-action]");
   if (importBtn) {
-    importBtn.innerHTML = '<i class="fa-solid fa-clipboard" aria-hidden="true"></i> Read from Clipboard';
+    importBtn.innerHTML =
+      '<i class="fa-solid fa-clipboard" aria-hidden="true"></i> Read from Clipboard';
   }
 
   // Update header
-  dialog.querySelector(".data-transfer-dialog__title").textContent = "Import Bookmarks";
+  dialog.querySelector(".data-transfer-dialog__title").textContent =
+    "Import Bookmarks";
 
   // Clear previous import preview
   const previewEl = dialog.querySelector("#data-transfer-import-preview");
@@ -159,7 +172,7 @@ function renderBookmarkList() {
   if (!listEl) return;
 
   const bookmarks = [...state.bookmarks].sort(
-    (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+    (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
   );
 
   if (bookmarks.length === 0) {
@@ -180,10 +193,15 @@ function renderBookmarkList() {
       const projectChips = (bookmark.projectIds || [])
         .map((pid) => projectNameById.get(pid))
         .filter(Boolean)
-        .map((name) => `<span class="data-transfer-item__project-chip">${escapeHtml(name)}</span>`)
+        .map(
+          (name) =>
+            `<span class="data-transfer-item__project-chip">${escapeHtml(name)}</span>`,
+        )
         .join("");
 
-      const createdAt = bookmark.createdAt ? formatRelativeTime(bookmark.createdAt) : "";
+      const createdAt = bookmark.createdAt
+        ? formatRelativeTime(bookmark.createdAt)
+        : "";
       const source = bookmark.source || extractDomain(bookmark.url) || "";
 
       return `
@@ -339,8 +357,11 @@ async function handleExport() {
 
   try {
     await navigator.clipboard.writeText(json);
-    showExportStatus(`Copied ${selectedIds.size} bookmarks to clipboard`, "success");
-    
+    showExportStatus(
+      `Copied ${selectedIds.size} bookmarks to clipboard`,
+      "success",
+    );
+
     // Auto-close after success
     setTimeout(() => closeDialog(), 1500);
   } catch (err) {
@@ -353,7 +374,9 @@ async function handleExport() {
  * Build the export payload with selected bookmarks and their projects
  */
 function buildExportPayload() {
-  const selectedBookmarks = state.bookmarks.filter((b) => selectedIds.has(b.id));
+  const selectedBookmarks = state.bookmarks.filter((b) =>
+    selectedIds.has(b.id),
+  );
 
   // Collect all project IDs referenced by selected bookmarks
   const projectIds = new Set();
@@ -402,7 +425,7 @@ async function handleImportAction() {
 
   try {
     const text = await navigator.clipboard.readText();
-    
+
     if (!text.trim()) {
       showImportStatus("Clipboard is empty", "error");
       return;
@@ -418,7 +441,10 @@ async function handleImportAction() {
 
     // Validate structure
     if (!parsed.bookmarks || !Array.isArray(parsed.bookmarks)) {
-      showImportStatus("Invalid export format: missing bookmarks array", "error");
+      showImportStatus(
+        "Invalid export format: missing bookmarks array",
+        "error",
+      );
       return;
     }
 
@@ -434,7 +460,9 @@ async function handleImportAction() {
 
     if (previewEl) {
       previewEl.removeAttribute("hidden");
-      previewEl.querySelector(".data-transfer-import-preview__stats").innerHTML = `
+      previewEl.querySelector(
+        ".data-transfer-import-preview__stats",
+      ).innerHTML = `
         <strong>${bookmarkCount}</strong> bookmark${bookmarkCount !== 1 ? "s" : ""}<br>
         <strong>${projectCount}</strong> project${projectCount !== 1 ? "s" : ""}<br>
         Exported: ${exportDate}
@@ -444,13 +472,17 @@ async function handleImportAction() {
     // Change button to "Import"
     const importBtn = dialog.querySelector("[data-import-action]");
     if (importBtn) {
-      importBtn.innerHTML = '<i class="fa-solid fa-download" aria-hidden="true"></i> Import';
+      importBtn.innerHTML =
+        '<i class="fa-solid fa-download" aria-hidden="true"></i> Import';
     }
 
     showImportStatus("Ready to import", "success");
   } catch (err) {
     console.error("Failed to read clipboard:", err);
-    showImportStatus("Failed to read clipboard. Make sure you've granted permission.", "error");
+    showImportStatus(
+      "Failed to read clipboard. Make sure you've granted permission.",
+      "error",
+    );
   }
 }
 
@@ -462,14 +494,16 @@ function executeImport() {
     showImportStatus("No data to import", "error");
     return;
   }
-  
+
   let addedBookmarks = 0;
   let updatedBookmarks = 0;
   let addedProjects = 0;
 
   // Build lookup maps for existing data
   const existingProjectIds = new Set(state.projects.map((p) => p.id));
-  const existingProjectNames = new Map(state.projects.map((p) => [p.name.toLowerCase(), p.id]));
+  const existingProjectNames = new Map(
+    state.projects.map((p) => [p.name.toLowerCase(), p.id]),
+  );
   const existingBookmarksByUrl = new Map();
   state.bookmarks.forEach((b) => {
     existingBookmarksByUrl.set(normalizeUrlForComparison(b.url), b);
@@ -477,16 +511,18 @@ function executeImport() {
 
   // Import projects first (and build ID mapping for renamed projects)
   const projectIdMapping = new Map(); // maps imported project ID to actual ID
-  
+
   (importData.projects || []).forEach((project) => {
     // If project ID already exists, just map it
     if (existingProjectIds.has(project.id)) {
       projectIdMapping.set(project.id, project.id);
       return;
     }
-    
+
     // If project name exists (case insensitive), map to existing project
-    const existingIdByName = existingProjectNames.get(project.name.toLowerCase());
+    const existingIdByName = existingProjectNames.get(
+      project.name.toLowerCase(),
+    );
     if (existingIdByName) {
       projectIdMapping.set(project.id, existingIdByName);
       return;
@@ -511,10 +547,17 @@ function executeImport() {
 
       // Merge highlights (add new ones by ID)
       if (importedBookmark.highlights?.length) {
-        const existingHighlightIds = new Set((existingBookmark.highlights || []).map((h) => h.id));
-        const newHighlights = importedBookmark.highlights.filter((h) => !existingHighlightIds.has(h.id));
+        const existingHighlightIds = new Set(
+          (existingBookmark.highlights || []).map((h) => h.id),
+        );
+        const newHighlights = importedBookmark.highlights.filter(
+          (h) => !existingHighlightIds.has(h.id),
+        );
         if (newHighlights.length > 0) {
-          existingBookmark.highlights = [...(existingBookmark.highlights || []), ...newHighlights];
+          existingBookmark.highlights = [
+            ...(existingBookmark.highlights || []),
+            ...newHighlights,
+          ];
           updated = true;
         }
       }
@@ -526,17 +569,27 @@ function executeImport() {
           .map((pid) => projectIdMapping.get(pid) || pid)
           .filter((pid) => !existingProjIds.has(pid));
         if (mappedProjectIds.length > 0) {
-          existingBookmark.projectIds = [...(existingBookmark.projectIds || []), ...mappedProjectIds];
+          existingBookmark.projectIds = [
+            ...(existingBookmark.projectIds || []),
+            ...mappedProjectIds,
+          ];
           updated = true;
         }
       }
 
       // Merge tags (add new ones)
       if (importedBookmark.tags?.length) {
-        const existingTags = new Set((existingBookmark.tags || []).map((t) => t.toLowerCase()));
-        const newTags = importedBookmark.tags.filter((t) => !existingTags.has(t.toLowerCase()));
+        const existingTags = new Set(
+          (existingBookmark.tags || []).map((t) => t.toLowerCase()),
+        );
+        const newTags = importedBookmark.tags.filter(
+          (t) => !existingTags.has(t.toLowerCase()),
+        );
         if (newTags.length > 0) {
-          existingBookmark.tags = [...(existingBookmark.tags || []), ...newTags];
+          existingBookmark.tags = [
+            ...(existingBookmark.tags || []),
+            ...newTags,
+          ];
           updated = true;
         }
       }
@@ -547,10 +600,12 @@ function executeImport() {
     } else {
       // New bookmark - add it with mapped project IDs
       const newBookmark = { ...importedBookmark };
-      
+
       // Remap project IDs to existing projects if needed
       if (newBookmark.projectIds?.length) {
-        newBookmark.projectIds = newBookmark.projectIds.map((pid) => projectIdMapping.get(pid) || pid);
+        newBookmark.projectIds = newBookmark.projectIds.map(
+          (pid) => projectIdMapping.get(pid) || pid,
+        );
       }
 
       // Generate new ID if collision
@@ -573,7 +628,9 @@ function executeImport() {
   // Show success message
   const parts = [];
   if (addedBookmarks > 0) {
-    parts.push(`${addedBookmarks} new bookmark${addedBookmarks !== 1 ? "s" : ""}`);
+    parts.push(
+      `${addedBookmarks} new bookmark${addedBookmarks !== 1 ? "s" : ""}`,
+    );
   }
   if (updatedBookmarks > 0) {
     parts.push(`${updatedBookmarks} updated`);
@@ -581,7 +638,10 @@ function executeImport() {
   if (addedProjects > 0) {
     parts.push(`${addedProjects} project${addedProjects !== 1 ? "s" : ""}`);
   }
-  const message = parts.length > 0 ? `Imported: ${parts.join(", ")}` : "Nothing new to import";
+  const message =
+    parts.length > 0
+      ? `Imported: ${parts.join(", ")}`
+      : "Nothing new to import";
 
   showImportStatus(message, "success");
   importData = null;

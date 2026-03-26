@@ -850,7 +850,8 @@
                     <div class="settings-action-row__text">
                       <strong>Export to clipboard</strong>
                       <small
-                        >Select bookmarks to copy as JSON. Projects are included automatically.</small
+                        >Select bookmarks to copy as JSON. Projects are included
+                        automatically.</small
                       >
                     </div>
                     <button
@@ -858,7 +859,10 @@
                       id="data-transfer-export-button"
                       type="button"
                     >
-                      <i class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></i>
+                      <i
+                        class="fa-solid fa-arrow-up-from-bracket"
+                        aria-hidden="true"
+                      ></i>
                       Export
                     </button>
                   </div>
@@ -866,7 +870,8 @@
                     <div class="settings-action-row__text">
                       <strong>Import from clipboard</strong>
                       <small
-                        >Import bookmarks and projects from a previous export.</small
+                        >Import bookmarks and projects from a previous
+                        export.</small
                       >
                     </div>
                     <button
@@ -874,7 +879,10 @@
                       id="data-transfer-import-button"
                       type="button"
                     >
-                      <i class="fa-solid fa-arrow-down-to-bracket" aria-hidden="true"></i>
+                      <i
+                        class="fa-solid fa-arrow-down-to-bracket"
+                        aria-hidden="true"
+                      ></i>
                       Import
                     </button>
                   </div>
@@ -1694,7 +1702,12 @@
       <div class="data-transfer-dialog__inner">
         <div class="data-transfer-dialog__header">
           <h2 class="data-transfer-dialog__title">Export Bookmarks</h2>
-          <button type="button" class="data-transfer-dialog__close" data-close-dialog aria-label="Close">
+          <button
+            type="button"
+            class="data-transfer-dialog__close"
+            data-close-dialog
+            aria-label="Close"
+          >
             <i class="fa-solid fa-xmark" aria-hidden="true"></i>
           </button>
         </div>
@@ -1703,24 +1716,61 @@
         <div class="data-transfer-export-view">
           <div class="data-transfer-filters">
             <span class="data-transfer-filters__label">Quick select:</span>
-            <button type="button" class="data-transfer-filter-btn" data-time-filter="24h">Past 24h</button>
-            <button type="button" class="data-transfer-filter-btn" data-time-filter="3d">Past 3 days</button>
-            <button type="button" class="data-transfer-filter-btn" data-time-filter="7d">Past week</button>
-            <button type="button" class="data-transfer-filter-btn" data-select-all>All</button>
+            <button
+              type="button"
+              class="data-transfer-filter-btn"
+              data-time-filter="24h"
+            >
+              Past 24h
+            </button>
+            <button
+              type="button"
+              class="data-transfer-filter-btn"
+              data-time-filter="3d"
+            >
+              Past 3 days
+            </button>
+            <button
+              type="button"
+              class="data-transfer-filter-btn"
+              data-time-filter="7d"
+            >
+              Past week
+            </button>
+            <button
+              type="button"
+              class="data-transfer-filter-btn"
+              data-select-all
+            >
+              All
+            </button>
           </div>
 
           <div class="data-transfer-selection-actions">
-            <span class="data-transfer-selection-count" id="data-transfer-count">
+            <span
+              class="data-transfer-selection-count"
+              id="data-transfer-count"
+            >
               <strong>0</strong> of 0 selected
             </span>
             <div class="data-transfer-selection-buttons">
-              <button type="button" class="data-transfer-select-btn" data-select-none>Clear selection</button>
+              <button
+                type="button"
+                class="data-transfer-select-btn"
+                data-select-none
+              >
+                Clear selection
+              </button>
             </div>
           </div>
 
           <ul class="data-transfer-list" id="data-transfer-list"></ul>
 
-          <div class="data-transfer-status" id="data-transfer-export-status" hidden></div>
+          <div
+            class="data-transfer-status"
+            id="data-transfer-export-status"
+            hidden
+          ></div>
         </div>
 
         <!-- Import View -->
@@ -1731,22 +1781,43 @@
               The data should be in JSON format from a previous export.
             </p>
 
-            <div class="data-transfer-import-preview" id="data-transfer-import-preview" hidden>
-              <p class="data-transfer-import-preview__title">Found in clipboard:</p>
+            <div
+              class="data-transfer-import-preview"
+              id="data-transfer-import-preview"
+              hidden
+            >
+              <p class="data-transfer-import-preview__title">
+                Found in clipboard:
+              </p>
               <p class="data-transfer-import-preview__stats"></p>
             </div>
           </div>
 
-          <div class="data-transfer-status" id="data-transfer-import-status" hidden></div>
+          <div
+            class="data-transfer-status"
+            id="data-transfer-import-status"
+            hidden
+          ></div>
         </div>
 
         <div class="data-transfer-dialog__footer">
-          <button type="button" class="button button--ghost" data-close-dialog>Cancel</button>
-          <button type="button" class="button button--primary" data-export-action>
+          <button type="button" class="button button--ghost" data-close-dialog>
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="button button--primary"
+            data-export-action
+          >
             <i class="fa-solid fa-copy" aria-hidden="true"></i>
             Copy to Clipboard
           </button>
-          <button type="button" class="button button--primary" data-import-action hidden>
+          <button
+            type="button"
+            class="button button--primary"
+            data-import-action
+            hidden
+          >
             <i class="fa-solid fa-clipboard" aria-hidden="true"></i>
             Read from Clipboard
           </button>
