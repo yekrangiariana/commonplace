@@ -109,6 +109,11 @@ import {
   isMarkdownFolderExportSupported,
   isMobileDevice,
 } from "./services/markdownExport.js";
+import {
+  initDataTransfer,
+  openExportDialog,
+  openImportDialog,
+} from "./services/dataTransfer.js";
 
 let statusTimeoutId = null;
 let projectLinkSelection = null;
@@ -226,6 +231,7 @@ async function init() {
     }
     applyDisplayPreferences();
     bindEvents();
+    initDataTransfer();
     workspaceContextMenu = initWorkspaceContextMenu({
       state,
       setStatus,
@@ -496,6 +502,19 @@ function bindEvents() {
     "click",
     handleMarkdownFolderExport,
   );
+
+  // Data transfer (clipboard import/export)
+  document
+    .querySelector("#data-transfer-export-button")
+    ?.addEventListener("click", openExportDialog);
+  document
+    .querySelector("#data-transfer-import-button")
+    ?.addEventListener("click", openImportDialog);
+  window.addEventListener("dataTransferImportComplete", () => {
+    renderAndSyncUrl();
+    setStatus("Import complete");
+  });
+
   dom.settingsStorageRefreshButton?.addEventListener(
     "click",
     refreshStorageUsageDisplay,
