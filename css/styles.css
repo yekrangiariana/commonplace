@@ -59,7 +59,7 @@ html[data-font="mono"] {
 }
 
 p {
-  text-align: left;
+  text-align: center;
 }
 
 html[data-font="sans"] {
@@ -2030,7 +2030,7 @@ html[data-theme="dark"][data-highlight-color="orange"] .reader-highlight {
   display: grid;
   place-items: center;
   min-height: 100%;
-  text-align: center;
+  text-align: left;
   color: var(--text-muted);
 }
 
@@ -2040,7 +2040,7 @@ html[data-theme="dark"][data-highlight-color="orange"] .reader-highlight {
 
 .empty-state--left {
   place-items: start;
-  text-align: left;
+  text-align: center;
 }
 
 .empty-state p,
@@ -2479,6 +2479,17 @@ html[data-theme="dark"][data-highlight-color="orange"] .reader-highlight {
 
 .settings-action-row--danger .settings-action-row__text small {
   color: var(--danger);
+}
+
+/* Quick Share buttons */
+.quick-share-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.quick-share-buttons .button {
+  flex: 1;
+  justify-content: center;
 }
 
 /* About section */

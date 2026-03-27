@@ -842,48 +842,32 @@
                 <hr class="panel-divider" />
 
                 <div class="section-heading section-heading--compact">
-                  <h2>Transfer</h2>
+                  <h2>Quick Share</h2>
                 </div>
 
                 <div class="stack-form">
-                  <div class="settings-action-row">
-                    <div class="settings-action-row__text">
-                      <strong>Export to clipboard</strong>
-                      <small
-                        >Select bookmarks to copy as JSON. Projects are included
-                        automatically.</small
-                      >
-                    </div>
+                  <p class="meta-text" style="margin-top: 0">
+                    Move bookmarks between devices via clipboard
+                  </p>
+                  <div class="quick-share-buttons">
                     <button
-                      class="button button--primary button--sm"
+                      class="button button--primary"
                       id="data-transfer-export-button"
                       type="button"
                     >
                       <i
-                        class="fa-solid fa-arrow-up-from-bracket"
+                        class="fa-solid fa-share-from-square"
                         aria-hidden="true"
                       ></i>
-                      Export
+                      Share
                     </button>
-                  </div>
-                  <div class="settings-action-row">
-                    <div class="settings-action-row__text">
-                      <strong>Import from clipboard</strong>
-                      <small
-                        >Import bookmarks and projects from a previous
-                        export.</small
-                      >
-                    </div>
                     <button
-                      class="button button--ghost button--sm"
+                      class="button button--ghost"
                       id="data-transfer-import-button"
                       type="button"
                     >
-                      <i
-                        class="fa-solid fa-arrow-down-to-bracket"
-                        aria-hidden="true"
-                      ></i>
-                      Import
+                      <i class="fa-solid fa-paste" aria-hidden="true"></i>
+                      Receive
                     </button>
                   </div>
                 </div>
@@ -1701,7 +1685,7 @@
     <dialog id="data-transfer-dialog" class="data-transfer-dialog">
       <div class="data-transfer-dialog__inner">
         <div class="data-transfer-dialog__header">
-          <h2 class="data-transfer-dialog__title">Export Bookmarks</h2>
+          <h2 class="data-transfer-dialog__title">Share Bookmarks</h2>
           <button
             type="button"
             class="data-transfer-dialog__close"
@@ -1777,8 +1761,8 @@
         <div class="data-transfer-import-view" hidden>
           <div class="data-transfer-import-area">
             <p class="data-transfer-import-hint">
-              Click the button below to read bookmark data from your clipboard.
-              The data should be in JSON format from a previous export.
+              Paste shared bookmarks from your clipboard. They'll be merged with
+              your existing library.
             </p>
 
             <div
@@ -1810,7 +1794,7 @@
             data-export-action
           >
             <i class="fa-solid fa-copy" aria-hidden="true"></i>
-            Copy to Clipboard
+            Copy
           </button>
           <button
             type="button"
@@ -1818,8 +1802,8 @@
             data-import-action
             hidden
           >
-            <i class="fa-solid fa-clipboard" aria-hidden="true"></i>
-            Read from Clipboard
+            <i class="fa-solid fa-paste" aria-hidden="true"></i>
+            Paste
           </button>
         </div>
       </div>

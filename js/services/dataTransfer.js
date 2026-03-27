@@ -101,7 +101,7 @@ export function openExportDialog() {
 
   // Update header
   dialog.querySelector(".data-transfer-dialog__title").textContent =
-    "Export Bookmarks";
+    "Share Bookmarks";
 
   renderBookmarkList();
   updateSelectionCount();
@@ -133,12 +133,12 @@ export function openImportDialog() {
   const importBtn = dialog.querySelector("[data-import-action]");
   if (importBtn) {
     importBtn.innerHTML =
-      '<i class="fa-solid fa-clipboard" aria-hidden="true"></i> Read from Clipboard';
+      '<i class="fa-solid fa-paste" aria-hidden="true"></i> Paste';
   }
 
   // Update header
   dialog.querySelector(".data-transfer-dialog__title").textContent =
-    "Import Bookmarks";
+    "Receive Bookmarks";
 
   // Clear previous import preview
   const previewEl = dialog.querySelector("#data-transfer-import-preview");
@@ -348,7 +348,7 @@ function selectNone() {
  */
 async function handleExport() {
   if (selectedIds.size === 0) {
-    showExportStatus("Please select at least one bookmark", "error");
+    showExportStatus("Select bookmarks to share", "error");
     return;
   }
 
@@ -357,16 +357,13 @@ async function handleExport() {
 
   try {
     await navigator.clipboard.writeText(json);
-    showExportStatus(
-      `Copied ${selectedIds.size} bookmarks to clipboard`,
-      "success",
-    );
+    showExportStatus(`Copied! Paste on your other device`, "success");
 
     // Auto-close after success
     setTimeout(() => closeDialog(), 1500);
   } catch (err) {
     console.error("Failed to copy to clipboard:", err);
-    showExportStatus("Failed to copy to clipboard", "error");
+    showExportStatus("Couldn't copy. Try again", "error");
   }
 }
 
@@ -427,7 +424,7 @@ async function handleImportAction() {
     const text = await navigator.clipboard.readText();
 
     if (!text.trim()) {
-      showImportStatus("Clipboard is empty", "error");
+      showImportStatus("Nothing in clipboard", "error");
       return;
     }
 
@@ -435,16 +432,13 @@ async function handleImportAction() {
     try {
       parsed = JSON.parse(text);
     } catch {
-      showImportStatus("Clipboard does not contain valid JSON", "error");
+      showImportStatus("No shared bookmarks found in clipboard", "error");
       return;
     }
 
     // Validate structure
     if (!parsed.bookmarks || !Array.isArray(parsed.bookmarks)) {
-      showImportStatus(
-        "Invalid export format: missing bookmarks array",
-        "error",
-      );
+      showImportStatus("No shared bookmarks found in clipboard", "error");
       return;
     }
 
@@ -469,18 +463,18 @@ async function handleImportAction() {
       `;
     }
 
-    // Change button to "Import"
+    // Change button to "Add"
     const importBtn = dialog.querySelector("[data-import-action]");
     if (importBtn) {
       importBtn.innerHTML =
-        '<i class="fa-solid fa-download" aria-hidden="true"></i> Import';
+        '<i class="fa-solid fa-plus" aria-hidden="true"></i> Add';
     }
 
-    showImportStatus("Ready to import", "success");
+    showImportStatus("Ready to add", "success");
   } catch (err) {
     console.error("Failed to read clipboard:", err);
     showImportStatus(
-      "Failed to read clipboard. Make sure you've granted permission.",
+      "Couldn't read clipboard. Allow access and try again.",
       "error",
     );
   }
@@ -491,7 +485,7 @@ async function handleImportAction() {
  */
 function executeImport() {
   if (!importData) {
-    showImportStatus("No data to import", "error");
+    showImportStatus("Nothing to add. Paste first.", "error");
     return;
   }
 
@@ -639,9 +633,7 @@ function executeImport() {
     parts.push(`${addedProjects} project${addedProjects !== 1 ? "s" : ""}`);
   }
   const message =
-    parts.length > 0
-      ? `Imported: ${parts.join(", ")}`
-      : "Nothing new to import";
+    parts.length > 0 ? `Added: ${parts.join(", ")}` : "Already up to date";
 
   showImportStatus(message, "success");
   importData = null;
