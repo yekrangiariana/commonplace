@@ -59,7 +59,7 @@ html[data-font="mono"] {
 }
 
 p {
-  text-align: center;
+  text-align: left;
 }
 
 html[data-font="sans"] {
@@ -2040,7 +2040,7 @@ html[data-theme="dark"][data-highlight-color="orange"] .reader-highlight {
 
 .empty-state--left {
   place-items: start;
-  text-align: center;
+  text-align: left;
 }
 
 .empty-state p,
@@ -2425,7 +2425,7 @@ html[data-theme="dark"][data-highlight-color="orange"] .reader-highlight {
 
 .settings-table__count {
   color: var(--text-muted);
-  text-align: center;
+  text-align: left;
   width: 60px;
 }
 
@@ -3074,7 +3074,7 @@ html[data-theme="dark"][data-highlight-color="orange"] .reader-highlight {
   align-content: center;
   justify-items: center;
   gap: 4px;
-  text-align: center;
+  text-align: left;
   border: var(--border-light);
   background: var(--surface-muted);
 }
