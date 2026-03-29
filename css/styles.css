@@ -68,9 +68,11 @@ html[data-font="sans"] {
 }
 
 html[data-font="serif"] {
-  --app-font-family:
-    "Lora", "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia,
-    serif;
+  --app-font-family: Georgia, "Times New Roman", "Noto Serif", serif;
+}
+
+html[data-font="slab"] {
+  --app-font-family: "Roboto Slab", Rockwell, "Courier New", serif;
 }
 
 html[data-theme="dark"] {

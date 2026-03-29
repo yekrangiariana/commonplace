@@ -3373,7 +3373,7 @@ function applyDisplayPreferences() {
   root.setAttribute("data-theme", state.theme === "dark" ? "dark" : "light");
   root.setAttribute(
     "data-font",
-    ["mono", "sans", "serif"].includes(state.displayFont)
+    ["mono", "sans", "serif", "slab"].includes(state.displayFont)
       ? state.displayFont
       : "mono",
   );

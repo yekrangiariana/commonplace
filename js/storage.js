@@ -455,7 +455,7 @@ function applyParsedState(state, parsedState) {
   state.autoTagCustomRules = Array.isArray(parsedState.autoTagCustomRules)
     ? parsedState.autoTagCustomRules
     : [];
-  state.displayFont = ["mono", "sans", "serif"].includes(
+  state.displayFont = ["mono", "sans", "serif", "slab"].includes(
     parsedState.displayFont,
   )
     ? parsedState.displayFont
