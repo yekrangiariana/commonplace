@@ -114,6 +114,7 @@ export const dom = {
   rssRefreshActiveButton: document.querySelector("[data-rss-refresh-active]"),
   rssLastUpdated: document.querySelector("#rss-last-updated"),
   rssFeedUrlInput: document.querySelector("#rss-feed-url-input"),
+  rssFeedNameInput: document.querySelector("#rss-feed-name-input"),
   rssFeedFolderInput: document.querySelector("#rss-feed-folder-input"),
   rssFolderSuggestions: document.querySelector("#rss-folder-suggestions"),
   rssFolderList: document.querySelector("#rss-folder-list"),
@@ -128,6 +129,7 @@ export const dom = {
   addDialogIndicators: [...document.querySelectorAll("[data-add-indicator]")],
   addFeedForm: document.querySelector("#add-feed-form"),
   addFeedUrl: document.querySelector("#add-feed-url"),
+  addFeedName: document.querySelector("#add-feed-name"),
   addFeedFolder: document.querySelector("#add-feed-folder"),
   addFeedFolderSuggestions: document.querySelector(
     "#add-feed-folder-suggestions",

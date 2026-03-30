@@ -121,7 +121,7 @@
           <div class="panel-grid panel-grid--rss">
             <aside class="panel-card panel-card--rss-folders">
               <div class="section-heading section-heading--compact">
-                <h2>Folders</h2>
+                <h2>Sources</h2>
               </div>
               <div
                 id="rss-folder-list"
@@ -133,7 +133,7 @@
             <section class="panel-card panel-card--rss-main">
               <div class="rss-toolbar">
                 <div class="section-heading section-heading--compact">
-                  <h2>Feeds</h2>
+                  <h2>Articles</h2>
                   <p id="rss-last-updated" class="meta-text rss-last-updated">
                     Last updated: Never
                   </p>
@@ -165,6 +165,12 @@
                           placeholder="https://example.com/feed.xml"
                           autocomplete="off"
                           required
+                        />
+                        <input
+                          id="rss-feed-name-input"
+                          type="text"
+                          placeholder="Name (optional)"
+                          autocomplete="off"
                         />
                         <input
                           id="rss-feed-folder-input"
@@ -1508,6 +1514,16 @@
                   placeholder="https://example.com/feed.xml"
                   autocomplete="off"
                   required
+                />
+              </label>
+              <label class="field-group">
+                <span>Name (optional)</span>
+                <input
+                  id="add-feed-name"
+                  name="name"
+                  type="text"
+                  placeholder="Custom display name"
+                  autocomplete="off"
                 />
               </label>
               <label class="field-group">

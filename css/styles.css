@@ -668,6 +668,119 @@ a:visited {
   width: 100%;
 }
 
+.rss-sidebar-divider {
+  border: none;
+  border-top: 1px dashed var(--border-color);
+  margin: 8px 0;
+}
+
+.rss-sidebar-feed {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  text-align: left;
+  background: var(--surface-muted);
+  border: var(--border-light);
+  border-radius: 4px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+
+.rss-sidebar-feed__name {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: var(--font-weight-label);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rss-sidebar-feed__name i {
+  flex-shrink: 0;
+}
+
+.rss-sidebar-feed__remove {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--text-muted);
+  opacity: 0.6;
+  font-size: 11px;
+  transition:
+    opacity 80ms ease,
+    color 80ms ease;
+}
+
+.rss-sidebar-feed__remove:hover {
+  opacity: 1;
+  color: var(--danger);
+}
+
+.rss-sidebar-feed--active {
+  background: var(--success-bg);
+  color: var(--success);
+  border-color: var(--success-border);
+}
+
+.rss-sidebar-feed--active .rss-sidebar-feed__remove {
+  color: var(--success);
+}
+
+.rss-sidebar-feed--active .rss-sidebar-feed__remove:hover {
+  color: var(--danger);
+}
+
+.rss-sidebar-feed--outside {
+  opacity: 0.5;
+}
+
+.rss-sidebar-feed--outside:not(.rss-sidebar-feed--active) {
+  border-style: dashed;
+}
+
+.rss-sidebar-deselect {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  margin-bottom: 6px;
+  background: var(--surface);
+  border: var(--border-light);
+  border-radius: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-label);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.rss-sidebar-deselect:hover {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
 .rss-toolbar {
   display: flex;
   align-items: flex-start;
@@ -743,13 +856,6 @@ a:visited {
 }
 
 .rss-feed-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 12px;
-}
-
-.rss-feed-list:empty {
   display: none;
 }
 

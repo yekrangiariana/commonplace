@@ -204,6 +204,29 @@
     flex: 0 0 auto;
   }
 
+  .rss-sidebar-divider {
+    width: 100%;
+    margin: 6px 0;
+  }
+
+  .rss-sidebar-feed {
+    width: auto;
+    flex: 0 0 auto;
+    padding: 8px 12px;
+  }
+
+  .rss-sidebar-feed__name {
+    font-size: 11px;
+    gap: 5px;
+  }
+
+  .rss-sidebar-deselect {
+    width: auto;
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    margin-bottom: 0;
+  }
+
   /* Consistent folder/nav button sizing across all sections */
   .sidebar-folder-button,
   .rss-folder-chip,

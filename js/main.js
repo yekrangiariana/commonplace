@@ -395,6 +395,8 @@ function bindEvents() {
     const btn = event.target.closest("[data-add-feed-suggest]");
     if (btn && dom.addFeedUrl) {
       dom.addFeedUrl.value = btn.dataset.addFeedSuggest;
+      if (dom.addFeedName)
+        dom.addFeedName.value = btn.dataset.addFeedSuggestName || "";
       dom.addFeedForm?.requestSubmit();
     }
   });
@@ -415,6 +417,8 @@ function bindEvents() {
     const btn = event.target.closest("[data-rss-suggest]");
     if (!btn || !dom.rssFeedUrlInput || !dom.rssSubscribeForm) return;
     dom.rssFeedUrlInput.value = btn.dataset.rssSuggest;
+    if (dom.rssFeedNameInput)
+      dom.rssFeedNameInput.value = btn.dataset.rssSuggestName || "";
     dom.rssSubscribeForm.requestSubmit();
   });
   dom.rssOpenSubscribeButton?.addEventListener(
@@ -2036,27 +2040,20 @@ function handleDocumentClick(event) {
 
   if (rssFolderTrigger) {
     state.rssFolderFilter = rssFolderTrigger.dataset.rssFolder || "";
-    const visibleFeeds = getVisibleRssFeeds();
-    const selectedFeedIds = new Set(
-      Array.isArray(state.rssSelectedFeedIds) ? state.rssSelectedFeedIds : [],
-    );
-
-    if (canNarrowRssByFeed()) {
+    // Clear feed selections when switching to a specific folder (not All or Today)
+    if (state.rssFolderFilter && state.rssFolderFilter !== "__today__") {
+      state.rssSelectedFeedIds = [];
+      state.rssActiveFeedId = null;
+    } else {
+      // For All/Today views, keep selections but filter to valid feeds
+      const visibleFeeds = getVisibleRssFeeds();
       const visibleFeedIds = new Set(visibleFeeds.map((feed) => feed.id));
-      state.rssSelectedFeedIds = [...selectedFeedIds].filter((feedId) =>
-        visibleFeedIds.has(feedId),
+      state.rssSelectedFeedIds = (state.rssSelectedFeedIds || []).filter(
+        (feedId) => visibleFeedIds.has(feedId),
       );
-
-      if (
-        state.rssActiveFeedId &&
-        !visibleFeeds.some((feed) => feed.id === state.rssActiveFeedId)
-      ) {
+      if (state.rssActiveFeedId && !visibleFeedIds.has(state.rssActiveFeedId)) {
         state.rssActiveFeedId = state.rssSelectedFeedIds[0] || null;
       }
-    } else if (
-      !visibleFeeds.some((feed) => feed.id === state.rssActiveFeedId)
-    ) {
-      state.rssActiveFeedId = visibleFeeds[0]?.id || null;
     }
 
     persistState(state);
@@ -2112,11 +2109,17 @@ function handleDocumentClick(event) {
   const rssSelectFeedTrigger = event.target.closest("[data-rss-select-feed]");
 
   if (rssSelectFeedTrigger) {
-    if (!canNarrowRssByFeed()) {
-      return;
+    const nextFeedId = rssSelectFeedTrigger.dataset.rssSelectFeed;
+    const feed = state.rssFeeds.find((f) => f.id === nextFeedId);
+
+    // If clicking a feed that's not in the current folder, switch to "All feeds"
+    if (state.rssFolderFilter && state.rssFolderFilter !== "__today__") {
+      const feedFolder = normalizeRssFolderName(feed?.folder);
+      if (feedFolder !== state.rssFolderFilter) {
+        state.rssFolderFilter = "";
+      }
     }
 
-    const nextFeedId = rssSelectFeedTrigger.dataset.rssSelectFeed;
     const selectedFeedIds = new Set(
       Array.isArray(state.rssSelectedFeedIds) ? state.rssSelectedFeedIds : [],
     );
@@ -2132,6 +2135,19 @@ function handleDocumentClick(event) {
     }
 
     state.rssSelectedFeedIds = [...selectedFeedIds];
+    persistState(state);
+    renderRssPanel();
+    rssAutoRefreshController?.sync();
+    return;
+  }
+
+  const rssDeselectFeedsTrigger = event.target.closest(
+    "[data-rss-deselect-feeds]",
+  );
+
+  if (rssDeselectFeedsTrigger) {
+    state.rssSelectedFeedIds = [];
+    state.rssActiveFeedId = null;
     persistState(state);
     renderRssPanel();
     rssAutoRefreshController?.sync();
@@ -3497,7 +3513,7 @@ function renderFeedSuggestions() {
     dom.rssFeedSuggestions.innerHTML = feeds
       .map(
         (f) =>
-          `<button type="button" class="chip chip--helper" data-rss-suggest="${escapeHtml(f.url)}">${escapeHtml(f.name)}</button>`,
+          `<button type="button" class="chip chip--helper" data-rss-suggest="${escapeHtml(f.url)}" data-rss-suggest-name="${escapeHtml(f.name)}">${escapeHtml(f.name)}</button>`,
       )
       .join("");
   }
@@ -3507,7 +3523,7 @@ function renderFeedSuggestions() {
     dom.addFeedSuggestions.innerHTML = feeds
       .map(
         (f) =>
-          `<button type="button" class="chip chip--helper" data-add-feed-suggest="${escapeHtml(f.url)}">${escapeHtml(f.name)}</button>`,
+          `<button type="button" class="chip chip--helper" data-add-feed-suggest="${escapeHtml(f.url)}" data-add-feed-suggest-name="${escapeHtml(f.name)}">${escapeHtml(f.name)}</button>`,
       )
       .join("");
   }
@@ -3562,6 +3578,7 @@ async function handleAddFeedSubmit(event) {
   event.preventDefault();
 
   const url = (dom.addFeedUrl?.value || "").trim();
+  const customName = (dom.addFeedName?.value || "").trim();
   const folder = normalizeRssFolderName(dom.addFeedFolder?.value || "");
 
   if (!url) {
@@ -3588,7 +3605,7 @@ async function handleAddFeedSubmit(event) {
     const feed = {
       id: createUniqueRssFeedId(),
       url: normalized,
-      title: feedData.title,
+      title: customName || feedData.title,
       items: (feedData.items || []).map((item) => ({
         ...item,
         canonicalUrl: canonicalizeArticleUrl(item.url),
@@ -4351,16 +4368,13 @@ function renderRssPanel() {
     Array.isArray(state.rssSelectedFeedIds) ? state.rssSelectedFeedIds : [],
   );
 
-  if (canNarrowRssByFeed()) {
-    if (
-      state.rssActiveFeedId &&
-      !visibleFeeds.some((feed) => feed.id === state.rssActiveFeedId)
-    ) {
-      state.rssActiveFeedId =
-        visibleFeeds.find((feed) => selectedFeedIdSet.has(feed.id))?.id || null;
-    }
-  } else if (!visibleFeeds.some((feed) => feed.id === state.rssActiveFeedId)) {
-    state.rssActiveFeedId = visibleFeeds[0]?.id || null;
+  // Ensure active feed is valid
+  if (
+    state.rssActiveFeedId &&
+    !state.rssFeeds.some((feed) => feed.id === state.rssActiveFeedId)
+  ) {
+    state.rssActiveFeedId =
+      selectedFeedIdSet.size > 0 ? [...selectedFeedIdSet][0] : null;
   }
 
   const latestVisibleFetch = visibleFeeds.reduce((latest, feed) => {
@@ -4427,6 +4441,50 @@ function renderRssPanel() {
       `,
       )
       .join("")}
+    ${state.rssFeeds.length > 0 ? '<hr class="rss-sidebar-divider">' : ""}
+    ${
+      selectedFeedIdSet.size > 0
+        ? `
+      <button
+        type="button"
+        class="rss-sidebar-deselect"
+        data-rss-deselect-feeds
+        title="Deselect all feeds"
+      >
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        Deselect (${selectedFeedIdSet.size})
+      </button>
+    `
+        : ""
+    }
+    ${state.rssFeeds
+      .map((feed) => {
+        const feedFolder = normalizeRssFolderName(feed.folder);
+        const isInCurrentFolder =
+          !state.rssFolderFilter ||
+          state.rssFolderFilter === "__today__" ||
+          feedFolder === state.rssFolderFilter;
+        return `
+        <div
+          class="rss-sidebar-feed ${selectedFeedIdSet.has(feed.id) ? "rss-sidebar-feed--active" : ""} ${!isInCurrentFolder ? "rss-sidebar-feed--outside" : ""}"
+          data-rss-select-feed="${escapeHtml(feed.id)}"
+          title="${escapeHtml(feed.title || feed.url)}${!isInCurrentFolder ? " (not in this folder)" : ""}"
+        >
+          <span class="rss-sidebar-feed__name">
+            <i class="fa-solid fa-rss" aria-hidden="true"></i>
+            ${escapeHtml(feed.title || feed.url)}
+          </span>
+          <button
+            class="rss-sidebar-feed__remove"
+            data-rss-remove-feed="${escapeHtml(feed.id)}"
+            title="Remove feed"
+            type="button"
+            aria-label="Remove ${escapeHtml(feed.title || "feed")}"
+          ><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </div>
+      `;
+      })
+      .join("")}
   `;
 
   if (dom.rssRefreshActiveButton) {
@@ -4453,30 +4511,6 @@ function renderRssPanel() {
       button.dataset.rssReadFilter === (state.rssReadFilter || "all"),
     );
   });
-
-  if (visibleFeeds.length === 0) {
-    dom.rssFeedList.innerHTML =
-      '<div class="empty-state empty-state--compact empty-state--left"><p>No feeds in this folder yet.</p></div>';
-  } else {
-    const canNarrow = canNarrowRssByFeed();
-    dom.rssFeedList.innerHTML = visibleFeeds
-      .map(
-        (feed) => `
-      <div class="rss-feed-chip ${canNarrow && selectedFeedIdSet.has(feed.id) ? "rss-feed-chip--active" : ""}"
-           ${canNarrow ? `data-rss-select-feed="${escapeHtml(feed.id)}"` : ""}
-           title="${escapeHtml(feed.title || feed.url)}">
-        <span>${escapeHtml(feed.title || feed.url)}</span>
-        <button
-          class="rss-feed-chip__remove"
-          data-rss-remove-feed="${escapeHtml(feed.id)}"
-          title="Remove feed"
-          type="button"
-          aria-label="Remove ${escapeHtml(feed.title || "feed")}"
-        ><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-      </div>`,
-      )
-      .join("");
-  }
 
   const sortedItems = filterRssItemsByReadState(
     getRssItemsForCurrentScope(),
@@ -4569,6 +4603,7 @@ async function handleRssSubscribeSubmit(event) {
   event.preventDefault();
 
   const url = (dom.rssFeedUrlInput?.value || "").trim();
+  const customName = (dom.rssFeedNameInput?.value || "").trim();
   const folder = normalizeRssFolderName(dom.rssFeedFolderInput?.value || "");
 
   if (!url) {
@@ -4595,7 +4630,7 @@ async function handleRssSubscribeSubmit(event) {
     const feed = {
       id: createUniqueRssFeedId(),
       url: normalized,
-      title: feedData.title,
+      title: customName || feedData.title,
       items: (feedData.items || []).map((item) => ({
         ...item,
         canonicalUrl: canonicalizeArticleUrl(item.url),
@@ -5256,10 +5291,6 @@ function getVisibleRssFeeds() {
   );
 }
 
-function canNarrowRssByFeed() {
-  return !state.rssFolderFilter || state.rssFolderFilter === "__today__";
-}
-
 function normalizeRssFolderName(value) {
   const normalized = String(value || "").trim();
   return normalized.toLowerCase() === "unfiled" ? "" : normalized;
@@ -5302,8 +5333,9 @@ function getRssItemsForCurrentScope() {
   const selectedFeedIdSet = new Set(
     Array.isArray(state.rssSelectedFeedIds) ? state.rssSelectedFeedIds : [],
   );
+  // Apply feed selection filter if any feeds are selected
   const scopedFeeds =
-    canNarrowRssByFeed() && selectedFeedIdSet.size > 0
+    selectedFeedIdSet.size > 0
       ? visibleFeeds.filter((feed) => selectedFeedIdSet.has(feed.id))
       : visibleFeeds;
 
