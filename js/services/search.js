@@ -59,7 +59,9 @@ export async function rebuildIndex(bookmarks = [], projects = []) {
   }
 
   isIndexReady = true;
-  console.log(`Search index built: ${bookmarks.length} bookmarks, ${projects.length} projects`);
+  console.log(
+    `Search index built: ${bookmarks.length} bookmarks, ${projects.length} projects`,
+  );
 }
 
 /**
@@ -76,21 +78,17 @@ function flattenBlocksToText(blocks) {
  */
 function bookmarkToSearchDoc(bookmark) {
   const tags = (bookmark.tags || []).join(" ");
-  
+
   // Get full body content from blocks
   const bodyText = flattenBlocksToText(bookmark.blocks);
-  
+
   // Get highlight texts
   const highlightTexts = (bookmark.highlights || [])
     .map((h) => h.text || "")
     .join(" ");
-  
+
   // Combine all searchable content
-  const content = [
-    bookmark.description || "",
-    bodyText,
-    highlightTexts,
-  ]
+  const content = [bookmark.description || "", bodyText, highlightTexts]
     .filter(Boolean)
     .join(" ");
 
@@ -111,11 +109,8 @@ function bookmarkToSearchDoc(bookmark) {
 function projectToSearchDoc(project) {
   // Project content is the markdown body
   const bodyContent = project.content || "";
-  
-  const content = [
-    project.description || "",
-    bodyContent,
-  ]
+
+  const content = [project.description || "", bodyContent]
     .filter(Boolean)
     .join(" ");
 

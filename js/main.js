@@ -840,7 +840,10 @@ function bindEvents() {
   dom.mobileSearchFab?.addEventListener("click", openMobileSearch);
   dom.searchOverlayBack?.addEventListener("click", closeMobileSearch);
   dom.searchOverlayInput?.addEventListener("input", handleMobileSearchInput);
-  dom.searchOverlayInput?.addEventListener("keydown", handleMobileSearchKeydown);
+  dom.searchOverlayInput?.addEventListener(
+    "keydown",
+    handleMobileSearchKeydown,
+  );
   dom.searchOverlayClear?.addEventListener("click", clearMobileSearch);
   dom.searchOverlayResults?.addEventListener("click", handleSearchResultClick);
 }
@@ -6053,10 +6056,10 @@ function renderSearchResults(results, listElement) {
   if (!listElement) return;
 
   const container = listElement.closest(
-    ".search-dropdown__results, .search-overlay__results"
+    ".search-dropdown__results, .search-overlay__results",
   );
   const emptyEl = container?.querySelector(
-    ".search-dropdown__empty, .search-overlay__empty"
+    ".search-dropdown__empty, .search-overlay__empty",
   );
 
   if (results.length === 0) {
@@ -6090,7 +6093,7 @@ function renderSearchResults(results, listElement) {
           ${result.preview ? `<div class="search-result-item__preview">${escapeHtml(result.preview)}</div>` : ""}
         </div>
       </li>
-    `
+    `,
     )
     .join("");
 }
@@ -6204,7 +6207,7 @@ function closeMobileSearch() {
     dom.searchOverlayList.innerHTML = "";
   }
   const emptyEl = dom.searchOverlayResults?.querySelector(
-    ".search-overlay__empty"
+    ".search-overlay__empty",
   );
   if (emptyEl) {
     emptyEl.textContent = "Start typing to search...";
