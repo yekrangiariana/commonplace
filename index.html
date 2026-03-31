@@ -73,6 +73,8 @@
     <link rel="stylesheet" href="./css/mobile-responsive.css" />
     <link rel="stylesheet" href="./css/splash.css" />
     <link rel="stylesheet" href="./css/data-transfer.css" />
+    <link rel="stylesheet" href="./css/search.css" />
+    <script src="https://cdn.jsdelivr.net/npm/flexsearch@0.7.43/dist/flexsearch.bundle.min.js"></script>
   </head>
   <body>
     <div class="splash-screen" id="splash-screen">
@@ -106,9 +108,48 @@
               <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
               <span>Projects</span>
             </button>
+            <button class="nav-link nav-link--search" id="search-toggle">
+              <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              <span>Search</span>
+            </button>
           </nav>
         </div>
         <div class="header-right">
+          <!-- Search Dropdown (positioned from nav-link) -->
+          <div class="search-dropdown" id="search-container">
+            <div class="search-dropdown__backdrop" id="search-backdrop"></div>
+            <div class="search-dropdown__content">
+              <div class="search-dropdown__input-wrap">
+                <i class="fa-solid fa-magnifying-glass search-dropdown__icon" aria-hidden="true"></i>
+                <input
+                  type="search"
+                  class="search-dropdown__input"
+                  id="search-input"
+                  placeholder="Search bookmarks & projects..."
+                  autocomplete="off"
+                />
+                <button
+                  type="button"
+                  class="search-dropdown__clear"
+                  id="search-clear"
+                  aria-label="Clear search"
+                >
+                  <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div class="search-dropdown__results" id="search-results">
+                <ul class="search-dropdown__list" id="search-results-list"></ul>
+                <div class="search-dropdown__empty">Start typing to search...</div>
+                <div class="search-dropdown__footer">
+                  <span class="search-dropdown__hint">
+                    <kbd>↑</kbd><kbd>↓</kbd> navigate
+                    <kbd>↵</kbd> select
+                    <kbd>esc</kbd> close
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
           <button
             class="header-action header-action--primary"
             id="add-article-open-button"
@@ -1751,6 +1792,46 @@
         ></div>
       </div>
     </dialog>
+
+    <!-- Mobile Search FAB -->
+    <button type="button" class="mobile-search-fab" id="mobile-search-fab" aria-label="Search">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+    </button>
+
+    <!-- Mobile Search Overlay -->
+    <div class="search-overlay" id="search-overlay">
+      <div class="search-overlay__header">
+        <button
+          type="button"
+          class="search-overlay__back"
+          id="search-overlay-back"
+          aria-label="Close search"
+        >
+          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+        </button>
+        <div class="search-overlay__input-wrap">
+          <input
+            type="search"
+            class="search-overlay__input"
+            id="search-overlay-input"
+            placeholder="Search bookmarks & projects..."
+            autocomplete="off"
+          />
+          <button
+            type="button"
+            class="search-overlay__clear"
+            id="search-overlay-clear"
+            aria-label="Clear search"
+          >
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+      <div class="search-overlay__results" id="search-overlay-results">
+        <div class="search-overlay__empty">Start typing to search...</div>
+        <ul class="search-overlay__list" id="search-overlay-list"></ul>
+      </div>
+    </div>
 
     <!-- Data Transfer Dialog -->
     <dialog id="data-transfer-dialog" class="data-transfer-dialog">

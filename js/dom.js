@@ -144,4 +144,20 @@ export const dom = {
   addTweetUrl: document.querySelector("#add-tweet-url"),
   addTweetTags: document.querySelector("#add-tweet-tags"),
   addTweetAvailableTags: document.querySelector("#add-tweet-available-tags"),
+  // Search
+  searchContainer: document.querySelector("#search-container"),
+  searchBackdrop: document.querySelector("#search-backdrop"),
+  searchInput: document.querySelector("#search-input"),
+  searchToggle: document.querySelector("#search-toggle"),
+  searchClear: document.querySelector("#search-clear"),
+  searchResults: document.querySelector("#search-results"),
+  searchResultsList: document.querySelector("#search-results-list"),
+  // Mobile search
+  mobileSearchFab: document.querySelector("#mobile-search-fab"),
+  searchOverlay: document.querySelector("#search-overlay"),
+  searchOverlayBack: document.querySelector("#search-overlay-back"),
+  searchOverlayInput: document.querySelector("#search-overlay-input"),
+  searchOverlayClear: document.querySelector("#search-overlay-clear"),
+  searchOverlayResults: document.querySelector("#search-overlay-results"),
+  searchOverlayList: document.querySelector("#search-overlay-list"),
 };
