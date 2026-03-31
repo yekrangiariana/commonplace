@@ -48,11 +48,13 @@
     box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.25);
   }
 
-  /* Hide app title section on mobile */
-  .app-header > div:first-child {
+  /* Hide desktop header elements on mobile */
+  .header-left,
+  .header-right {
     display: none;
   }
 
+  /* Show mobile tab bar */
   .tab-bar {
     width: 100%;
     display: flex;
@@ -104,7 +106,7 @@
   }
 
   /* Add button - circular raised style */
-  #add-article-open-button {
+  #add-article-open-button-mobile {
     position: relative;
     top: -20px;
     width: 56px;
@@ -122,19 +124,19 @@
       border-color 0s; /* No transition to prevent flash */
   }
 
-  html[data-theme="dark"] #add-article-open-button {
+  html[data-theme="dark"] #add-article-open-button-mobile {
     border-color: var(--surface);
     background: var(--success);
     color: var(--bg);
   }
 
-  #add-article-open-button i {
+  #add-article-open-button-mobile i {
     font-size: 22px;
     color: inherit;
     transition: transform 0.2s ease;
   }
 
-  #add-article-open-button:hover {
+  #add-article-open-button-mobile:hover {
     transform: scale(1.05);
     background: var(--success);
   }
@@ -665,10 +667,10 @@
   .add-article-dialog__close {
     display: none;
   }
-  body.add-dialog-open #add-article-open-button i {
+  body.add-dialog-open #add-article-open-button-mobile i {
     transform: rotate(45deg);
   }
-  #add-article-open-button i {
+  #add-article-open-button-mobile i {
     transition: transform 0.2s ease;
   }
 
@@ -1091,7 +1093,7 @@
   .tab-button.is-active:hover {
     background: transparent;
   }
-  #add-article-open-button:hover {
+  #add-article-open-button-mobile:hover {
     transform: none;
   }
   .article-card:hover,

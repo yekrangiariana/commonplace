@@ -333,6 +333,9 @@ function bindEvents() {
     .querySelector("#add-article-open-button")
     ?.addEventListener("click", () => openAddModal());
   document
+    .querySelector("#add-article-open-button-mobile")
+    ?.addEventListener("click", () => openAddModal());
+  document
     .querySelector("#add-article-close-button")
     ?.addEventListener("click", closeAddModal);
   dom.addArticleDialog?.addEventListener("click", (event) => {
