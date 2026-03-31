@@ -1073,6 +1073,11 @@
     padding-right: env(safe-area-inset-right, 16px);
   }
 
+  .rss-item-card__excerpt,
+  .meta-text {
+    display: none;
+  }
+
   /* Specific adjustments for iOS */
   @supports (-webkit-touch-callout: none) {
     body {

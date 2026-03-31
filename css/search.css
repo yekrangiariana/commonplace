@@ -152,9 +152,12 @@ html[data-theme="dark"] .search-dropdown__content {
   transition: background 120ms ease;
 }
 
-.search-result-item:hover,
-.search-result-item.is-focused {
+.search-result-item:hover {
   background: var(--input-bg);
+}
+
+.search-result-item.is-focused {
+  background: var(--success-bg);
 }
 
 .search-result-item__icon {

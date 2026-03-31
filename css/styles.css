@@ -1083,6 +1083,7 @@ a:visited {
   object-fit: cover;
   border: var(--border-faint);
   background: var(--surface-muted);
+  border-radius: 5px;
 }
 
 .rss-item-card h3 {
