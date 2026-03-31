@@ -211,7 +211,8 @@
 
   .rss-sidebar-feed {
     width: auto;
-    flex: 0 0 auto;
+    flex: 0 1 auto;
+    max-width: 200px;
     padding: 8px 12px;
   }
 

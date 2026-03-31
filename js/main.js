@@ -803,45 +803,6 @@ function bindEvents() {
   window.addEventListener("hashchange", handleBrowserNavigation);
   window.addEventListener("resize", positionRssSubscribePopover);
   document.addEventListener("visibilitychange", handleDocumentVisibilityChange);
-
-  // Pull-to-refresh for RSS panel (mobile only)
-  if ("ontouchstart" in window) {
-    const rssPanel = document.querySelector('[data-tab-panel="rss"]');
-    let startY = 0;
-    let pulling = false;
-
-    rssPanel?.addEventListener(
-      "touchstart",
-      (e) => {
-        if (rssPanel.scrollTop === 0) {
-          startY = e.touches[0].clientY;
-          pulling = true;
-        }
-      },
-      { passive: true },
-    );
-
-    rssPanel?.addEventListener(
-      "touchmove",
-      (e) => {
-        if (!pulling) return;
-        const pullDistance = e.touches[0].clientY - startY;
-        if (pullDistance > 80 && rssPanel.scrollTop === 0) {
-          pulling = false;
-          refreshAllRssFeeds();
-        }
-      },
-      { passive: true },
-    );
-
-    rssPanel?.addEventListener(
-      "touchend",
-      () => {
-        pulling = false;
-      },
-      { passive: true },
-    );
-  }
 }
 
 async function handleBookmarkSubmit(event) {

@@ -695,15 +695,13 @@ a:visited {
   flex: 1;
   min-width: 0;
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   font-size: var(--font-size-sm);
   text-transform: uppercase;
   letter-spacing: 0.6px;
   font-weight: var(--font-weight-label);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
 }
 
 .rss-sidebar-feed__name i {
