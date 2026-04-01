@@ -296,7 +296,6 @@ button:disabled {
   width: 100%;
   border-left: var(--border-light);
   border-right: var(--border-light);
-  overflow-x: hidden;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -703,7 +702,6 @@ body.add-dialog-open {
   display: grid;
   background: var(--surface);
   position: relative;
-  overflow: hidden;
 }
 
 .tab-panel {
