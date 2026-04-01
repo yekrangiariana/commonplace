@@ -30,7 +30,7 @@
             )
               ? state.displayHighlightColor
               : "green";
-            var font = ["mono", "sans", "guardian"].includes(
+            var font = ["mono", "sans", "guardian", "josefin"].includes(
               state.displayFont,
             )
               ? state.displayFont
@@ -61,7 +61,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://assets.guim.co.uk" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;600;700&family=Merriweather:wght@400;700&family=Roboto+Mono:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
     <link
@@ -1382,12 +1382,25 @@
                     <span
                       class="settings-font-tile__preview"
                       style="
-                        font-family:
-                          &quot;GuardianTextEgyptian&quot;, Georgia, serif;
+                        font-family: &quot;Merriweather&quot;, Georgia, serif;
                       "
                       >Aa</span
                     >
-                    <span class="settings-font-tile__name">Guardian</span>
+                    <span class="settings-font-tile__name">Merriweather</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="settings-font-tile"
+                    data-display-font="josefin"
+                  >
+                    <span
+                      class="settings-font-tile__preview"
+                      style="
+                        font-family: &quot;Josefin Sans&quot;, &quot;Segoe UI&quot;, Arial, sans-serif;
+                      "
+                      >Aa</span
+                    >
+                    <span class="settings-font-tile__name">Josefin</span>
                   </button>
                 </div>
               </section>
@@ -2030,6 +2043,40 @@
     <!-- Focus Reading Mode Overlay -->
     <div class="focus-mode-overlay" id="focus-mode-overlay" hidden>
       <div class="focus-mode-header">
+        <div class="focus-mode-settings">
+          <div class="focus-mode-setting-group">
+            <button
+              type="button"
+              class="focus-mode-setting-btn"
+              title="Reading options"
+              id="focus-mode-reading-toggle"
+              aria-label="Reading options"
+            >
+              <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+            </button>
+            <div class="focus-mode-reading-menu" id="focus-mode-reading-menu" hidden>
+              <div class="focus-mode-reading-row focus-mode-reading-row--size" aria-label="Text size">
+                <button type="button" class="focus-mode-size-btn" id="focus-mode-size-down" title="Decrease text size" aria-label="Decrease text size">
+                  A-
+                </button>
+                <span class="focus-mode-size-label" id="focus-mode-size-label">100%</span>
+                <button type="button" class="focus-mode-size-btn" id="focus-mode-size-up" title="Increase text size" aria-label="Increase text size">
+                  A+
+                </button>
+              </div>
+              <div class="focus-mode-reading-row" aria-label="Reading font">
+                <button type="button" class="focus-mode-font-option" data-font="mono">Mono</button>
+                <button type="button" class="focus-mode-font-option" data-font="sans">Sans</button>
+                <button type="button" class="focus-mode-font-option" data-font="guardian">Merri</button>
+                <button type="button" class="focus-mode-font-option" data-font="josefin">Josefin</button>
+              </div>
+              <div class="focus-mode-reading-row" aria-label="Reading background">
+                <button type="button" class="focus-mode-theme-option" data-focus-theme="black">Black</button>
+                <button type="button" class="focus-mode-theme-option" data-focus-theme="paper">Paper</button>
+              </div>
+            </div>
+          </div>
+        </div>
         <button
           class="button button--ghost button--small focus-mode-close"
           id="focus-mode-close"

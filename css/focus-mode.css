@@ -18,11 +18,16 @@
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: #0d0d0d;
+  background: #000;
   color: #e8e6e3;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.focus-mode-overlay[data-focus-theme="paper"] {
+  background: #271814;
+  color: #f5e8df;
 }
 
 .focus-mode-overlay[hidden] {
@@ -33,11 +38,128 @@
 
 .focus-mode-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   padding: 10px 16px;
   background: transparent;
   flex-shrink: 0;
+  gap: 12px;
+}
+
+.focus-mode-settings {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.focus-mode-setting-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.focus-mode-setting-btn {
+  background: transparent;
+  border: 1px solid #2f2f2f;
+  color: #8a8a8a;
+  font-size: 13px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, border-color 0.15s;
+  min-width: 30px;
+  min-height: 30px;
+  border-radius: 999px;
+}
+
+.focus-mode-setting-btn:hover {
+  color: #d0d0d0;
+  border-color: #454545;
+}
+
+.focus-mode-setting-btn i {
+  font-size: 14px;
+}
+
+.focus-mode-size-label {
+  color: #7f7f7f;
+  font-size: 11px;
+  min-width: 34px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-mode-reading-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #111;
+  border: 1px solid #2f2f2f;
+  border-radius: 10px;
+  margin-top: 8px;
+  padding: 10px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.focus-mode-reading-menu[hidden] {
+  display: none;
+}
+
+.focus-mode-reading-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.focus-mode-reading-row--size {
+  justify-content: space-between;
+  border-bottom: 1px solid #232323;
+  padding-bottom: 8px;
+}
+
+.focus-mode-size-btn,
+.focus-mode-font-option,
+.focus-mode-theme-option {
+  background: transparent;
+  border: 1px solid #3a3a3a;
+  color: #c2c2c2;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.focus-mode-size-btn {
+  min-width: 40px;
+}
+
+.focus-mode-font-option {
+  min-width: 58px;
+}
+
+.focus-mode-size-btn:hover,
+.focus-mode-font-option:hover,
+.focus-mode-theme-option:hover {
+  border-color: #5d5d5d;
+  color: #f2f2f2;
+}
+
+.focus-mode-font-option.is-active,
+.focus-mode-theme-option.is-active {
+  border-color: #7ac9a3;
+  color: #7ac9a3;
+  background: rgba(122, 201, 163, 0.08);
 }
 
 .focus-mode-close {
@@ -96,6 +218,7 @@
   top: 0;
   left: 0;
   box-sizing: border-box;
+  font-size: 16px;
   /* NO padding here - handled by wrapper */
   /* Column settings - width set by JS */
   column-fill: auto;
@@ -108,20 +231,28 @@
 
 .focus-mode-content .reader-block {
   margin: 0 0 1.2rem;
-  font-size: 16px;
+  font-size: 1em;
   line-height: 1.85;
   color: #d8d5d0;
   /* Allow paragraphs to flow across pages like a book */
 }
 
+.focus-mode-overlay[data-focus-theme="paper"] .focus-mode-content .reader-block {
+  color: #f2dfd6;
+}
+
 .focus-mode-content .reader-block--heading {
   margin-top: 1.6rem;
   margin-bottom: 0.8rem;
-  font-size: 1.15rem;
+  font-size: 1.15em;
   font-weight: 600;
   color: #f0ede8;
   line-height: 1.35;
   break-after: avoid;
+}
+
+.focus-mode-overlay[data-focus-theme="paper"] .focus-mode-content .reader-block--heading {
+  color: #ffe9dd;
 }
 
 .focus-mode-content .reader-block--heading:first-child {
@@ -129,13 +260,14 @@
 }
 
 .focus-mode-content .reader-link {
-  color: #7ac9a3;
+  color: var(--success);
   text-decoration: underline;
   text-underline-offset: 0.25em;
+  transition: color 0.15s;
 }
 
 .focus-mode-content .reader-link:hover {
-  color: #9ed8bc;
+  filter: brightness(1.15);
 }
 
 /* ─── Focus Mode Highlights ────────────────────────────────────────────────── */

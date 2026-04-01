@@ -695,6 +695,78 @@ function bindEvents() {
     closeFocusMode();
   });
 
+  // Focus mode reading settings
+  const focusModeReadingToggle = document.getElementById(
+    "focus-mode-reading-toggle",
+  );
+  const focusModeReadingMenu = document.getElementById(
+    "focus-mode-reading-menu",
+  );
+  if (focusModeReadingToggle && focusModeReadingMenu) {
+    focusModeReadingToggle.addEventListener("click", () => {
+      focusModeReadingMenu.hidden = !focusModeReadingMenu.hidden;
+    });
+
+    const fontOptions = focusModeReadingMenu.querySelectorAll(
+      ".focus-mode-font-option",
+    );
+    fontOptions.forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const font = e.target.dataset.font;
+        if (font && ["mono", "sans", "guardian", "josefin"].includes(font)) {
+          state.displayFont = font;
+          applyDisplayPreferences();
+          refreshFocusModeReadingMenu();
+        }
+      });
+    });
+
+    const themeOptions = focusModeReadingMenu.querySelectorAll(
+      ".focus-mode-theme-option",
+    );
+    themeOptions.forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const theme = e.target.dataset.focusTheme;
+        if (theme === "black" || theme === "paper") {
+          focusModeState.theme = theme;
+          applyFocusModeTheme();
+          refreshFocusModeReadingMenu();
+        }
+      });
+    });
+
+    document.addEventListener("click", (event) => {
+      if (
+        !focusModeReadingMenu.hidden &&
+        !event.target.closest(".focus-mode-setting-group")
+      ) {
+        focusModeReadingMenu.hidden = true;
+      }
+    });
+  }
+
+  const focusModeSizeUp = document.getElementById("focus-mode-size-up");
+  const focusModeSizeDown = document.getElementById("focus-mode-size-down");
+  const focusModeSizeLabel = document.getElementById("focus-mode-size-label");
+
+  if (focusModeSizeUp) {
+    focusModeSizeUp.addEventListener("click", () => {
+      if (focusModeState.textSize < 200) {
+        focusModeState.textSize = Math.min(200, focusModeState.textSize + 10);
+        updateFocusModeTextSize();
+      }
+    });
+  }
+
+  if (focusModeSizeDown) {
+    focusModeSizeDown.addEventListener("click", () => {
+      if (focusModeState.textSize > 80) {
+        focusModeState.textSize = Math.max(80, focusModeState.textSize - 10);
+        updateFocusModeTextSize();
+      }
+    });
+  }
+
   // Focus mode keyboard navigation
   document.addEventListener("keydown", (event) => {
     if (!dom.focusModeOverlay || dom.focusModeOverlay.hidden) {
@@ -2684,6 +2756,8 @@ let focusModeState = {
   verticalWheelDelta: 0,
   touchStartX: 0,
   touchStartY: 0,
+  textSize: 100,
+  theme: "black",
 };
 
 function openFocusMode(options = {}) {
@@ -2704,6 +2778,7 @@ function openFocusMode(options = {}) {
   const highlightColor =
     document.documentElement.getAttribute("data-highlight-color") || "green";
   dom.focusModeOverlay.setAttribute("data-highlight-color", highlightColor);
+  applyFocusModeTheme();
 
   // Show the overlay
   dom.focusModeOverlay.hidden = false;
@@ -2715,6 +2790,16 @@ function openFocusMode(options = {}) {
   focusModeState.currentPage = Math.max(0, initialPage);
   focusModeState.verticalWheelDelta = 0;
   pendingFocusModePage = focusModeState.currentPage;
+
+  // Initialize reading settings UI
+  const focusModeReadingMenu = document.getElementById("focus-mode-reading-menu");
+  if (focusModeReadingMenu) {
+    focusModeReadingMenu.hidden = true;
+  }
+
+  refreshFocusModeReadingMenu();
+
+  updateFocusModeTextSize();
 
   // Wait for layout, then calculate pages
   requestAnimationFrame(() => {
@@ -2778,6 +2863,11 @@ function closeFocusMode(options = {}) {
     dom.focusModeContent.style.left = "";
     dom.focusModeContent.style.width = "";
     dom.focusModeContent.style.height = "";
+  }
+
+  const focusModeReadingMenu = document.getElementById("focus-mode-reading-menu");
+  if (focusModeReadingMenu) {
+    focusModeReadingMenu.hidden = true;
   }
 }
 
@@ -3054,6 +3144,51 @@ function handleFocusModeWheel(e) {
     focusModeState.verticalWheelDelta = 0;
     focusModePrevPage();
   }
+}
+
+function updateFocusModeTextSize() {
+  const focusModeSizeLabel = document.getElementById("focus-mode-size-label");
+  const focusModeContent = document.getElementById("focus-mode-content");
+
+  if (focusModeSizeLabel) {
+    focusModeSizeLabel.textContent = `${focusModeState.textSize}%`;
+  }
+
+  if (focusModeContent) {
+    focusModeContent.style.fontSize = `${focusModeState.textSize}%`;
+  }
+}
+
+function applyFocusModeTheme() {
+  if (!dom.focusModeOverlay) {
+    return;
+  }
+
+  const theme = focusModeState.theme === "paper" ? "paper" : "black";
+  dom.focusModeOverlay.setAttribute("data-focus-theme", theme);
+}
+
+function refreshFocusModeReadingMenu() {
+  const focusModeReadingMenu = document.getElementById("focus-mode-reading-menu");
+  const focusModeSizeLabel = document.getElementById("focus-mode-size-label");
+
+  if (focusModeSizeLabel) {
+    focusModeSizeLabel.textContent = `${focusModeState.textSize}%`;
+  }
+
+  if (!focusModeReadingMenu) {
+    return;
+  }
+
+  const fontOptions = focusModeReadingMenu.querySelectorAll(".focus-mode-font-option");
+  fontOptions.forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.font === state.displayFont);
+  });
+
+  const themeOptions = focusModeReadingMenu.querySelectorAll(".focus-mode-theme-option");
+  themeOptions.forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.focusTheme === focusModeState.theme);
+  });
 }
 
 function handleFocusModeSelection() {
@@ -3885,7 +4020,9 @@ function applyDisplayPreferences() {
   root.setAttribute("data-theme", state.theme === "dark" ? "dark" : "light");
   root.setAttribute(
     "data-font",
-    ["mono", "sans", "serif", "slab"].includes(state.displayFont)
+    ["mono", "sans", "serif", "slab", "guardian", "josefin"].includes(
+      state.displayFont,
+    )
       ? state.displayFont
       : "mono",
   );
