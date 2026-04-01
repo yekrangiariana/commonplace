@@ -50,7 +50,8 @@
 
   /* Hide desktop header elements on mobile */
   .header-left,
-  .header-right {
+  .header-right,
+  .desktop-fab {
     display: none;
   }
 

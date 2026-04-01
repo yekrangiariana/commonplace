@@ -84,6 +84,7 @@ import {
 } from "./pages/pagination.js";
 import { initWorkspaceContextMenu } from "./contextMenu.js";
 import { initReaderTtsPlayer } from "./ttsPlayer.js";
+import { initSwipeNavigation } from "./swipeNavigation.js";
 import {
   initImageCache,
   ensurePageImagesLoaded,
@@ -246,6 +247,7 @@ async function init() {
     }
     applyDisplayPreferences();
     bindEvents();
+    initSwipeNavigation(switchTab, () => state.activeTab);
     initDataTransfer();
     workspaceContextMenu = initWorkspaceContextMenu({
       state,

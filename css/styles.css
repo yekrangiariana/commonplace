@@ -422,6 +422,40 @@ button:disabled {
   position: relative;
 }
 
+/* Desktop FAB - bottom right corner */
+.desktop-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--success);
+  color: var(--bg);
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.desktop-fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.desktop-fab i {
+  transition: transform 0.2s ease;
+}
+
+body.add-dialog-open .desktop-fab i {
+  transform: rotate(45deg);
+}
+
 /* Header Actions */
 .header-action {
   display: flex;
@@ -652,6 +686,75 @@ body.add-dialog-open #add-article-open-button i {
 
 .tab-panel.is-active {
   display: block;
+}
+
+/* Swipe Navigation Animations (touch devices) */
+.tab-panel.swipe-exit-left,
+.tab-panel.swipe-exit-right,
+.tab-panel.swipe-enter-left,
+.tab-panel.swipe-enter-right {
+  display: block;
+  will-change: transform, opacity;
+}
+
+.tab-panel.swipe-exit-left {
+  animation: swipeExitLeft 120ms ease-out forwards;
+}
+
+.tab-panel.swipe-exit-right {
+  animation: swipeExitRight 120ms ease-out forwards;
+}
+
+.tab-panel.swipe-enter-left {
+  animation: swipeEnterLeft 120ms ease-out forwards;
+}
+
+.tab-panel.swipe-enter-right {
+  animation: swipeEnterRight 120ms ease-out forwards;
+}
+
+@keyframes swipeExitLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-20%);
+    opacity: 0;
+  }
+}
+
+@keyframes swipeExitRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(20%);
+    opacity: 0;
+  }
+}
+
+@keyframes swipeEnterLeft {
+  from {
+    transform: translateX(-20%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes swipeEnterRight {
+  from {
+    transform: translateX(20%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .panel-grid {
