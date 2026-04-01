@@ -296,6 +296,7 @@ button:disabled {
   width: 100%;
   border-left: var(--border-light);
   border-right: var(--border-light);
+  overflow-x: hidden;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
