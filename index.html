@@ -30,7 +30,7 @@
             )
               ? state.displayHighlightColor
               : "green";
-            var font = ["mono", "sans", "serif", "slab"].includes(
+            var font = ["mono", "sans", "guardian"].includes(
               state.displayFont,
             )
               ? state.displayFont
@@ -59,8 +59,13 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://assets.guim.co.uk" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Roboto+Slab:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://assets.guim.co.uk/static/frontend/fonts/font-faces.css"
       rel="stylesheet"
     />
     <link
@@ -73,9 +78,13 @@
     <link rel="stylesheet" href="./css/tts-player.css" />
     <link rel="stylesheet" href="./css/mobile-responsive.css" />
     <link rel="stylesheet" href="./css/splash.css" />
+    <link rel="stylesheet" href="./css/epub-reader.css" />
     <link rel="stylesheet" href="./css/data-transfer.css" />
     <link rel="stylesheet" href="./css/search.css" />
     <script src="https://cdn.jsdelivr.net/npm/flexsearch@0.7.43/dist/flexsearch.bundle.min.js"></script>
+    <!-- EPUB.js and JSZip for EPUB reading -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
   </head>
   <body>
     <div class="splash-screen" id="splash-screen">
@@ -1358,34 +1367,17 @@
                   <button
                     type="button"
                     class="settings-font-tile"
-                    data-display-font="serif"
+                    data-display-font="guardian"
                   >
                     <span
                       class="settings-font-tile__preview"
                       style="
                         font-family:
-                          Georgia, &quot;Times New Roman&quot;,
-                          &quot;Noto Serif&quot;, serif;
+                          &quot;GuardianTextEgyptian&quot;, Georgia, serif;
                       "
                       >Aa</span
                     >
-                    <span class="settings-font-tile__name">Serif</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="settings-font-tile"
-                    data-display-font="slab"
-                  >
-                    <span
-                      class="settings-font-tile__preview"
-                      style="
-                        font-family:
-                          &quot;Roboto Slab&quot;, Rockwell,
-                          &quot;Courier New&quot;, serif;
-                      "
-                      >Aa</span
-                    >
-                    <span class="settings-font-tile__name">Slab</span>
+                    <span class="settings-font-tile__name">Guardian</span>
                   </button>
                 </div>
               </section>
@@ -1574,6 +1566,10 @@
               <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
               <span>Tweet</span>
             </button>
+            <button type="button" class="add-dialog-tab" data-add-tab="book">
+              <i class="fa-solid fa-book" aria-hidden="true"></i>
+              <span>Book</span>
+            </button>
           </nav>
         </aside>
 
@@ -1753,6 +1749,56 @@
               </div>
             </form>
           </div>
+
+          <!-- Book Panel -->
+          <div class="add-dialog-panel" data-add-panel="book">
+            <form id="add-book-form" class="stack-form">
+              <label class="field-group">
+                <span>EPUB File</span>
+                <input
+                  id="add-book-file"
+                  name="file"
+                  type="file"
+                  accept=".epub,application/epub+zip"
+                  required
+                />
+              </label>
+              <label class="field-group">
+                <span>Tags</span>
+                <input
+                  id="add-book-tags"
+                  name="tags"
+                  type="text"
+                  placeholder="fiction, philosophy, history"
+                />
+              </label>
+              <div
+                id="add-book-available-tags"
+                class="field-suggestions"
+                aria-live="polite"
+              ></div>
+              <label class="field-group">
+                <span>Attach to projects</span>
+                <input
+                  id="add-book-projects"
+                  name="projects"
+                  type="text"
+                  placeholder="essay draft, research"
+                />
+              </label>
+              <div
+                id="add-book-available-projects"
+                class="field-suggestions"
+                aria-live="polite"
+              ></div>
+              <div class="button-row">
+                <button type="submit" class="button button--primary">
+                  <i class="fa-solid fa-book" aria-hidden="true"></i>
+                  Import book
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
 
         <div
@@ -1787,6 +1833,12 @@
           class="add-dialog-indicator"
           data-add-indicator="tweet"
           aria-label="Tweet"
+        ></button>
+        <button
+          type="button"
+          class="add-dialog-indicator"
+          data-add-indicator="book"
+          aria-label="Book"
         ></button>
       </div>
     </dialog>
