@@ -2792,7 +2792,9 @@ function openFocusMode(options = {}) {
   pendingFocusModePage = focusModeState.currentPage;
 
   // Initialize reading settings UI
-  const focusModeReadingMenu = document.getElementById("focus-mode-reading-menu");
+  const focusModeReadingMenu = document.getElementById(
+    "focus-mode-reading-menu",
+  );
   if (focusModeReadingMenu) {
     focusModeReadingMenu.hidden = true;
   }
@@ -2865,7 +2867,9 @@ function closeFocusMode(options = {}) {
     dom.focusModeContent.style.height = "";
   }
 
-  const focusModeReadingMenu = document.getElementById("focus-mode-reading-menu");
+  const focusModeReadingMenu = document.getElementById(
+    "focus-mode-reading-menu",
+  );
   if (focusModeReadingMenu) {
     focusModeReadingMenu.hidden = true;
   }
@@ -3169,7 +3173,9 @@ function applyFocusModeTheme() {
 }
 
 function refreshFocusModeReadingMenu() {
-  const focusModeReadingMenu = document.getElementById("focus-mode-reading-menu");
+  const focusModeReadingMenu = document.getElementById(
+    "focus-mode-reading-menu",
+  );
   const focusModeSizeLabel = document.getElementById("focus-mode-size-label");
 
   if (focusModeSizeLabel) {
@@ -3180,14 +3186,21 @@ function refreshFocusModeReadingMenu() {
     return;
   }
 
-  const fontOptions = focusModeReadingMenu.querySelectorAll(".focus-mode-font-option");
+  const fontOptions = focusModeReadingMenu.querySelectorAll(
+    ".focus-mode-font-option",
+  );
   fontOptions.forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.font === state.displayFont);
   });
 
-  const themeOptions = focusModeReadingMenu.querySelectorAll(".focus-mode-theme-option");
+  const themeOptions = focusModeReadingMenu.querySelectorAll(
+    ".focus-mode-theme-option",
+  );
   themeOptions.forEach((btn) => {
-    btn.classList.toggle("is-active", btn.dataset.focusTheme === focusModeState.theme);
+    btn.classList.toggle(
+      "is-active",
+      btn.dataset.focusTheme === focusModeState.theme,
+    );
   });
 }
 

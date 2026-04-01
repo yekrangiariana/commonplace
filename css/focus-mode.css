@@ -69,7 +69,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
   min-width: 30px;
   min-height: 30px;
   border-radius: 999px;
@@ -137,7 +139,10 @@
   line-height: 1;
   padding: 7px 10px;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
 }
 
 .focus-mode-size-btn {
@@ -237,7 +242,9 @@
   /* Allow paragraphs to flow across pages like a book */
 }
 
-.focus-mode-overlay[data-focus-theme="paper"] .focus-mode-content .reader-block {
+.focus-mode-overlay[data-focus-theme="paper"]
+  .focus-mode-content
+  .reader-block {
   color: #f2dfd6;
 }
 
@@ -251,7 +258,9 @@
   break-after: avoid;
 }
 
-.focus-mode-overlay[data-focus-theme="paper"] .focus-mode-content .reader-block--heading {
+.focus-mode-overlay[data-focus-theme="paper"]
+  .focus-mode-content
+  .reader-block--heading {
   color: #ffe9dd;
 }
 

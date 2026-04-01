@@ -73,8 +73,8 @@ html[data-font="guardian"] {
 }
 
 html[data-font="josefin"] {
-  --app-font-family: "Josefin Sans", "Segoe UI", "Helvetica Neue", Arial,
-    sans-serif;
+  --app-font-family:
+    "Josefin Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
 html[data-theme="dark"] {
