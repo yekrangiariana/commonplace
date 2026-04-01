@@ -350,9 +350,6 @@ function bindEvents() {
   document
     .querySelector("#add-article-open-button-mobile")
     ?.addEventListener("click", () => openAddModal());
-  document
-    .querySelector("#add-article-close-button")
-    ?.addEventListener("click", closeAddModal);
   dom.addArticleDialog?.addEventListener("click", (event) => {
     if (event.target === dom.addArticleDialog) {
       closeAddModal();
@@ -374,9 +371,9 @@ function bindEvents() {
   // Add dialog swipe detection (mobile)
   dom.addDialogPanels?.addEventListener("scroll", () => {
     const scrollLeft = dom.addDialogPanels.scrollLeft;
-    const panelWidth = dom.addDialogPanels.scrollWidth / 3;
+    const panelWidth = dom.addDialogPanels.scrollWidth / 4;
     const index = Math.round(scrollLeft / panelWidth);
-    const tabs = ["feed", "article", "project"];
+    const tabs = ["feed", "article", "project", "tweet"];
     if (tabs[index] && tabs[index] !== currentAddTab) {
       currentAddTab = tabs[index];
       // Update UI without scrolling again
@@ -2652,12 +2649,6 @@ function renderReaderRssContext(activeArticle) {
     return;
   }
 
-  // Restore rssReaderContext from bookmark's _rssOrigin if not already set
-  if (!rssReaderContext && activeArticle?._rssOrigin) {
-    rssReaderContext = activeArticle._rssOrigin;
-    readerSideTab = "next";
-  }
-
   dom.readerSurface.querySelector(".reader-rss-next-footer")?.remove();
 
   const setActiveReaderSideTab = (tab) => {
@@ -2684,7 +2675,7 @@ function renderReaderRssContext(activeArticle) {
     );
 
     if (nextTabButton) {
-      nextTabButton.disabled = true;
+      nextTabButton.hidden = true;
     }
 
     dom.rssReaderNext.innerHTML = "";
@@ -2703,7 +2694,7 @@ function renderReaderRssContext(activeArticle) {
     );
 
     if (nextTabButton) {
-      nextTabButton.disabled = true;
+      nextTabButton.hidden = true;
     }
 
     dom.rssReaderNext.innerHTML = "";
@@ -2715,7 +2706,7 @@ function renderReaderRssContext(activeArticle) {
   );
 
   if (nextTabButton) {
-    nextTabButton.disabled = false;
+    nextTabButton.hidden = false;
   }
 
   const upcomingItems = getUpcomingRssItems(10);
@@ -4621,7 +4612,6 @@ function renderRssPanel() {
           >${isSaved ? '<i class="fa-solid fa-book-open" aria-hidden="true"></i>' : '<i class="fa-solid fa-plus" aria-hidden="true"></i>'}</button>
         </div>
         ${meta ? `<p class="rss-item-card__meta">${escapeHtml(meta)}</p>` : ""}
-        ${description ? `<p class="rss-item-card__excerpt">${escapeHtml(description)}</p>` : ""}
       </div>`;
       })
       .join("") + paginationMarkup;
@@ -5136,11 +5126,6 @@ async function restorePendingRssArticle() {
   const existing = state.bookmarks.find((b) => extractUrlSlug(b.url) === slug);
 
   if (existing) {
-    // Restore RSS context from bookmark if available
-    if (existing._rssOrigin) {
-      rssReaderContext = existing._rssOrigin;
-      readerSideTab = "next";
-    }
     state.selectedArticleId = existing.id;
     state.rssReaderArticle = null;
     persistState(state);
@@ -6010,6 +5995,15 @@ function closeDesktopSearch() {
   dom.searchResults?.classList.remove("is-visible");
   dom.searchInput.value = "";
   dom.searchClear?.classList.remove("is-visible");
+  // Reset to empty state
+  if (dom.searchResultsList) {
+    dom.searchResultsList.innerHTML = "";
+  }
+  dom.searchResults?.classList.add("is-empty");
+  const emptyEl = dom.searchResults?.querySelector(".search-dropdown__empty");
+  if (emptyEl) {
+    emptyEl.textContent = "Start typing to search...";
+  }
 }
 
 function showSearchResults() {
@@ -6206,12 +6200,13 @@ function closeMobileSearch() {
   if (dom.searchOverlayList) {
     dom.searchOverlayList.innerHTML = "";
   }
+  // Reset to empty state
+  dom.searchOverlayResults?.classList.add("is-empty");
   const emptyEl = dom.searchOverlayResults?.querySelector(
     ".search-overlay__empty",
   );
   if (emptyEl) {
     emptyEl.textContent = "Start typing to search...";
-    emptyEl.hidden = false;
   }
 }
 

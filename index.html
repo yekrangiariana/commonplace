@@ -68,6 +68,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     />
     <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/sidebar.css" />
     <link rel="stylesheet" href="./css/context-menu.css" />
     <link rel="stylesheet" href="./css/tts-player.css" />
     <link rel="stylesheet" href="./css/mobile-responsive.css" />
@@ -89,24 +90,12 @@
     <div class="app-shell">
       <header class="app-header">
         <div class="header-left">
-          <nav class="nav-links" aria-label="Primary navigation">
-            <button class="nav-link" data-tab-target="rss">
-              <i class="fa-solid fa-compass" aria-hidden="true"></i>
-              <span>Explore</span>
-            </button>
-            <button class="nav-link" data-tab-target="library">
-              <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-              <span>Library</span>
-            </button>
-            <button class="nav-link" data-tab-target="projects">
-              <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
-              <span>Projects</span>
-            </button>
-            <button class="nav-link nav-link--search" id="search-toggle">
-              <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-              <span>Search</span>
-            </button>
-          </nav>
+          <div class="app-branding">
+            <img class="app-icon" src="./lotus.png" alt="" />
+            <div class="app-branding-text">
+              <h1 class="app-title">Commonplace</h1>
+            </div>
+          </div>
         </div>
         <div class="header-right">
           <!-- Search Dropdown (positioned from nav-link) -->
@@ -134,7 +123,10 @@
                   <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                 </button>
               </div>
-              <div class="search-dropdown__results" id="search-results">
+              <div
+                class="search-dropdown__results is-empty"
+                id="search-results"
+              >
                 <ul class="search-dropdown__list" id="search-results-list"></ul>
                 <div class="search-dropdown__empty">
                   Start typing to search...
@@ -152,17 +144,32 @@
             class="header-action header-action--primary"
             id="add-article-open-button"
             type="button"
+            aria-label="Add article"
           >
             <i class="fa-solid fa-plus" aria-hidden="true"></i>
-            <span>Add</span>
           </button>
-          <button
-            class="header-action header-action--icon"
-            data-tab-target="settings"
-            aria-label="Settings"
-          >
-            <i class="fa-solid fa-gear" aria-hidden="true"></i>
-          </button>
+          <nav class="nav-links" aria-label="Primary navigation">
+            <button class="nav-link" data-tab-target="library">
+              <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+              <span>Library</span>
+            </button>
+            <button class="nav-link" data-tab-target="projects">
+              <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
+              <span>Projects</span>
+            </button>
+            <button class="nav-link" data-tab-target="rss">
+              <i class="fa-solid fa-compass" aria-hidden="true"></i>
+              <span>Explore</span>
+            </button>
+            <button class="nav-link nav-link--icon" id="search-toggle">
+              <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              <span>Search</span>
+            </button>
+            <button class="nav-link nav-link--icon" data-tab-target="settings" aria-label="Settings">
+              <i class="fa-solid fa-gear" aria-hidden="true"></i>
+              <span>Settings</span>
+            </button>
+          </nav>
         </div>
         <!-- Mobile tab bar (hidden on desktop) -->
         <nav class="tab-bar" aria-label="Primary">
@@ -215,81 +222,6 @@
                     Last updated: Never
                   </p>
                 </div>
-                <div class="rss-toolbar-actions">
-                  <div class="reader-meta-action-wrap rss-subscribe-wrap">
-                    <button
-                      type="button"
-                      class="button button--ghost button--small"
-                      data-rss-open-subscribe
-                      title="Subscribe to feed"
-                    >
-                      <i class="fa-solid fa-plus" aria-hidden="true"></i>
-                      Feed
-                    </button>
-
-                    <div
-                      class="reader-popover rss-subscribe-popover"
-                      id="rss-subscribe-popover"
-                      hidden
-                    >
-                      <form
-                        id="rss-subscribe-form"
-                        class="rss-subscribe-form rss-subscribe-form--popover"
-                      >
-                        <input
-                          id="rss-feed-url-input"
-                          type="url"
-                          placeholder="https://example.com/feed.xml"
-                          autocomplete="off"
-                          required
-                        />
-                        <input
-                          id="rss-feed-name-input"
-                          type="text"
-                          placeholder="Name (optional)"
-                          autocomplete="off"
-                        />
-                        <input
-                          id="rss-feed-folder-input"
-                          type="text"
-                          placeholder="Folder (optional)"
-                          autocomplete="off"
-                        />
-                        <div id="rss-folder-suggestions" class="chip-row"></div>
-                        <p class="meta-text">Popular feeds</p>
-                        <div id="rss-feed-suggestions" class="chip-row"></div>
-                        <div class="reader-popover-actions">
-                          <button
-                            type="button"
-                            class="button button--ghost button--small"
-                            data-rss-close-subscribe
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="submit"
-                            class="button button--primary button--small"
-                          >
-                            Add feed
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    class="button button--ghost button--small"
-                    data-rss-refresh-active
-                    title="Refresh all feeds"
-                  >
-                    <i class="fa-solid fa-rotate" aria-hidden="true"></i>
-                    Refresh
-                  </button>
-                </div>
-              </div>
-
-              <div class="library-toolbar rss-toolbar-secondary">
                 <div class="library-toolbar__actions">
                   <div
                     class="library-view-options"
@@ -387,6 +319,81 @@
                       ></i>
                     </button>
                   </div>
+                </div>
+              </div>
+
+              <div class="library-toolbar rss-toolbar-secondary">
+                <div class="rss-toolbar-actions">
+                  <div class="reader-meta-action-wrap rss-subscribe-wrap">
+                    <button
+                      type="button"
+                      class="button button--ghost button--small"
+                      data-rss-open-subscribe
+                      title="Subscribe to feed"
+                    >
+                      <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                      Feed
+                    </button>
+
+                    <div
+                      class="reader-popover rss-subscribe-popover"
+                      id="rss-subscribe-popover"
+                      hidden
+                    >
+                      <form
+                        id="rss-subscribe-form"
+                        class="rss-subscribe-form rss-subscribe-form--popover"
+                      >
+                        <input
+                          id="rss-feed-url-input"
+                          type="url"
+                          placeholder="https://example.com/feed.xml"
+                          autocomplete="off"
+                          required
+                        />
+                        <input
+                          id="rss-feed-name-input"
+                          type="text"
+                          placeholder="Name (optional)"
+                          autocomplete="off"
+                        />
+                        <input
+                          id="rss-feed-folder-input"
+                          type="text"
+                          placeholder="Folder (optional)"
+                          autocomplete="off"
+                        />
+                        <div id="rss-folder-suggestions" class="chip-row"></div>
+                        <p class="meta-text">Popular feeds</p>
+                        <div id="rss-feed-suggestions" class="chip-row"></div>
+                        <div class="reader-popover-actions">
+                          <button
+                            type="button"
+                            class="button button--ghost button--small"
+                            data-rss-close-subscribe
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            class="button button--primary button--small"
+                          >
+                            Add feed
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="button button--ghost button--small"
+                    data-rss-refresh-active
+                    title="Refresh all feeds"
+                  >
+                    <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                    Refresh
+                  </button>
                 </div>
               </div>
 
@@ -1549,7 +1556,8 @@
       aria-labelledby="add-article-dialog-title"
     >
       <div class="add-article-dialog__inner">
-        <div class="add-article-dialog__header">
+        <aside class="add-dialog-sidebar">
+          <h2 class="add-dialog-sidebar__title">Add New</h2>
           <nav class="add-dialog-tabs" aria-label="Add type">
             <button type="button" class="add-dialog-tab" data-add-tab="feed">
               <i class="fa-solid fa-rss" aria-hidden="true"></i>
@@ -1568,29 +1576,22 @@
               <span>Tweet</span>
             </button>
           </nav>
-          <button
-            type="button"
-            id="add-article-close-button"
-            class="add-article-dialog__close"
-            aria-label="Close"
-          >
-            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-          </button>
-        </div>
+        </aside>
 
-        <div class="add-dialog-panels" id="add-dialog-panels">
-          <!-- Feed Panel -->
-          <div class="add-dialog-panel" data-add-panel="feed">
-            <form id="add-feed-form" class="stack-form">
-              <label class="field-group">
-                <span>Feed URL</span>
-                <input
-                  id="add-feed-url"
-                  name="url"
-                  type="url"
-                  placeholder="https://example.com/feed.xml"
-                  autocomplete="off"
-                  required
+        <div class="add-dialog-content">
+          <div class="add-dialog-panels" id="add-dialog-panels">
+            <!-- Feed Panel -->
+            <div class="add-dialog-panel" data-add-panel="feed">
+              <form id="add-feed-form" class="stack-form">
+                <label class="field-group">
+                  <span>Feed URL</span>
+                  <input
+                    id="add-feed-url"
+                    name="url"
+                    type="url"
+                    placeholder="https://example.com/feed.xml"
+                    autocomplete="off"
+                    required
                 />
               </label>
               <label class="field-group">
@@ -1755,39 +1756,39 @@
           </div>
         </div>
 
-        <div class="add-dialog-indicators" id="add-dialog-indicators">
-          <button
-            type="button"
-            class="add-dialog-indicator"
-            data-add-indicator="feed"
-            aria-label="Feed"
-          ></button>
-          <button
-            type="button"
-            class="add-dialog-indicator"
-            data-add-indicator="article"
-            aria-label="Article"
-          ></button>
-          <button
-            type="button"
-            class="add-dialog-indicator"
-            data-add-indicator="project"
-            aria-label="Project"
-          ></button>
-          <button
-            type="button"
-            class="add-dialog-indicator"
-            data-add-indicator="tweet"
-            aria-label="Tweet"
-          ></button>
-        </div>
-
         <div
           class="status-box"
           id="fetch-status"
           aria-live="polite"
           hidden
         ></div>
+      </div>
+
+      <div class="add-dialog-indicators" id="add-dialog-indicators">
+        <button
+          type="button"
+          class="add-dialog-indicator"
+          data-add-indicator="feed"
+          aria-label="Feed"
+        ></button>
+        <button
+          type="button"
+          class="add-dialog-indicator"
+          data-add-indicator="article"
+          aria-label="Article"
+        ></button>
+        <button
+          type="button"
+          class="add-dialog-indicator"
+          data-add-indicator="project"
+          aria-label="Project"
+        ></button>
+        <button
+          type="button"
+          class="add-dialog-indicator"
+          data-add-indicator="tweet"
+          aria-label="Tweet"
+        ></button>
       </div>
     </dialog>
 
@@ -1830,7 +1831,7 @@
           </button>
         </div>
       </div>
-      <div class="search-overlay__results" id="search-overlay-results">
+      <div class="search-overlay__results is-empty" id="search-overlay-results">
         <div class="search-overlay__empty">Start typing to search...</div>
         <ul class="search-overlay__list" id="search-overlay-list"></ul>
       </div>

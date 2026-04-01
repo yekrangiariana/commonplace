@@ -347,10 +347,19 @@ html[data-theme="dark"] .search-dropdown__content {
 }
 
 .search-overlay__empty {
+  display: none;
   padding: 48px 24px;
   text-align: center;
   color: var(--text-muted);
   font-size: var(--font-size-sm);
+}
+
+.search-overlay__results.is-empty .search-overlay__empty {
+  display: block;
+}
+
+.search-overlay__results.is-empty .search-overlay__list {
+  display: none;
 }
 
 .search-overlay__list {

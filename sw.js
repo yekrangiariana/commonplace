@@ -1,4 +1,13 @@
-const CACHE_NAME = "commonplace-v14";
+const CACHE_PREFIX = "commonplace-v";
+const DEFAULT_VERSION = "1.0.0";
+
+// Fetch app version from settings (once, at SW load time)
+const cacheNamePromise = fetch("./app-settings.json", { cache: "no-store" })
+  .then((r) => (r.ok ? r.json() : {}))
+  .then(
+    (settings) => `${CACHE_PREFIX}${settings.appVersion || DEFAULT_VERSION}`,
+  )
+  .catch(() => `${CACHE_PREFIX}${DEFAULT_VERSION}`);
 
 const PRECACHE_URLS = [
   "./index.html",
@@ -39,26 +48,30 @@ const PRECACHE_URLS = [
 // Install — precache app shell
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting()),
+    cacheNamePromise.then((cacheName) =>
+      caches
+        .open(cacheName)
+        .then((cache) => cache.addAll(PRECACHE_URLS))
+        .then(() => self.skipWaiting()),
+    ),
   );
 });
 
 // Activate — purge old caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys
-            .filter((key) => key !== CACHE_NAME)
-            .map((key) => caches.delete(key)),
-        ),
-      )
-      .then(() => self.clients.claim()),
+    cacheNamePromise.then((cacheName) =>
+      caches
+        .keys()
+        .then((keys) =>
+          Promise.all(
+            keys
+              .filter((key) => key !== cacheName)
+              .map((key) => caches.delete(key)),
+          ),
+        )
+        .then(() => self.clients.claim()),
+    ),
   );
 });
 
@@ -87,21 +100,23 @@ self.addEventListener("fetch", (event) => {
   // 2. Fetch fresh version in background
   // 3. Update cache for next load
   event.respondWith(
-    caches.open(CACHE_NAME).then((cache) =>
-      cache.match(request).then((cachedResponse) => {
-        const fetchPromise = fetch(request)
-          .then((networkResponse) => {
-            // Only cache successful responses
-            if (networkResponse.ok) {
-              cache.put(request, networkResponse.clone());
-            }
-            return networkResponse;
-          })
-          .catch(() => cachedResponse); // Offline fallback
+    cacheNamePromise.then((cacheName) =>
+      caches.open(cacheName).then((cache) =>
+        cache.match(request).then((cachedResponse) => {
+          const fetchPromise = fetch(request)
+            .then((networkResponse) => {
+              // Only cache successful responses
+              if (networkResponse.ok) {
+                cache.put(request, networkResponse.clone());
+              }
+              return networkResponse;
+            })
+            .catch(() => cachedResponse); // Offline fallback
 
-        // Return cached immediately, or wait for network if not cached
-        return cachedResponse || fetchPromise;
-      }),
+          // Return cached immediately, or wait for network if not cached
+          return cachedResponse || fetchPromise;
+        }),
+      ),
     ),
   );
 });
