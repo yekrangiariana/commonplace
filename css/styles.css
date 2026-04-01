@@ -227,6 +227,17 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Disable tap highlight on all interactive elements */
+a,
+button,
+input,
+select,
+textarea,
+[role="button"],
+[tabindex] {
+  -webkit-tap-highlight-color: transparent;
+}
+
 button,
 input,
 select,
@@ -271,6 +282,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button:disabled {
@@ -355,9 +367,10 @@ button:disabled {
   align-items: center;
   gap: 4px;
   background: var(--success-bg);
-  padding: 6px;
+  padding: 3px;
   border-radius: 999px;
   border: 1px solid var(--success-border);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .nav-link {
@@ -375,6 +388,7 @@ button:disabled {
   font-weight: 500;
   cursor: pointer;
   transition: all 150ms ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Hide icons on desktop (except icon-only buttons) */
@@ -480,6 +494,7 @@ a:visited {
   padding: 7px 12px;
   background: var(--input-bg);
   color: var(--text);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .tab-button.is-active {
@@ -504,8 +519,8 @@ a:visited {
   margin: 0 auto;
   position: fixed;
   top: 81px; /* Below header */
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   border-left: var(--border-light);
   border-right: var(--border-light);
 }
