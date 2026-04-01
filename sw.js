@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "commonplace-v";
-const DEFAULT_VERSION = "1.0.0";
+const DEFAULT_VERSION = "2.0.0";
 
 // Fetch app version from settings (once, at SW load time)
 const cacheNamePromise = fetch("./app-settings.json", { cache: "no-store" })
