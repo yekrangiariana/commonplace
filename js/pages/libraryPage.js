@@ -228,6 +228,10 @@ export function updateLibraryVirtualWindow() {
   // No-op kept for compatibility with existing resize/scroll hooks.
 }
 
+export function getLibraryReadingOrder(state) {
+  return getCachedSortedArticles(state, state.librarySortMode || "newest");
+}
+
 function createArticleCardMarkup(article, projectNameById, options = {}) {
   const showImages = options.showImages !== false;
   const showTags = options.showTags !== false;

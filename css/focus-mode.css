@@ -1,0 +1,268 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Focus Reading Mode
+   Full-screen dark overlay with paginated two-column layout for foldables
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Reader Topbar Adjustments ─────────────────────────────────────────────── */
+
+.reader-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── Focus Mode Overlay ───────────────────────────────────────────────────── */
+
+.focus-mode-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #0d0d0d;
+  color: #e8e6e3;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.focus-mode-overlay[hidden] {
+  display: none;
+}
+
+/* ─── Focus Mode Header ────────────────────────────────────────────────────── */
+
+.focus-mode-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 10px 16px;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.focus-mode-close {
+  color: #707070;
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s;
+}
+
+.focus-mode-close:hover {
+  color: #b0b0b0;
+}
+
+.focus-mode-close i {
+  font-size: 14px;
+}
+
+/* ─── Focus Mode Footer (page indicator) ───────────────────────────────────── */
+
+.focus-mode-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 20px;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.focus-mode-page-indicator {
+  color: #606060;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Focus Mode Content Wrapper ───────────────────────────────────────────── */
+
+.focus-mode-content-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  /* Horizontal padding for content margins */
+  padding: 0 32px;
+  box-sizing: border-box;
+}
+
+/* ─── Focus Mode Content (paginated columns) ───────────────────────────────── */
+
+.focus-mode-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  /* NO padding here - handled by wrapper */
+  /* Column settings - width set by JS */
+  column-fill: auto;
+  column-gap: 48px;
+  /* Smooth page transitions */
+  transition: transform 0.3s ease-out;
+}
+
+/* ─── Focus Mode Typography ────────────────────────────────────────────────── */
+
+.focus-mode-content .reader-block {
+  margin: 0 0 1.2rem;
+  font-size: 16px;
+  line-height: 1.85;
+  color: #d8d5d0;
+  /* Allow paragraphs to flow across pages like a book */
+}
+
+.focus-mode-content .reader-block--heading {
+  margin-top: 1.6rem;
+  margin-bottom: 0.8rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #f0ede8;
+  line-height: 1.35;
+  break-after: avoid;
+}
+
+.focus-mode-content .reader-block--heading:first-child {
+  margin-top: 0;
+}
+
+.focus-mode-content .reader-link {
+  color: #7ac9a3;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.focus-mode-content .reader-link:hover {
+  color: #9ed8bc;
+}
+
+/* ─── Focus Mode Highlights ────────────────────────────────────────────────── */
+
+.focus-mode-content .reader-highlight {
+  background: rgba(180, 247, 207, 0.35);
+  color: #e8e6e3;
+  box-decoration-break: clone;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Highlight color variants */
+.focus-mode-overlay[data-highlight-color="yellow"] .reader-highlight {
+  background: rgba(242, 223, 159, 0.45);
+}
+
+.focus-mode-overlay[data-highlight-color="green"] .reader-highlight {
+  background: rgba(180, 247, 207, 0.35);
+}
+
+.focus-mode-overlay[data-highlight-color="red"] .reader-highlight {
+  background: rgba(222, 76, 66, 0.35);
+}
+
+.focus-mode-overlay[data-highlight-color="orange"] .reader-highlight {
+  background: rgba(232, 138, 58, 0.35);
+}
+
+/* ─── Focus Mode Selection ─────────────────────────────────────────────────── */
+
+.focus-mode-content ::selection {
+  background: rgba(122, 201, 163, 0.45);
+  color: #fff;
+}
+
+/* ─── Focus Mode Scrollbar (WebKit) ────────────────────────────────────────── */
+
+.focus-mode-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.focus-mode-content::-webkit-scrollbar-track {
+  background: #161616;
+}
+
+.focus-mode-content::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+  border-radius: 4px;
+}
+
+.focus-mode-content::-webkit-scrollbar-thumb:hover {
+  background: #4a4a4a;
+}
+
+/* ─── Focus Mode Blockquotes ───────────────────────────────────────────────── */
+
+.focus-mode-content blockquote,
+.focus-mode-content .reader-block--quote {
+  border-left: 3px solid #4a4a4a;
+  padding-left: 16px;
+  margin-left: 0;
+  color: #b0ada8;
+  font-style: italic;
+}
+
+/* ─── Focus Mode Code Blocks ───────────────────────────────────────────────── */
+
+.focus-mode-content code,
+.focus-mode-content pre {
+  background: #1a1a1a;
+  color: #c8c5c0;
+  border-radius: 4px;
+  font-family: "Roboto Mono", "SF Mono", Menlo, Monaco, monospace;
+}
+
+.focus-mode-content code {
+  padding: 2px 6px;
+  font-size: 0.9em;
+}
+
+.focus-mode-content pre {
+  padding: 12px 16px;
+  overflow-x: auto;
+  font-size: 14px;
+}
+
+/* ─── Focus Mode Lists ─────────────────────────────────────────────────────── */
+
+.focus-mode-content ul,
+.focus-mode-content ol {
+  padding-left: 24px;
+  margin: 0 0 1rem;
+}
+
+.focus-mode-content li {
+  margin-bottom: 0.5rem;
+  line-height: 1.7;
+}
+
+/* ─── Focus Mode Images ────────────────────────────────────────────────────── */
+
+.focus-mode-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 1rem 0;
+}
+
+/* ─── Context Menu Support in Focus Mode ───────────────────────────────────── */
+
+/* Selection menu needs to work in focus mode - ensure it's above the overlay */
+body:has(.focus-mode-overlay:not([hidden])) .selection-menu {
+  z-index: 10001;
+  background: #252525;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+body:has(.focus-mode-overlay:not([hidden])) .selection-menu__button {
+  color: #d8d5d0;
+  background: transparent;
+  border-color: #3a3a3a;
+}
+
+body:has(.focus-mode-overlay:not([hidden])) .selection-menu__button:hover {
+  background: #333;
+  color: #f0ede8;
+}

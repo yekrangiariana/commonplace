@@ -100,7 +100,12 @@ export function handleSelectionChange({
 
   const range = selection.getRangeAt(0);
 
-  if (!dom.readerSurface.contains(range.commonAncestorContainer)) {
+  // Check if selection is in reader surface OR focus mode content
+  const focusModeContent = document.querySelector("#focus-mode-content");
+  const isInReaderSurface = dom.readerSurface.contains(range.commonAncestorContainer);
+  const isInFocusMode = focusModeContent?.contains(range.commonAncestorContainer);
+
+  if (!isInReaderSurface && !isInFocusMode) {
     return;
   }
 

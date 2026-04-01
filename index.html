@@ -81,6 +81,7 @@
     <link rel="stylesheet" href="./css/epub-reader.css" />
     <link rel="stylesheet" href="./css/data-transfer.css" />
     <link rel="stylesheet" href="./css/search.css" />
+    <link rel="stylesheet" href="./css/focus-mode.css" />
     <script src="https://cdn.jsdelivr.net/npm/flexsearch@0.7.43/dist/flexsearch.bundle.min.js"></script>
     <!-- EPUB.js and JSZip for EPUB reading -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -556,6 +557,15 @@
                 >
                   <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
                   Back
+                </button>
+                <button
+                  class="button button--ghost button--small"
+                  id="reader-focus-button"
+                  type="button"
+                  title="Focus reading mode"
+                >
+                  <i class="fa-solid fa-expand" aria-hidden="true"></i>
+                  Focus
                 </button>
               </div>
 
@@ -2015,6 +2025,27 @@
         </div>
       </div>
     </dialog>
+
+    <!-- Focus Reading Mode Overlay -->
+    <!-- Focus Reading Mode Overlay -->
+    <div class="focus-mode-overlay" id="focus-mode-overlay" hidden>
+      <div class="focus-mode-header">
+        <button
+          class="button button--ghost button--small focus-mode-close"
+          id="focus-mode-close"
+          type="button"
+        >
+          <i class="fa-solid fa-compress" aria-hidden="true"></i>
+          Exit
+        </button>
+      </div>
+      <div class="focus-mode-content-wrapper" id="focus-mode-content-wrapper">
+        <article class="focus-mode-content" id="focus-mode-content"></article>
+      </div>
+      <div class="focus-mode-footer">
+        <span class="focus-mode-page-indicator" id="focus-mode-page-indicator"></span>
+      </div>
+    </div>
 
     <script type="module" src="./js/main.js"></script>
     <script>
