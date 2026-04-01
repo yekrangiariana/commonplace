@@ -310,6 +310,7 @@ button:disabled {
   border-bottom: var(--border-light);
   background: var(--surface);
   position: relative;
+  z-index: 10;
 }
 
 .header-left {
@@ -678,6 +679,8 @@ body.add-dialog-open #add-article-open-button i {
 .app-main {
   display: grid;
   background: var(--surface);
+  position: relative;
+  overflow: hidden;
 }
 
 .tab-panel {
