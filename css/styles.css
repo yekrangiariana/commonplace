@@ -307,7 +307,7 @@ button:disabled {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 11px 15px;
   border-bottom: var(--border-light);
   background: var(--surface);
   position: relative;
@@ -424,11 +424,11 @@ button:disabled {
   position: relative;
 }
 
-/* Desktop FAB - bottom right corner */
+/* Desktop FAB - bottom right corner, relative to app-shell */
 .desktop-fab {
   position: fixed;
   bottom: 24px;
-  right: 24px;
+  right: calc((100vw - min(100vw, 1200px)) / 2 + 24px);
   width: 56px;
   height: 56px;
   padding: 0;
@@ -454,8 +454,9 @@ button:disabled {
   transition: transform 0.2s ease;
 }
 
-body.add-dialog-open .desktop-fab i {
-  transform: rotate(45deg);
+body.add-dialog-open .desktop-fab {
+  pointer-events: none;
+  opacity: 0;
 }
 
 /* Header Actions */
@@ -577,20 +578,41 @@ body.add-dialog-open {
   overflow: hidden;
 }
 
-/* Rotate + to × when dialog is open */
-body.add-dialog-open #add-article-open-button i {
-  transform: rotate(45deg);
+/* Dialog close FAB - inside dialog, same style as desktop-fab */
+.dialog-close-fab {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--success);
+  color: var(--bg);
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
-#add-article-open-button i {
-  transition: transform 0.2s ease;
+.dialog-close-fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.dialog-close-fab i {
+  transform: rotate(45deg);
 }
 
 /* Sidebar */
 .add-dialog-sidebar {
   background: var(--bg);
   border-right: var(--border-light);
-  padding: 32px 20px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -650,7 +672,7 @@ body.add-dialog-open #add-article-open-button i {
 
 /* Content area */
 .add-dialog-content {
-  padding: 32px 40px;
+  padding: 12px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1257,17 +1279,23 @@ body.add-dialog-open #add-article-open-button i {
   text-decoration: underline;
 }
 
+.rss-item-card__meta {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.2px;
+}
+
 .rss-item-card__add {
-  flex-shrink: 0;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 8px;
+  padding: 4px 10px;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-label);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  letter-spacing: 0.3px;
   border: var(--border-light);
+  border-radius: 20px;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
@@ -1276,6 +1304,8 @@ body.add-dialog-open #add-article-open-button i {
     background-color 120ms ease,
     color 120ms ease,
     border-color 120ms ease;
+  margin-top: 4px;
+  width: fit-content;
 }
 
 .rss-item-card__add:hover {
@@ -1291,16 +1321,9 @@ body.add-dialog-open #add-article-open-button i {
   cursor: default;
 }
 
-.rss-item-card__meta {
-  margin: 0;
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-  letter-spacing: 0.2px;
-}
-
 .rss-items--view-1 .rss-item-card {
   grid-template-columns: 100px minmax(0, 1fr);
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto auto;
   padding: 0;
   gap: 0;
   overflow: hidden;
@@ -1329,6 +1352,13 @@ body.add-dialog-open #add-article-open-button i {
   grid-column: 2;
   grid-row: 2;
   padding: 0 10px 4px;
+}
+
+.rss-items--view-1 .rss-item-card__add {
+  grid-column: 2;
+  grid-row: 3;
+  margin: 0 10px 9px;
+  justify-self: start;
 }
 
 /* ─────────────────────────────────────────────────────── */
@@ -1928,7 +1958,7 @@ html[data-theme="dark"] .selection-menu {
   border-radius: 0;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-label);
-  text-transform: uppercase;
+  text-transform: capitalize;
   letter-spacing: 0.6px;
 }
 

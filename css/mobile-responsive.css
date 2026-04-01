@@ -51,7 +51,8 @@
   /* Hide desktop header elements on mobile */
   .header-left,
   .header-right,
-  .desktop-fab {
+  .desktop-fab,
+  .dialog-close-fab {
     display: none;
   }
 
@@ -535,18 +536,17 @@
      - View 3: becomes 2-column grid on mobile
   */
 
-  /* RSS toolbar - feed title and actions on same row */
+  /* RSS toolbar - stack heading and actions vertically on mobile */
   .rss-toolbar {
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
-    flex-wrap: nowrap;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
 
   .rss-toolbar .section-heading {
     flex: 1;
     min-width: 0;
+    margin-bottom: 0;
   }
 
   .rss-toolbar .section-heading h2 {
@@ -555,6 +555,13 @@
 
   .rss-toolbar .section-heading .meta-text {
     font-size: 10px;
+  }
+
+  .rss-toolbar .library-toolbar__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: start;
   }
 
   .rss-toolbar-actions {

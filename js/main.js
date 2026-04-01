@@ -352,6 +352,9 @@ function bindEvents() {
   document
     .querySelector("#add-article-open-button-mobile")
     ?.addEventListener("click", () => openAddModal());
+  document
+    .querySelector("#add-dialog-close-fab")
+    ?.addEventListener("click", () => closeAddModal());
   dom.addArticleDialog?.addEventListener("click", (event) => {
     if (event.target === dom.addArticleDialog) {
       closeAddModal();
@@ -4605,15 +4608,15 @@ function renderRssPanel() {
         ${imageUrl ? `<img class="rss-item-card__image" src="${escapeHtml(imageUrl)}" alt="" loading="lazy" draggable="false" />` : ""}
         <div class="rss-item-card__header">
           <h3>${escapeHtml(item.title)}</h3>
-          <button
-            class="rss-item-card__add${isSaved ? " rss-item-card__add--saved" : ""}"
-            data-rss-add-item="${escapeHtml(item.url)}"
-            title="${isSaved ? "Already in library" : "Add to library"}"
-            type="button"
-            ${isSaved ? "aria-disabled='true'" : ""}
-          >${isSaved ? '<i class="fa-solid fa-book-open" aria-hidden="true"></i>' : '<i class="fa-solid fa-plus" aria-hidden="true"></i>'}</button>
         </div>
         ${meta ? `<p class="rss-item-card__meta">${escapeHtml(meta)}</p>` : ""}
+        <button
+          class="rss-item-card__add${isSaved ? " rss-item-card__add--saved" : ""}"
+          data-rss-add-item="${escapeHtml(item.url)}"
+          title="${isSaved ? "Already in library" : "Add to library"}"
+          type="button"
+          ${isSaved ? "aria-disabled='true'" : ""}
+        >${isSaved ? '<i class="fa-solid fa-check" aria-hidden="true"></i> In Library' : '<i class="fa-solid fa-plus" aria-hidden="true"></i> Library'}</button>
       </div>`;
       })
       .join("") + paginationMarkup;
