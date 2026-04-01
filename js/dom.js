@@ -21,7 +21,9 @@ export const dom = {
   readerMeta: document.querySelector("#reader-meta"),
   readerSurface: document.querySelector("#reader-surface"),
   focusModeOverlay: document.querySelector("#focus-mode-overlay"),
-  focusModeContentWrapper: document.querySelector("#focus-mode-content-wrapper"),
+  focusModeContentWrapper: document.querySelector(
+    "#focus-mode-content-wrapper",
+  ),
   focusModeContent: document.querySelector("#focus-mode-content"),
   focusModeClose: document.querySelector("#focus-mode-close"),
   focusModePageIndicator: document.querySelector("#focus-mode-page-indicator"),

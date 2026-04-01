@@ -2728,8 +2728,15 @@ function openFocusMode(options = {}) {
   });
 
   // Set up swipe handlers
-  dom.focusModeContentWrapper?.addEventListener("touchstart", handleFocusModeTouchStart, { passive: true });
-  dom.focusModeContentWrapper?.addEventListener("touchend", handleFocusModeTouchEnd);
+  dom.focusModeContentWrapper?.addEventListener(
+    "touchstart",
+    handleFocusModeTouchStart,
+    { passive: true },
+  );
+  dom.focusModeContentWrapper?.addEventListener(
+    "touchend",
+    handleFocusModeTouchEnd,
+  );
   dom.focusModeContentWrapper?.addEventListener("wheel", handleFocusModeWheel, {
     passive: false,
   });
@@ -2752,9 +2759,18 @@ function closeFocusMode(options = {}) {
   }
 
   // Remove event handlers
-  dom.focusModeContentWrapper?.removeEventListener("touchstart", handleFocusModeTouchStart);
-  dom.focusModeContentWrapper?.removeEventListener("touchend", handleFocusModeTouchEnd);
-  dom.focusModeContentWrapper?.removeEventListener("wheel", handleFocusModeWheel);
+  dom.focusModeContentWrapper?.removeEventListener(
+    "touchstart",
+    handleFocusModeTouchStart,
+  );
+  dom.focusModeContentWrapper?.removeEventListener(
+    "touchend",
+    handleFocusModeTouchEnd,
+  );
+  dom.focusModeContentWrapper?.removeEventListener(
+    "wheel",
+    handleFocusModeWheel,
+  );
 
   // Reset styles
   if (dom.focusModeContent) {
@@ -2786,10 +2802,10 @@ function calculateFocusModePages() {
 
   // Column gap between the two columns
   const columnGap = 48;
-  
+
   // Vertical padding for text readability
   const verticalPadding = 24;
-  
+
   // Calculate column width: 2 columns per page with gap between
   // Each column = (viewportWidth - gap) / 2
   const columnWidth = (viewportWidth - columnGap) / 2;
@@ -2821,7 +2837,10 @@ function calculateFocusModePages() {
   // Store state
   focusModeState.pageWidth = pageWidth;
   focusModeState.totalPages = totalPages;
-  focusModeState.currentPage = Math.min(focusModeState.currentPage, totalPages - 1);
+  focusModeState.currentPage = Math.min(
+    focusModeState.currentPage,
+    totalPages - 1,
+  );
 
   // Go to current page
   goToFocusModePage(focusModeState.currentPage, { updateHistory: false });
@@ -2832,7 +2851,10 @@ function goToFocusModePage(page, options = {}) {
 
   const { updateHistory = true, replaceHistory = false } = options;
 
-  focusModeState.currentPage = Math.max(0, Math.min(page, focusModeState.totalPages - 1));
+  focusModeState.currentPage = Math.max(
+    0,
+    Math.min(page, focusModeState.totalPages - 1),
+  );
   pendingFocusModePage = focusModeState.currentPage;
   const offset = -focusModeState.currentPage * focusModeState.pageWidth;
   dom.focusModeContent.style.transform = `translateX(${offset}px)`;
