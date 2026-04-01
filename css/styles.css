@@ -547,14 +547,14 @@ a:visited {
   padding: 0;
   width: 100%;
   max-width: 1200px;
-  height: calc(100dvh - 81px); /* Subtract header height */
+  height: calc(100dvh - 75px); /* Subtract header height */
   max-height: none;
   overflow: hidden;
   background: var(--surface);
   color: var(--text);
   margin: 0 auto;
   position: fixed;
-  top: 81px; /* Below header */
+  top: 75px; /* Below header */
   left: 0;
   right: 0;
   border-left: var(--border-light);
