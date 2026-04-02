@@ -1,5 +1,10 @@
 import { normalizeTag, syncSavedTags } from "./taxonomy.js";
-import { touchBookmarks, touchProjects, recordTombstone, bumpItemSync } from "./state.js";
+import {
+  touchBookmarks,
+  touchProjects,
+  recordTombstone,
+  bumpItemSync,
+} from "./state.js";
 
 const PROJECT_STAGES = ["idea", "research", "done"];
 

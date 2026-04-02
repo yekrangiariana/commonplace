@@ -17,10 +17,7 @@ import {
   startRealtime,
   disconnect as disconnectRealtime,
 } from "./realtimeSync.js";
-import {
-  mergeAll,
-  stampSyncFields,
-} from "./syncMerge.js";
+import { mergeAll, stampSyncFields } from "./syncMerge.js";
 
 const SYNC_DEBOUNCE_MS = 5000;
 const SYNC_COOLDOWN_MS = 30000;
@@ -82,20 +79,27 @@ export async function pullSync(localState, serializeMetaFn) {
     const merged = mergeAll(localData, remoteData);
 
     // Check if anything actually changed versus local
-    const localBookmarkIds = new Set((localState.bookmarks || []).map(b => b.id));
-    const mergedBookmarkIds = new Set(merged.bookmarks.map(b => b.id));
-    const bookmarksChanged = localBookmarkIds.size !== mergedBookmarkIds.size ||
-      [...mergedBookmarkIds].some(id => !localBookmarkIds.has(id));
+    const localBookmarkIds = new Set(
+      (localState.bookmarks || []).map((b) => b.id),
+    );
+    const mergedBookmarkIds = new Set(merged.bookmarks.map((b) => b.id));
+    const bookmarksChanged =
+      localBookmarkIds.size !== mergedBookmarkIds.size ||
+      [...mergedBookmarkIds].some((id) => !localBookmarkIds.has(id));
 
-    const localProjectIds = new Set((localState.projects || []).map(p => p.id));
-    const mergedProjectIds = new Set(merged.projects.map(p => p.id));
-    const projectsChanged = localProjectIds.size !== mergedProjectIds.size ||
-      [...mergedProjectIds].some(id => !localProjectIds.has(id));
+    const localProjectIds = new Set(
+      (localState.projects || []).map((p) => p.id),
+    );
+    const mergedProjectIds = new Set(merged.projects.map((p) => p.id));
+    const projectsChanged =
+      localProjectIds.size !== mergedProjectIds.size ||
+      [...mergedProjectIds].some((id) => !localProjectIds.has(id));
 
-    const localFeedIds = new Set((localState.rssFeeds || []).map(f => f.id));
-    const mergedFeedIds = new Set(merged.rssFeeds.map(f => f.id));
-    const feedsChanged = localFeedIds.size !== mergedFeedIds.size ||
-      [...mergedFeedIds].some(id => !localFeedIds.has(id));
+    const localFeedIds = new Set((localState.rssFeeds || []).map((f) => f.id));
+    const mergedFeedIds = new Set(merged.rssFeeds.map((f) => f.id));
+    const feedsChanged =
+      localFeedIds.size !== mergedFeedIds.size ||
+      [...mergedFeedIds].some((id) => !localFeedIds.has(id));
 
     const hasChanges = bookmarksChanged || projectsChanged || feedsChanged;
 

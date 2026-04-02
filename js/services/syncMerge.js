@@ -53,14 +53,20 @@ export function mergeTombstones(local, remote) {
   for (const type of ["bookmarks", "projects", "rssFeeds"]) {
     const localMap = local?.[type] || {};
     const remoteMap = remote?.[type] || {};
-    const allIds = new Set([...Object.keys(localMap), ...Object.keys(remoteMap)]);
+    const allIds = new Set([
+      ...Object.keys(localMap),
+      ...Object.keys(remoteMap),
+    ]);
 
     for (const id of allIds) {
       const localTs = localMap[id];
       const remoteTs = remoteMap[id];
-      const latest = localTs && remoteTs
-        ? (localTs > remoteTs ? localTs : remoteTs)
-        : (localTs || remoteTs);
+      const latest =
+        localTs && remoteTs
+          ? localTs > remoteTs
+            ? localTs
+            : remoteTs
+          : localTs || remoteTs;
 
       // Purge old tombstones
       if (latest >= cutoff) {
@@ -104,9 +110,17 @@ function pickFieldByTimestamp(local, remote, field) {
 
 /** Scalar content fields on bookmarks resolved per-field. */
 const BOOKMARK_SCALAR_FIELDS = [
-  "title", "url", "description", "source", "publishedAt",
-  "previewText", "imageUrl", "fetchedAt", "createdAt",
-  "tweetHtml", "blocks",
+  "title",
+  "url",
+  "description",
+  "source",
+  "publishedAt",
+  "previewText",
+  "imageUrl",
+  "fetchedAt",
+  "createdAt",
+  "tweetHtml",
+  "blocks",
 ];
 
 function mergeBookmarkPair(local, remote) {
@@ -209,7 +223,13 @@ function highlightKey(h) {
 
 // ── Project per-field merge ──
 
-const PROJECT_SCALAR_FIELDS = ["name", "description", "content", "stage", "createdAt"];
+const PROJECT_SCALAR_FIELDS = [
+  "name",
+  "description",
+  "content",
+  "stage",
+  "createdAt",
+];
 
 function mergeProjectPair(local, remote) {
   const merged = { id: local.id };
@@ -256,13 +276,16 @@ function mergeFeedPair(local, remote) {
 
 // ── Generic smart merge for an array of items ──
 
-function smartMergeItems(localItems, remoteItems, localTombstones, remoteTombstones, mergePairFn) {
+function smartMergeItems(
+  localItems,
+  remoteItems,
+  localTombstones,
+  remoteTombstones,
+  mergePairFn,
+) {
   const localMap = indexById(localItems);
   const remoteMap = indexById(remoteItems);
-  const allIds = new Set([
-    ...Object.keys(localMap),
-    ...Object.keys(remoteMap),
-  ]);
+  const allIds = new Set([...Object.keys(localMap), ...Object.keys(remoteMap)]);
 
   const result = [];
 
@@ -312,11 +335,27 @@ function smartMergeItems(localItems, remoteItems, localTombstones, remoteTombsto
 
 /** Settings keys that should be synced with per-key timestamps. */
 const SYNCED_SETTINGS_KEYS = [
-  "savedTags", "autoTagEnabled", "autoTagUseDefaultCountries", "autoTagCustomRules",
-  "displayFont", "theme", "displayHighlightColor", "splashEnabled",
-  "ttsVoiceId", "ttsRate", "libraryView", "librarySort", "libraryShowImages",
-  "libraryShowTags", "projectsView", "projectsSort", "rssView", "rssSort",
-  "rssReadFilter", "rssRetentionDays", "rssAutoRefreshMinutes",
+  "savedTags",
+  "autoTagEnabled",
+  "autoTagUseDefaultCountries",
+  "autoTagCustomRules",
+  "displayFont",
+  "theme",
+  "displayHighlightColor",
+  "splashEnabled",
+  "ttsVoiceId",
+  "ttsRate",
+  "libraryView",
+  "librarySort",
+  "libraryShowImages",
+  "libraryShowTags",
+  "projectsView",
+  "projectsSort",
+  "rssView",
+  "rssSort",
+  "rssReadFilter",
+  "rssRetentionDays",
+  "rssAutoRefreshMinutes",
 ];
 
 function mergeMeta(localMeta, remoteMeta) {
@@ -342,7 +381,10 @@ function mergeMeta(localMeta, remoteMeta) {
 
   // Merge timestamps — keep latest per key
   const mergedTs = {};
-  const allTsKeys = new Set([...Object.keys(localTs), ...Object.keys(remoteTs)]);
+  const allTsKeys = new Set([
+    ...Object.keys(localTs),
+    ...Object.keys(remoteTs),
+  ]);
   for (const key of allTsKeys) {
     mergedTs[key] = newerTimestamp(localTs[key], remoteTs[key]);
   }
@@ -361,8 +403,10 @@ function mergeMeta(localMeta, remoteMeta) {
  * @returns {{ bookmarks, projects, rssFeeds, meta, tombstones }}
  */
 export function mergeAll(localData, remoteData) {
-  const localTombstones = localData.meta?._tombstones || createEmptyTombstones();
-  const remoteTombstones = remoteData.meta?._tombstones || createEmptyTombstones();
+  const localTombstones =
+    localData.meta?._tombstones || createEmptyTombstones();
+  const remoteTombstones =
+    remoteData.meta?._tombstones || createEmptyTombstones();
 
   // Merge tombstones first (purges old entries)
   const mergedTombstones = mergeTombstones(localTombstones, remoteTombstones);

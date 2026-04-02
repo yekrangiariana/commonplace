@@ -1,4 +1,10 @@
-import { touchBookmarks, touchMeta, touchProjects, recordTombstone, bumpItemSync } from "./state.js";
+import {
+  touchBookmarks,
+  touchMeta,
+  touchProjects,
+  recordTombstone,
+  bumpItemSync,
+} from "./state.js";
 
 export function normalizeTag(value) {
   return value.replace(/\s+/g, " ").trim().toLowerCase();
