@@ -175,8 +175,11 @@ export function createFocusModeController(deps) {
       return;
     }
 
-    const { initialPage = 0, pushHistory = true, replaceHistory = false } =
-      options;
+    const {
+      initialPage = 0,
+      pushHistory = true,
+      replaceHistory = false,
+    } = options;
 
     dom.focusModeContent.innerHTML = getFocusModeContentMarkup();
 
@@ -239,8 +242,14 @@ export function createFocusModeController(deps) {
       syncRoute({ closing: true });
     }
 
-    dom.focusModeContentWrapper?.removeEventListener("touchstart", handleTouchStart);
-    dom.focusModeContentWrapper?.removeEventListener("touchend", handleTouchEnd);
+    dom.focusModeContentWrapper?.removeEventListener(
+      "touchstart",
+      handleTouchStart,
+    );
+    dom.focusModeContentWrapper?.removeEventListener(
+      "touchend",
+      handleTouchEnd,
+    );
     dom.focusModeContentWrapper?.removeEventListener("wheel", handleWheel);
 
     if (dom.focusModeContent) {
@@ -269,7 +278,10 @@ export function createFocusModeController(deps) {
     const paddingLeft = Number.parseFloat(wrapperStyles.paddingLeft) || 0;
     const paddingRight = Number.parseFloat(wrapperStyles.paddingRight) || 0;
 
-    const viewportWidth = Math.max(0, wrapper.clientWidth - paddingLeft - paddingRight);
+    const viewportWidth = Math.max(
+      0,
+      wrapper.clientWidth - paddingLeft - paddingRight,
+    );
     const viewportHeight = wrapper.clientHeight;
 
     const columnGap = 48;
@@ -516,7 +528,9 @@ export function createFocusModeController(deps) {
     }
 
     const baseHash = getFocusModeBaseHash();
-    const nextHash = closing ? baseHash : `${baseHash}/f/${focusModeState.currentPage + 1}`;
+    const nextHash = closing
+      ? baseHash
+      : `${baseHash}/f/${focusModeState.currentPage + 1}`;
 
     if (window.location.hash === nextHash) {
       return;
@@ -590,7 +604,8 @@ export function createFocusModeController(deps) {
   }
 
   function handleWheel(e) {
-    const dominantDelta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+    const dominantDelta =
+      Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
 
     if (Math.abs(dominantDelta) < 4) {
       return;
