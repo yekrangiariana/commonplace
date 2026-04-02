@@ -1,5 +1,5 @@
 import { normalizeTag, syncSavedTags } from "./taxonomy.js";
-import { touchBookmarks, touchProjects } from "./state.js";
+import { touchBookmarks, touchProjects, recordTombstone, bumpItemSync } from "./state.js";
 
 const PROJECT_STAGES = ["idea", "research", "done"];
 
@@ -147,6 +147,7 @@ export function initWorkspaceContextMenu({
     }
 
     state.bookmarks = state.bookmarks.filter((item) => item.id !== articleId);
+    recordTombstone(state, "bookmarks", articleId);
 
     if (state.selectedArticleId === articleId) {
       state.selectedArticleId = null;
@@ -244,6 +245,7 @@ export function initWorkspaceContextMenu({
 
       if (!currentTags.includes(normalized)) {
         article.tags = [...currentTags, normalized];
+        bumpItemSync(article, ["tags"]);
       }
     });
 
@@ -335,6 +337,7 @@ export function initWorkspaceContextMenu({
 
     selectedProjects.forEach((project) => {
       project.stage = stage;
+      bumpItemSync(project, ["stage"]);
     });
 
     touchProjects(state);

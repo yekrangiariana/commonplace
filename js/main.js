@@ -4,6 +4,9 @@ import {
   touchBookmarks,
   touchProjects,
   touchRss,
+  recordTombstone,
+  bumpItemSync,
+  stampSettingKey,
 } from "./state.js";
 import { dom } from "./dom.js";
 import { getDerivedIndexes } from "./derivedIndexes.js";
@@ -636,6 +639,7 @@ function bindEvents() {
   dom.displayFontButtons.forEach((button) => {
     button.addEventListener("click", () => {
       state.displayFont = button.dataset.displayFont;
+      stampSettingKey(state, "displayFont");
       persistState(state);
       applyDisplayPreferences();
       renderSettings(state, dom);
@@ -644,6 +648,7 @@ function bindEvents() {
   dom.displayThemeButtons.forEach((button) => {
     button.addEventListener("click", () => {
       state.theme = button.dataset.displayTheme;
+      stampSettingKey(state, "theme");
       persistState(state);
       applyDisplayPreferences();
       renderSettings(state, dom);
@@ -652,6 +657,7 @@ function bindEvents() {
   dom.displayHighlightButtons.forEach((button) => {
     button.addEventListener("click", () => {
       state.displayHighlightColor = button.dataset.displayHighlight;
+      stampSettingKey(state, "displayHighlightColor");
       persistState(state);
       applyDisplayPreferences();
       renderSettings(state, dom);
@@ -659,6 +665,7 @@ function bindEvents() {
   });
   dom.splashEnabled?.addEventListener("change", () => {
     state.splashEnabled = dom.splashEnabled.checked;
+    stampSettingKey(state, "splashEnabled");
     try {
       if (state.splashEnabled) {
         localStorage.removeItem("splashOff");
@@ -671,6 +678,7 @@ function bindEvents() {
   dom.rssRetentionSelect?.addEventListener("change", () => {
     const raw = dom.rssRetentionSelect.value;
     state.rssRetentionDays = raw === "never" ? "never" : Number(raw) || 7;
+    stampSettingKey(state, "rssRetentionDays");
     const removedCount = pruneRssItemsForRetention();
     persistState(state);
     renderSettings(state, dom);
@@ -690,6 +698,7 @@ function bindEvents() {
     state.rssAutoRefreshMinutes = normalizeRssAutoRefreshMinutes(
       dom.rssAutoRefreshSelect.value,
     );
+    stampSettingKey(state, "rssAutoRefreshMinutes");
     persistState(state);
     renderSettings(state, dom);
     rssAutoRefreshController?.sync();
@@ -731,6 +740,7 @@ function bindEvents() {
 
   dom.autoTagEnabled?.addEventListener("change", () => {
     state.autoTagEnabled = Boolean(dom.autoTagEnabled.checked);
+    stampSettingKey(state, "autoTagEnabled");
     persistState(state);
     renderSettings(state, dom);
   });
@@ -739,6 +749,7 @@ function bindEvents() {
     state.autoTagUseDefaultCountries = Boolean(
       dom.autoTagUseDefaultCountries.checked,
     );
+    stampSettingKey(state, "autoTagUseDefaultCountries");
     persistState(state);
     renderSettings(state, dom);
   });
@@ -1693,6 +1704,7 @@ function handleDocumentClick(event) {
   if (deleteArticleTrigger) {
     const id = deleteArticleTrigger.dataset.deleteArticle;
     state.bookmarks = state.bookmarks.filter((b) => b.id !== id);
+    recordTombstone(state, "bookmarks", id);
     if (state.selectedArticleId === id) state.selectedArticleId = null;
     touchBookmarks(state);
     persistState(state);
@@ -3052,6 +3064,7 @@ function ensureHighlightedRssReaderArticleInLibrary() {
     if (rssReaderContext && !existing._rssOrigin) {
       existing._rssOrigin = { ...rssReaderContext };
     }
+    bumpItemSync(existing, ["highlights", "tags", "projectIds"]);
     touchBookmarks(state);
     state.selectedArticleId = existing.id;
     state.rssReaderArticle = null;
@@ -3559,6 +3572,7 @@ function removeHighlight(highlightId) {
   article.highlights = article.highlights.filter(
     (highlight) => highlight.id !== highlightId,
   );
+  bumpItemSync(article, ["highlights"]);
   touchBookmarks(state);
   persistState(state);
   renderAndSyncUrl();
@@ -4362,6 +4376,7 @@ function applyReaderTagsFromPopover() {
 
   const merged = [...new Set([...(article.tags || []), ...newTags])];
   article.tags = merged;
+  bumpItemSync(article, ["tags"]);
   const didSave = ensureHighlightedRssReaderArticleInLibrary();
   touchBookmarks(state);
   persistState(state);
@@ -4395,6 +4410,7 @@ function applyReaderProjectsFromPopover() {
   article.projectIds = [
     ...new Set([...(article.projectIds || []), ...projectIds]),
   ];
+  bumpItemSync(article, ["projectIds"]);
   const didSave = ensureHighlightedRssReaderArticleInLibrary();
   touchBookmarks(state);
   persistState(state);
@@ -4421,6 +4437,7 @@ function removeReaderTag(tag) {
   article.tags = (article.tags || []).filter(
     (currentTag) => currentTag !== tag,
   );
+  bumpItemSync(article, ["tags"]);
   touchBookmarks(state);
   persistState(state);
   renderAndSyncUrl();
@@ -4438,6 +4455,7 @@ function removeReaderProject(projectId) {
   article.projectIds = (article.projectIds || []).filter(
     (currentProjectId) => currentProjectId !== projectId,
   );
+  bumpItemSync(article, ["projectIds"]);
   touchBookmarks(state);
   persistState(state);
   renderAndSyncUrl();
@@ -4490,6 +4508,7 @@ function handleDeleteFeed(feedId) {
   }
 
   state.rssFeeds = state.rssFeeds.filter((f) => f.id !== feedId);
+  recordTombstone(state, "rssFeeds", feedId);
   state.rssSelectedFeedIds = (state.rssSelectedFeedIds || []).filter(
     (id) => id !== feedId,
   );

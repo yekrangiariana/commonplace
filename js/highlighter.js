@@ -1,3 +1,5 @@
+import { bumpItemSync } from "./state.js";
+
 export function renderBlock(block, highlights, escapeHtml) {
   const html = renderInlineContent(block, highlights, escapeHtml);
   const tagName = block.type === "heading" ? "h2" : "p";
@@ -207,6 +209,7 @@ export function createHighlightFromSelection({
     createdAt: new Date().toISOString(),
   });
 
+  bumpItemSync(activeArticle, ["highlights"]);
   onChanged();
   clearPendingSelection(state, dom);
 }

@@ -1,7 +1,7 @@
 /**
  * Cloud Sync Service
- * Handles push/pull blob sync with Supabase, auto-pull polling,
- * sync UI initialisation, and applying remote data to local state.
+ * Handles push/pull sync with Supabase using per-item conflict resolution,
+ * tombstone-based deletion tracking, and field-level bookmark merge.
  */
 
 import {
@@ -17,6 +17,10 @@ import {
   startRealtime,
   disconnect as disconnectRealtime,
 } from "./realtimeSync.js";
+import {
+  mergeAll,
+  stampSyncFields,
+} from "./syncMerge.js";
 
 const SYNC_DEBOUNCE_MS = 5000;
 const SYNC_COOLDOWN_MS = 30000;
@@ -37,10 +41,16 @@ function notifyStatus(status, message) {
   onSyncStatusChange?.({ status, message });
 }
 
-// ── Pull ──
+// ── Pull (smart merge with remote) ──
 
 export async function pullSync(localState, serializeMetaFn) {
   if (!isLoggedIn()) return null;
+
+  // If a local push is pending, skip — let the push complete first to avoid
+  // merging against stale local intent. Next poll/realtime will retry.
+  if (syncTimerId !== null) {
+    return null;
+  }
 
   notifyStatus("pulling", "Syncing from cloud…");
 
@@ -53,18 +63,57 @@ export async function pullSync(localState, serializeMetaFn) {
       return null;
     }
 
-    const remoteTime = new Date(remote.updated_at).getTime();
-    const localTime = getLocalSyncTimestamp();
+    // Build local and remote data objects for merge
+    const localMeta = serializeMetaFn(localState);
+    const localData = {
+      bookmarks: localState.bookmarks || [],
+      projects: localState.projects || [],
+      rssFeeds: localState.rssFeeds || [],
+      meta: localMeta,
+    };
+    const remoteData = {
+      bookmarks: remote.bookmarks || [],
+      projects: remote.projects || [],
+      rssFeeds: remote.rss_feeds || [],
+      meta: remote.meta || {},
+    };
 
-    if (remoteTime > localTime) {
-      setLocalSyncTimestamp(remoteTime);
+    // Smart merge with conflict resolution
+    const merged = mergeAll(localData, remoteData);
+
+    // Check if anything actually changed versus local
+    const localBookmarkIds = new Set((localState.bookmarks || []).map(b => b.id));
+    const mergedBookmarkIds = new Set(merged.bookmarks.map(b => b.id));
+    const bookmarksChanged = localBookmarkIds.size !== mergedBookmarkIds.size ||
+      [...mergedBookmarkIds].some(id => !localBookmarkIds.has(id));
+
+    const localProjectIds = new Set((localState.projects || []).map(p => p.id));
+    const mergedProjectIds = new Set(merged.projects.map(p => p.id));
+    const projectsChanged = localProjectIds.size !== mergedProjectIds.size ||
+      [...mergedProjectIds].some(id => !localProjectIds.has(id));
+
+    const localFeedIds = new Set((localState.rssFeeds || []).map(f => f.id));
+    const mergedFeedIds = new Set(merged.rssFeeds.map(f => f.id));
+    const feedsChanged = localFeedIds.size !== mergedFeedIds.size ||
+      [...mergedFeedIds].some(id => !localFeedIds.has(id));
+
+    const hasChanges = bookmarksChanged || projectsChanged || feedsChanged;
+
+    setLocalSyncTimestamp(Date.now());
+
+    if (hasChanges) {
       notifyStatus("done", "Synced from cloud");
       return {
-        bookmarks: remote.bookmarks || [],
-        projects: remote.projects || [],
-        meta: remote.meta || {},
-        rssFeeds: remote.rss_feeds || [],
+        bookmarks: merged.bookmarks,
+        projects: merged.projects,
+        meta: merged.meta,
+        rssFeeds: merged.rssFeeds,
       };
+    }
+
+    // Even if items didn't change, update tombstones in local state
+    if (merged.meta._tombstones) {
+      localState._tombstones = merged.meta._tombstones;
     }
 
     notifyStatus("done", "Already up to date");
@@ -107,6 +156,11 @@ export async function pushSyncNow(localState, serializeMetaFn) {
     delete meta.selectedProjectSidebarArticleId;
     delete meta.activeTab;
     delete meta.settingsSection;
+
+    // Ensure sync fields exist on items that predate sync (migration)
+    stampSyncFields(localState.bookmarks || []);
+    stampSyncFields(localState.projects || []);
+    stampSyncFields(localState.rssFeeds || []);
 
     await upsertSyncData({
       bookmarks: localState.bookmarks,
@@ -170,6 +224,10 @@ export async function forcePush(localState, serializeMetaFn) {
     delete meta.activeTab;
     delete meta.settingsSection;
 
+    stampSyncFields(localState.bookmarks || []);
+    stampSyncFields(localState.projects || []);
+    stampSyncFields(localState.rssFeeds || []);
+
     await upsertSyncData({
       bookmarks: localState.bookmarks,
       projects: localState.projects,
@@ -187,22 +245,7 @@ export async function forcePush(localState, serializeMetaFn) {
   }
 }
 
-// ── Merge (union local + remote, no deletions) ──
-
-function mergeArraysById(local, remote) {
-  const seen = new Set();
-  const merged = [];
-  for (const item of local) {
-    if (item.id) seen.add(item.id);
-    merged.push(item);
-  }
-  for (const item of remote) {
-    if (item.id && !seen.has(item.id)) {
-      merged.push(item);
-    }
-  }
-  return merged;
-}
+// ── Merge (union local + remote, respects tombstones) ──
 
 export async function mergeSync(localState, serializeMetaFn) {
   if (!isLoggedIn() || syncInFlight) return null;
@@ -214,51 +257,44 @@ export async function mergeSync(localState, serializeMetaFn) {
     const remote = await fetchSyncData();
 
     if (!remote) {
-      // Nothing in cloud — just push local
       syncInFlight = false;
       await forcePush(localState, serializeMetaFn);
       return null;
     }
 
-    const remoteBookmarks = remote.bookmarks || [];
-    const remoteProjects = remote.projects || [];
-    const remoteFeeds = remote.rss_feeds || [];
-
-    const mergedBookmarks = mergeArraysById(
-      localState.bookmarks,
-      remoteBookmarks,
-    );
-    const mergedProjects = mergeArraysById(localState.projects, remoteProjects);
-    const mergedFeeds = mergeArraysById(localState.rssFeeds, remoteFeeds);
-
-    // For meta, keep local values but fill in any keys only present remotely
-    const remoteMeta = remote.meta || {};
     const localMeta = serializeMetaFn(localState);
-    const mergedMeta = { ...remoteMeta, ...localMeta };
-    delete mergedMeta.selectedArticleId;
-    delete mergedMeta.selectedProjectId;
-    delete mergedMeta.selectedProjectSidebarArticleId;
-    delete mergedMeta.activeTab;
-    delete mergedMeta.settingsSection;
+    const localData = {
+      bookmarks: localState.bookmarks || [],
+      projects: localState.projects || [],
+      rssFeeds: localState.rssFeeds || [],
+      meta: localMeta,
+    };
+    const remoteData = {
+      bookmarks: remote.bookmarks || [],
+      projects: remote.projects || [],
+      rssFeeds: remote.rss_feeds || [],
+      meta: remote.meta || {},
+    };
+
+    const merged = mergeAll(localData, remoteData);
 
     // Push merged result to cloud
     await upsertSyncData({
-      bookmarks: mergedBookmarks,
-      projects: mergedProjects,
-      meta: mergedMeta,
-      rss_feeds: mergedFeeds,
+      bookmarks: merged.bookmarks,
+      projects: merged.projects,
+      meta: merged.meta,
+      rss_feeds: merged.rssFeeds,
     });
 
     lastSyncPushedAt = Date.now();
     setLocalSyncTimestamp(Date.now());
     notifyStatus("done", "Merge complete");
 
-    // Return merged data so local state gets updated too
     return {
-      bookmarks: mergedBookmarks,
-      projects: mergedProjects,
-      meta: mergedMeta,
-      rssFeeds: mergedFeeds,
+      bookmarks: merged.bookmarks,
+      projects: merged.projects,
+      meta: merged.meta,
+      rssFeeds: merged.rssFeeds,
     };
   } catch (err) {
     notifyStatus("error", `Merge failed: ${err.message}`);
@@ -347,15 +383,15 @@ export function applyRemoteSyncData(remoteData, deps) {
     rebuildIndex,
   } = deps;
 
-  if (Array.isArray(remoteData.bookmarks) && remoteData.bookmarks.length > 0) {
+  if (Array.isArray(remoteData.bookmarks)) {
     state.bookmarks = remoteData.bookmarks;
     touchBookmarks(state);
   }
-  if (Array.isArray(remoteData.projects) && remoteData.projects.length > 0) {
+  if (Array.isArray(remoteData.projects)) {
     state.projects = remoteData.projects;
     touchProjects(state);
   }
-  if (Array.isArray(remoteData.rssFeeds) && remoteData.rssFeeds.length > 0) {
+  if (Array.isArray(remoteData.rssFeeds)) {
     state.rssFeeds = remoteData.rssFeeds;
     touchRss(state);
   }
@@ -383,6 +419,9 @@ export function applyRemoteSyncData(remoteData, deps) {
       state.rssAutoRefreshMinutes = m.rssAutoRefreshMinutes;
     if (m.ttsVoiceId !== undefined) state.ttsVoiceId = m.ttsVoiceId;
     if (m.ttsRate !== undefined) state.ttsRate = m.ttsRate;
+    // Apply merged tombstones and meta timestamps
+    if (m._tombstones) state._tombstones = m._tombstones;
+    if (m._metaTimestamps) state._metaTimestamps = m._metaTimestamps;
   }
   persistState(state);
   renderAndSyncUrl();

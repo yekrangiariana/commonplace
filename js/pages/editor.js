@@ -1,5 +1,5 @@
 import { renderBlock } from "../highlighter.js";
-import { touchProjects } from "../state.js";
+import { touchProjects, bumpItemSync } from "../state.js";
 import { escapeHtml, formatDate } from "../utils.js";
 
 function normalizeHeading(value) {
@@ -208,6 +208,7 @@ export function saveProjectEditorContent(state, projectId, content) {
     project.name = markdownTitle;
   }
   project.updatedAt = new Date().toISOString();
+  bumpItemSync(project, ["content", "name"]);
   touchProjects(state);
   return normalizedContent;
 }

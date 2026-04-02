@@ -1,4 +1,4 @@
-import { touchBookmarks, touchMeta, touchProjects } from "./state.js";
+import { touchBookmarks, touchMeta, touchProjects, recordTombstone, bumpItemSync } from "./state.js";
 
 export function normalizeTag(value) {
   return value.replace(/\s+/g, " ").trim().toLowerCase();
@@ -116,17 +116,22 @@ export function toggleArticleProject(state, articleId, projectId) {
     article.projectIds.push(projectId);
   }
 
+  bumpItemSync(article, ["projectIds"]);
   touchBookmarks(state);
 }
 
 export function deleteProject(state, projectId) {
   state.projects = state.projects.filter((project) => project.id !== projectId);
-  state.bookmarks = state.bookmarks.map((bookmark) => ({
-    ...bookmark,
-    projectIds: bookmark.projectIds.filter(
+  recordTombstone(state, "projects", projectId);
+  state.bookmarks = state.bookmarks.map((bookmark) => {
+    const filtered = bookmark.projectIds.filter(
       (currentProjectId) => currentProjectId !== projectId,
-    ),
-  }));
+    );
+    const changed = filtered.length !== bookmark.projectIds.length;
+    const updated = { ...bookmark, projectIds: filtered };
+    if (changed) bumpItemSync(updated, ["projectIds"]);
+    return updated;
+  });
   state.selectedProjectId =
     state.selectedProjectId === projectId ? null : state.selectedProjectId;
   touchProjects(state);
@@ -144,16 +149,20 @@ export function renameProject(state, projectId, nextName) {
   }
 
   project.name = normalizeProjectName(nextName);
+  bumpItemSync(project, ["name"]);
   touchProjects(state);
 }
 
 export function renameTag(state, currentTag, nextTag) {
-  state.bookmarks = state.bookmarks.map((bookmark) => ({
-    ...bookmark,
-    tags: dedupeTags(
+  state.bookmarks = state.bookmarks.map((bookmark) => {
+    const newTags = dedupeTags(
       bookmark.tags.map((tag) => (tag === currentTag ? nextTag : tag)),
-    ),
-  }));
+    );
+    const changed = newTags.join(",") !== bookmark.tags.join(",");
+    const updated = { ...bookmark, tags: newTags };
+    if (changed) bumpItemSync(updated, ["tags"]);
+    return updated;
+  });
   state.savedTags = dedupeTags(
     state.savedTags.map((tag) => (tag === currentTag ? nextTag : tag)),
   );
@@ -162,10 +171,13 @@ export function renameTag(state, currentTag, nextTag) {
 }
 
 export function deleteTag(state, tagToDelete) {
-  state.bookmarks = state.bookmarks.map((bookmark) => ({
-    ...bookmark,
-    tags: bookmark.tags.filter((tag) => tag !== tagToDelete),
-  }));
+  state.bookmarks = state.bookmarks.map((bookmark) => {
+    const newTags = bookmark.tags.filter((tag) => tag !== tagToDelete);
+    const changed = newTags.length !== bookmark.tags.length;
+    const updated = { ...bookmark, tags: newTags };
+    if (changed) bumpItemSync(updated, ["tags"]);
+    return updated;
+  });
   state.savedTags = state.savedTags.filter((tag) => tag !== tagToDelete);
   touchBookmarks(state);
   touchMeta(state);
