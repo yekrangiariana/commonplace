@@ -8,7 +8,7 @@ Default payload:
 - 10,000 RSS items total by default (50 items per feed, configurable)
 - 600 projects with seeded descriptions and markdown draft content
 
-Tested against DB: bookmark-manager-db (v4)
+Tested against DB: bookmark-manager-db (v5)
 Stores: bookmarks, projects, meta, rssFeeds, rssItems, imageCache, kv
 */
 
@@ -23,7 +23,7 @@ Stores: bookmarks, projects, meta, rssFeeds, rssItems, imageCache, kv
     RESET_EXISTING: true,
     BATCH_SIZE: 500,
     DB_NAME: "bookmark-manager-db",
-    DB_VERSION: 4,
+    DB_VERSION: 5,
   };
 
   const STORE = {

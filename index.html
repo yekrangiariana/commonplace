@@ -74,14 +74,11 @@
     <link rel="stylesheet" href="./css/tts-player.css" />
     <link rel="stylesheet" href="./css/mobile-responsive.css" />
     <link rel="stylesheet" href="./css/splash.css" />
-    <link rel="stylesheet" href="./css/epub-reader.css" />
     <link rel="stylesheet" href="./css/data-transfer.css" />
     <link rel="stylesheet" href="./css/search.css" />
     <link rel="stylesheet" href="./css/focus-mode.css" />
+    <link rel="stylesheet" href="./css/cloud-sync.css" />
     <script src="https://cdn.jsdelivr.net/npm/flexsearch@0.7.43/dist/flexsearch.bundle.min.js"></script>
-    <!-- EPUB.js and JSZip for EPUB reading -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
   </head>
   <body>
     <div class="splash-screen" id="splash-screen">
@@ -1063,6 +1060,183 @@
                 </div>
               </section>
 
+              <section class="settings-panel" data-settings-panel="sync" hidden>
+                <!-- Logged-out state -->
+                <div id="sync-login-view" class="sync-login">
+                  <div class="sync-login__hero">
+                    <div class="sync-login__icon">
+                      <i class="fa-solid fa-cloud" aria-hidden="true"></i>
+                    </div>
+                    <h2 class="sync-login__title">Cloud Sync</h2>
+                    <p class="sync-login__subtitle">
+                      Sign in to sync your library, projects, and settings
+                      across all your devices.
+                    </p>
+                  </div>
+                  <form id="sync-auth-form" class="sync-login__form">
+                    <div class="sync-login__input-wrap">
+                      <i
+                        class="fa-solid fa-envelope sync-login__input-icon"
+                        aria-hidden="true"
+                      ></i>
+                      <input
+                        type="email"
+                        id="sync-email-input"
+                        placeholder="Email address"
+                        required
+                        autocomplete="email"
+                      />
+                    </div>
+                    <div class="sync-login__input-wrap">
+                      <i
+                        class="fa-solid fa-lock sync-login__input-icon"
+                        aria-hidden="true"
+                      ></i>
+                      <input
+                        type="password"
+                        id="sync-password-input"
+                        placeholder="Password"
+                        required
+                        autocomplete="current-password"
+                        minlength="6"
+                      />
+                    </div>
+                    <div class="sync-login__actions">
+                      <button
+                        class="button button--primary sync-login__submit"
+                        type="submit"
+                      >
+                        Sign in
+                      </button>
+                      <button
+                        class="button button--secondary sync-login__submit"
+                        type="button"
+                        id="sync-signup-button"
+                      >
+                        Create account
+                      </button>
+                    </div>
+                  </form>
+                  <p
+                    class="sync-login__status"
+                    id="sync-login-status"
+                    aria-live="polite"
+                  ></p>
+                </div>
+
+                <!-- Logged-in state -->
+                <div id="sync-account-view" class="sync-profile" hidden>
+                  <div class="sync-profile__card">
+                    <div class="sync-profile__avatar-wrap">
+                      <img
+                        id="sync-profile-avatar"
+                        class="sync-profile__avatar"
+                        src=""
+                        alt=""
+                        hidden
+                      />
+                      <div
+                        id="sync-profile-avatar-fallback"
+                        class="sync-profile__avatar-fallback"
+                      ></div>
+                      <label
+                        class="sync-profile__avatar-edit"
+                        title="Change profile picture"
+                      >
+                        <i class="fa-solid fa-camera" aria-hidden="true"></i>
+                        <input
+                          type="file"
+                          id="sync-avatar-input"
+                          accept="image/*"
+                          hidden
+                        />
+                      </label>
+                    </div>
+                    <div class="sync-profile__info">
+                      <strong
+                        class="sync-profile__email"
+                        id="sync-account-email"
+                      ></strong>
+                      <span
+                        class="sync-profile__sync-time"
+                        id="sync-last-synced"
+                        >Not synced yet</span
+                      >
+                      <span
+                        class="sync-profile__sync-indicator"
+                        id="sync-status"
+                        aria-live="polite"
+                      ></span>
+                    </div>
+                  </div>
+
+                  <div class="sync-profile__details">
+                    <div class="sync-profile__row">
+                      <div class="sync-profile__row-label">
+                        <i
+                          class="fa-solid fa-book-bookmark"
+                          aria-hidden="true"
+                        ></i>
+                        Articles
+                      </div>
+                      <span
+                        class="sync-profile__row-value"
+                        id="sync-stat-articles"
+                        >0</span
+                      >
+                    </div>
+                    <div class="sync-profile__row">
+                      <div class="sync-profile__row-label">
+                        <i
+                          class="fa-solid fa-folder"
+                          aria-hidden="true"
+                        ></i>
+                        Projects
+                      </div>
+                      <span
+                        class="sync-profile__row-value"
+                        id="sync-stat-projects"
+                        >0</span
+                      >
+                    </div>
+                    <div class="sync-profile__row">
+                      <div class="sync-profile__row-label">
+                        <i class="fa-solid fa-rss" aria-hidden="true"></i>
+                        RSS Feeds
+                      </div>
+                      <span
+                        class="sync-profile__row-value"
+                        id="sync-stat-feeds"
+                        >0</span
+                      >
+                    </div>
+                  </div>
+
+                  <div class="sync-profile__footer">
+                    <p class="sync-profile__privacy">
+                      <i
+                        class="fa-solid fa-shield-halved"
+                        aria-hidden="true"
+                      ></i>
+                      Synced data is stored unencrypted. This includes your
+                      saved articles, highlights, projects, RSS feeds, tags,
+                      and display preferences.
+                    </p>
+                    <button
+                      class="button button--ghost sync-profile__signout"
+                      id="sync-logout-button"
+                      type="button"
+                    >
+                      <i
+                        class="fa-solid fa-right-from-bracket"
+                        aria-hidden="true"
+                      ></i>
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              </section>
+
               <section
                 class="settings-panel"
                 data-settings-panel="projects"
@@ -1518,6 +1692,14 @@
                 >
                   <i class="fa-solid fa-hard-drive" aria-hidden="true"></i>
                   Data
+                </button>
+                <button
+                  type="button"
+                  class="settings-nav-button"
+                  data-settings-section="sync"
+                >
+                  <i class="fa-solid fa-cloud" aria-hidden="true"></i>
+                  Sync
                 </button>
                 <button
                   type="button"

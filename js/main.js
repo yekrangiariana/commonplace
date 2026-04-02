@@ -31,6 +31,8 @@ import {
 import {
   hydrateState,
   persistState,
+  serializeMetaState,
+  setAfterPersistCallback,
   clearAllPersistedData,
   estimatePersistedStorageUsage,
   putRssReaderCache,
@@ -128,6 +130,20 @@ import {
   isSearchReady,
 } from "./services/search.js";
 import { createFocusModeController } from "./focusMode.js";
+import {
+  handleAuthRedirect,
+  isLoggedIn,
+  restoreSession,
+} from "./services/supabaseClient.js";
+import {
+  pullSync,
+  pushSyncNow,
+  schedulePushSync,
+  startAutoPull,
+  stopAutoPull,
+  applyRemoteSyncData,
+  initSyncUI,
+} from "./services/cloudSync.js";
 
 let statusTimeoutId = null;
 let projectLinkSelection = null;
@@ -182,6 +198,7 @@ const VALID_TABS = new Set([
 ]);
 const VALID_SETTINGS_SECTIONS = new Set([
   "export",
+  "sync",
   "projects",
   "tags",
   "display",
@@ -225,9 +242,28 @@ async function init() {
     await hydrateRuntimeConfig(runtimeConfig);
     renderFeedSuggestions();
 
+    // Handle magic link auth redirect (exchange token hash for session)
+    const didAuth = await handleAuthRedirect();
+
     // Only hydrate state from DB if we didn't just clear it
     if (!didClearData) {
       await hydrateState(state);
+    }
+
+    // If logged in, try to pull remote sync data and merge
+    if (isLoggedIn() && !didClearData) {
+      try {
+        const remoteData = await pullSync(state, serializeMetaState);
+        if (remoteData) {
+          applyRemoteSyncData(remoteData, getSyncDeps());
+        }
+      } catch {
+        // Sync failure should not block app init
+      }
+      // Start background polling for cross-device changes
+      startAutoPull(state, serializeMetaState, (data) =>
+        applyRemoteSyncData(data, getSyncDeps()),
+      );
     }
 
     // Only show splash delay if not clearing data and splash is enabled
@@ -249,6 +285,12 @@ async function init() {
     pruneRssReaderCacheByRetention(state).catch(() => {});
     initImageCache(state.bookmarks).catch(() => {});
     initSearchIndex(state.bookmarks, state.projects).catch(() => {});
+
+    // Schedule cloud sync push after each local persist
+    setAfterPersistCallback((stateRef) => {
+      schedulePushSync(stateRef, serializeMetaState);
+    });
+
     focusModeController = createFocusModeController({
       dom,
       state,
@@ -577,6 +619,9 @@ function bindEvents() {
     refreshStorageUsageDisplay,
   );
   dom.deleteAllDataButton.addEventListener("click", handleDeleteAllData);
+
+  // Cloud sync UI
+  initSyncUI({ formatRelativeTime, getState: () => state });
 
   document
     .querySelector("[data-about-open-features]")
@@ -1001,6 +1046,18 @@ async function handleDeleteAllData() {
   window.localStorage.setItem("pendingClearAllData", "1");
   window.location.href = window.location.pathname + "#library";
   window.location.reload();
+}
+
+function getSyncDeps() {
+  return {
+    state,
+    touchBookmarks,
+    touchProjects,
+    touchRss,
+    persistState,
+    renderAndSyncUrl,
+    rebuildIndex,
+  };
 }
 
 async function handleMarkdownFolderExport() {

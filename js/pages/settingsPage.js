@@ -6,6 +6,7 @@ import { runtimeConfig } from "../state.js";
 
 const SETTINGS_SECTIONS = [
   "export",
+  "sync",
   "projects",
   "tags",
   "display",

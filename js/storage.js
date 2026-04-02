@@ -28,6 +28,15 @@ let pendingStateRef = null;
 let hasPendingChanges = false;
 let isPersistFlushQueued = false;
 let lastPersistedSnapshot = null;
+let onAfterPersist = null;
+
+/**
+ * Register a callback that fires after each successful persist flush.
+ * Receives the state reference that was persisted.
+ */
+export function setAfterPersistCallback(callback) {
+  onAfterPersist = callback;
+}
 
 export async function hydrateState(state) {
   const parsedState = await readPersistedState();
@@ -234,6 +243,13 @@ function queuePersistFlush() {
 
   Promise.resolve()
     .then(() => writePersistedState(stateSnapshot, dirtyScopes))
+    .then(() => {
+      try {
+        onAfterPersist?.(stateRef);
+      } catch {
+        /* non-critical */
+      }
+    })
     .catch(() => {
       // Keep runtime resilient if storage is unavailable.
     })
@@ -291,7 +307,7 @@ function serializeState(state) {
   };
 }
 
-function serializeMetaState(state) {
+export function serializeMetaState(state) {
   return {
     savedTags: state.savedTags,
     selectedArticleId: state.selectedArticleId,
@@ -437,6 +453,7 @@ function applyParsedState(state, parsedState) {
     : "newest";
   state.settingsSection = [
     "export",
+    "sync",
     "projects",
     "tags",
     "display",
