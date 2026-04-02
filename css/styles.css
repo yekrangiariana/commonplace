@@ -749,6 +749,7 @@ body.add-dialog-open {
   display: grid;
   background: var(--surface);
   position: relative;
+  overflow-x: hidden;
 }
 
 .tab-panel {
