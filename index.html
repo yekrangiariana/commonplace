@@ -1064,6 +1064,35 @@
                   </div>
 
                   <div class="sync-profile__footer">
+                    <div class="sync-profile__manual-actions">
+                      <button
+                        class="button button--ghost button--sm"
+                        id="sync-force-pull-button"
+                        type="button"
+                        title="Replace local data with cloud data"
+                      >
+                        <i class="fa-solid fa-cloud-arrow-down" aria-hidden="true"></i>
+                        Pull
+                      </button>
+                      <button
+                        class="button button--ghost button--sm"
+                        id="sync-merge-button"
+                        type="button"
+                        title="Combine local and cloud data without removing anything"
+                      >
+                        <i class="fa-solid fa-code-merge" aria-hidden="true"></i>
+                        Merge
+                      </button>
+                      <button
+                        class="button button--ghost button--sm"
+                        id="sync-force-push-button"
+                        type="button"
+                        title="Replace cloud data with local data"
+                      >
+                        <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+                        Push
+                      </button>
+                    </div>
                     <p class="sync-profile__privacy">
                       <i
                         class="fa-solid fa-shield-halved"

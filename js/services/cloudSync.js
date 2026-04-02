@@ -121,6 +121,146 @@ export async function pushSyncNow(localState, serializeMetaFn) {
   }
 }
 
+// ── Force pull (ignores timestamps — always overwrites local) ──
+
+export async function forcePull() {
+  if (!isLoggedIn()) return null;
+
+  notifyStatus("pulling", "Pulling from cloud…");
+
+  try {
+    const remote = await fetchSyncData();
+
+    if (!remote) {
+      notifyStatus("error", "No cloud data found");
+      return null;
+    }
+
+    setLocalSyncTimestamp(new Date(remote.updated_at).getTime());
+    notifyStatus("done", "Replaced local data with cloud data");
+    return {
+      bookmarks: remote.bookmarks || [],
+      projects: remote.projects || [],
+      meta: remote.meta || {},
+      rssFeeds: remote.rss_feeds || [],
+    };
+  } catch (err) {
+    notifyStatus("error", `Force pull failed: ${err.message}`);
+    return null;
+  }
+}
+
+// ── Force push (ignores cooldown — always overwrites cloud) ──
+
+export async function forcePush(localState, serializeMetaFn) {
+  if (!isLoggedIn() || syncInFlight) return;
+
+  syncInFlight = true;
+  notifyStatus("pushing", "Pushing to cloud…");
+
+  try {
+    const meta = serializeMetaFn(localState);
+    delete meta.selectedArticleId;
+    delete meta.selectedProjectId;
+    delete meta.selectedProjectSidebarArticleId;
+    delete meta.activeTab;
+    delete meta.settingsSection;
+
+    await upsertSyncData({
+      bookmarks: localState.bookmarks,
+      projects: localState.projects,
+      meta,
+      rss_feeds: localState.rssFeeds,
+    });
+
+    lastSyncPushedAt = Date.now();
+    setLocalSyncTimestamp(Date.now());
+    notifyStatus("done", "Replaced cloud data with local data");
+  } catch (err) {
+    notifyStatus("error", `Force push failed: ${err.message}`);
+  } finally {
+    syncInFlight = false;
+  }
+}
+
+// ── Merge (union local + remote, no deletions) ──
+
+function mergeArraysById(local, remote) {
+  const seen = new Set();
+  const merged = [];
+  for (const item of local) {
+    if (item.id) seen.add(item.id);
+    merged.push(item);
+  }
+  for (const item of remote) {
+    if (item.id && !seen.has(item.id)) {
+      merged.push(item);
+    }
+  }
+  return merged;
+}
+
+export async function mergeSync(localState, serializeMetaFn) {
+  if (!isLoggedIn() || syncInFlight) return null;
+
+  syncInFlight = true;
+  notifyStatus("pulling", "Merging with cloud…");
+
+  try {
+    const remote = await fetchSyncData();
+
+    if (!remote) {
+      // Nothing in cloud — just push local
+      syncInFlight = false;
+      await forcePush(localState, serializeMetaFn);
+      return null;
+    }
+
+    const remoteBookmarks = remote.bookmarks || [];
+    const remoteProjects = remote.projects || [];
+    const remoteFeeds = remote.rss_feeds || [];
+
+    const mergedBookmarks = mergeArraysById(localState.bookmarks, remoteBookmarks);
+    const mergedProjects = mergeArraysById(localState.projects, remoteProjects);
+    const mergedFeeds = mergeArraysById(localState.rssFeeds, remoteFeeds);
+
+    // For meta, keep local values but fill in any keys only present remotely
+    const remoteMeta = remote.meta || {};
+    const localMeta = serializeMetaFn(localState);
+    const mergedMeta = { ...remoteMeta, ...localMeta };
+    delete mergedMeta.selectedArticleId;
+    delete mergedMeta.selectedProjectId;
+    delete mergedMeta.selectedProjectSidebarArticleId;
+    delete mergedMeta.activeTab;
+    delete mergedMeta.settingsSection;
+
+    // Push merged result to cloud
+    await upsertSyncData({
+      bookmarks: mergedBookmarks,
+      projects: mergedProjects,
+      meta: mergedMeta,
+      rss_feeds: mergedFeeds,
+    });
+
+    lastSyncPushedAt = Date.now();
+    setLocalSyncTimestamp(Date.now());
+    notifyStatus("done", "Merge complete");
+
+    // Return merged data so local state gets updated too
+    return {
+      bookmarks: mergedBookmarks,
+      projects: mergedProjects,
+      meta: mergedMeta,
+      rssFeeds: mergedFeeds,
+    };
+  } catch (err) {
+    notifyStatus("error", `Merge failed: ${err.message}`);
+    return null;
+  } finally {
+    syncInFlight = false;
+  }
+}
+
 // ── Local timestamp tracking ──
 
 const SYNC_TS_KEY = "commonplace-last-sync-ts";
@@ -239,10 +379,10 @@ export function applyRemoteSyncData(remoteData, deps) {
 
 /**
  * Initialise the cloud sync settings panel.
- * @param {object} deps - { formatRelativeTime, getState }
+ * @param {object} deps - { formatRelativeTime, getState, getSyncDeps, serializeMetaState, applyRemote }
  */
 export function initSyncUI(deps) {
-  const { formatRelativeTime, getState } = deps;
+  const { formatRelativeTime, getState, getSyncDeps, serializeMetaState, applyRemote } = deps;
 
   const loginView = document.getElementById("sync-login-view");
   const accountView = document.getElementById("sync-account-view");
@@ -256,6 +396,9 @@ export function initSyncUI(deps) {
   const statArticles = document.getElementById("sync-stat-articles");
   const statProjects = document.getElementById("sync-stat-projects");
   const statFeeds = document.getElementById("sync-stat-feeds");
+  const forcePullBtn = document.getElementById("sync-force-pull-button");
+  const forcePushBtn = document.getElementById("sync-force-push-button");
+  const mergeBtn = document.getElementById("sync-merge-button");
 
   function updateStats() {
     const state = getState();
@@ -318,6 +461,44 @@ export function initSyncUI(deps) {
   signupBtn?.addEventListener("click", () => {
     if (!authForm?.reportValidity()) return;
     handleAuth(true);
+  });
+
+  forcePullBtn?.addEventListener("click", async () => {
+    if (!confirm("Replace all local data with cloud data? Any unsynced local changes will be lost.")) return;
+    forcePullBtn.disabled = true;
+    try {
+      const remoteData = await forcePull();
+      if (remoteData) {
+        applyRemote(remoteData);
+        updateSyncView();
+      }
+    } finally {
+      forcePullBtn.disabled = false;
+    }
+  });
+
+  forcePushBtn?.addEventListener("click", async () => {
+    if (!confirm("Replace all cloud data with local data? Any unsynced changes on other devices will be lost.")) return;
+    forcePushBtn.disabled = true;
+    try {
+      await forcePush(getState(), serializeMetaState);
+      updateSyncView();
+    } finally {
+      forcePushBtn.disabled = false;
+    }
+  });
+
+  mergeBtn?.addEventListener("click", async () => {
+    mergeBtn.disabled = true;
+    try {
+      const merged = await mergeSync(getState(), serializeMetaState);
+      if (merged) {
+        applyRemote(merged);
+        updateSyncView();
+      }
+    } finally {
+      mergeBtn.disabled = false;
+    }
   });
 
   logoutBtn?.addEventListener("click", () => {

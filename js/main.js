@@ -621,7 +621,13 @@ function bindEvents() {
   dom.deleteAllDataButton.addEventListener("click", handleDeleteAllData);
 
   // Cloud sync UI
-  initSyncUI({ formatRelativeTime, getState: () => state });
+  initSyncUI({
+    formatRelativeTime,
+    getState: () => state,
+    getSyncDeps,
+    serializeMetaState,
+    applyRemote: (data) => applyRemoteSyncData(data, getSyncDeps()),
+  });
 
   document
     .querySelector("[data-about-open-features]")

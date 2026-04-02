@@ -217,6 +217,19 @@
 
 /* ── Footer ── */
 
+.sync-profile__manual-actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  padding: 0 20px;
+  margin-top: 12px;
+}
+
+.sync-profile__manual-actions .button {
+  flex: 1;
+  justify-content: center;
+}
+
 .sync-profile__footer {
   display: flex;
   flex-direction: column;
