@@ -3,11 +3,16 @@
  *
  * Per-item conflict resolution for cloud sync.
  * - Tombstones track deletions so they propagate across devices
- * - Bookmarks use per-field merge (union arrays, per-field timestamp for scalars)
+ * - Bookmarks use per-field merge (_ft timestamps for ALL fields, including arrays)
  * - Projects use per-field merge (name, content, stage resolved independently)
- * - Feeds use version-based last-write-wins
+ * - Feeds use version-based last-write-wins (_sv is the primary signal here ONLY)
  * - Settings use per-key timestamp resolution (latest _metaTimestamps wins)
+ *
+ * _sv is a coarse ordering fallback. It does NOT influence field-level decisions
+ * for bookmarks or projects — _ft is the single source of truth there.
  */
+
+import { syncNow } from "../syncClock.js";
 
 const TOMBSTONE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
@@ -17,9 +22,14 @@ const TOMBSTONE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
  * Ensure every item has _sv (sync version) and _su (sync updated) fields.
  * Items without them get version 1 and _su = createdAt or now.
  * Migration-only — for items that existed before sync was added.
+ *
+ * _sv is a coarse ordering signal used for:
+ *  - pullSync change detection (quick "did anything change?" check)
+ *  - Feed LWW (feeds have no per-field merge)
+ * It does NOT drive field-level decisions on bookmarks or projects.
  */
 export function stampSyncFields(items) {
-  const now = new Date().toISOString();
+  const now = syncNow();
   for (const item of items) {
     if (typeof item._sv !== "number") {
       item._sv = 1;
@@ -106,6 +116,28 @@ function pickFieldByTimestamp(local, remote, field) {
   return remoteFt > localFt ? remote[field] : local[field];
 }
 
+/**
+ * For array fields (tags, projectIds, highlights): if both sides have
+ * _ft[field], the newer timestamp wins outright (LWW). This means
+ * intentional removals stick. If neither side has _ft, fall back to
+ * union so legacy/un-stamped items don't lose data.
+ */
+function pickArrayByTimestamp(local, remote, field) {
+  const localFt = local._ft?.[field];
+  const remoteFt = remote._ft?.[field];
+
+  if (localFt && remoteFt) {
+    // Both stamped — newer wins (LWW)
+    const winner = remoteFt > localFt ? remote : local;
+    return Array.isArray(winner[field]) ? [...winner[field]] : [];
+  }
+  if (localFt) return Array.isArray(local[field]) ? [...local[field]] : [];
+  if (remoteFt) return Array.isArray(remote[field]) ? [...remote[field]] : [];
+
+  // Neither side stamped — legacy fallback to union
+  return unionArrays(local[field], remote[field]);
+}
+
 // ── Bookmark per-field merge ──
 
 /** Scalar content fields on bookmarks resolved per-field. */
@@ -135,10 +167,11 @@ function mergeBookmarkPair(local, remote) {
     }
   }
 
-  // Union array fields — never lose data
-  merged.tags = unionArrays(local.tags, remote.tags);
-  merged.projectIds = unionArrays(local.projectIds, remote.projectIds);
-  merged.highlights = mergeHighlights(local.highlights, remote.highlights);
+  // Array fields — use _ft timestamps when available (LWW), fall back to union
+  // for legacy items that lack _ft. This ensures intentional removals stick.
+  merged.tags = pickArrayByTimestamp(local, remote, "tags");
+  merged.projectIds = pickArrayByTimestamp(local, remote, "projectIds");
+  merged.highlights = pickArrayByTimestamp(local, remote, "highlights");
 
   // Take latest timestamps
   merged.lastOpenedAt = newerTimestamp(local.lastOpenedAt, remote.lastOpenedAt);
@@ -146,9 +179,9 @@ function mergeBookmarkPair(local, remote) {
   // Merge field timestamps
   merged._ft = mergeFieldTimestamps(local._ft, remote._ft);
 
-  // Bump sync version past both
+  // Coarse ordering — _sv is NOT used for field decisions, only change detection
   merged._sv = Math.max(local._sv || 1, remote._sv || 1) + 1;
-  merged._su = new Date().toISOString();
+  merged._su = syncNow();
 
   // Carry forward any extra fields (e.g., _rssOrigin, isTransientRss)
   for (const key of Object.keys(local)) {
@@ -247,7 +280,7 @@ function mergeProjectPair(local, remote) {
   merged.updatedAt = newerTimestamp(local.updatedAt, remote.updatedAt);
   merged._ft = mergeFieldTimestamps(local._ft, remote._ft);
   merged._sv = Math.max(local._sv || 1, remote._sv || 1) + 1;
-  merged._su = new Date().toISOString();
+  merged._su = syncNow();
 
   // Carry forward extra fields
   for (const key of Object.keys(local)) {
@@ -260,7 +293,7 @@ function mergeProjectPair(local, remote) {
   return merged;
 }
 
-// ── Feed merge (last-write-wins by version/timestamp) ──
+// ── Feed merge (whole-object LWW — _sv is the primary signal here) ──
 
 function mergeFeedPair(local, remote) {
   const localV = local._sv || 1;

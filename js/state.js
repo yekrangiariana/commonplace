@@ -1,3 +1,5 @@
+import { syncNow } from "./syncClock.js";
+
 export const STORAGE_KEY = "bookmark-manager-state-v1";
 export const DEFAULT_FETCH_TIMEOUT_MS = 25000;
 
@@ -71,7 +73,7 @@ export function recordTombstone(state, type, id) {
  * @param {string[]} [changedFields] - names of fields that were modified
  */
 export function bumpItemSync(item, changedFields) {
-  const now = new Date().toISOString();
+  const now = syncNow();
   item._sv = (item._sv || 0) + 1;
   item._su = now;
   if (changedFields && changedFields.length) {
@@ -90,7 +92,7 @@ export function bumpItemSync(item, changedFields) {
  */
 export function stampSettingKey(state, key) {
   if (!state._metaTimestamps) state._metaTimestamps = {};
-  state._metaTimestamps[key] = new Date().toISOString();
+  state._metaTimestamps[key] = syncNow();
 }
 
 export const state = {

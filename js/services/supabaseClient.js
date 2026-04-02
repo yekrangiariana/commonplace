@@ -4,6 +4,7 @@
  */
 
 import { runtimeConfig } from "../state.js";
+import { updateClockOffset } from "../syncClock.js";
 
 const AUTH_TOKEN_KEY = "sb-auth-token";
 
@@ -254,6 +255,7 @@ export async function fetchSyncData() {
   }
 
   const rows = await res.json();
+  updateClockOffset(res.headers.get("Date"));
   return rows.length > 0 ? rows[0] : null;
 }
 
@@ -288,5 +290,6 @@ export async function upsertSyncData(payload) {
     throw new Error(`Upsert sync data failed: ${res.status}`);
   }
 
+  updateClockOffset(res.headers.get("Date"));
   return (await res.json())[0];
 }
