@@ -25,7 +25,7 @@
   overflow: hidden;
 }
 
-.focus-mode-overlay[data-focus-theme="navy"] {
+.focus-mode-overlay[data-focus-theme="paper"] {
   background: #141d27;
   color: #f5e8df;
 }
