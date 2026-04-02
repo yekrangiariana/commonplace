@@ -863,6 +863,9 @@ function bindEvents() {
 
   // Mobile search
   dom.mobileSearchFab?.addEventListener("click", openMobileSearch);
+  document
+    .querySelector("#mobile-search-fab-projects")
+    ?.addEventListener("click", openMobileSearch);
   dom.searchOverlayBack?.addEventListener("click", closeMobileSearch);
   dom.searchOverlayInput?.addEventListener("input", handleMobileSearchInput);
   dom.searchOverlayInput?.addEventListener(

@@ -245,7 +245,7 @@ html[data-theme="dark"] .search-dropdown__content {
   display: none;
 }
 
-/* Floating search button for mobile - positioned at top right */
+/* Mobile search button - inline in library toolbar (desktop: hidden) */
 .mobile-search-fab {
   display: none;
 }
@@ -399,50 +399,14 @@ html[data-theme="dark"] .search-dropdown__content {
     display: none;
   }
 
-  /* Hide tab bar search button - we use floating FAB instead */
+  /* Hide tab bar search button */
   .mobile-search-button {
     display: none !important;
   }
 
-  /* Floating search button at top-right corner */
+  /* Search button lives inline inside the library toolbar on mobile */
   .mobile-search-fab {
-    display: flex;
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    z-index: 90;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    background: var(--surface);
-    color: var(--text-muted);
-    font-size: 16px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-    cursor: pointer;
-    transition: all 150ms ease;
-  }
-
-  html[data-theme="dark"] .mobile-search-fab {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  .mobile-search-fab:hover {
-    background: var(--input-bg);
-    color: var(--text);
-  }
-
-  .mobile-search-fab:active {
-    transform: scale(0.95);
-  }
-
-  /* Hide FAB when search overlay is open */
-  .search-overlay.is-visible ~ .mobile-search-fab,
-  body:has(.search-overlay.is-visible) .mobile-search-fab {
-    display: none;
+    display: flex !important;
   }
 }
 

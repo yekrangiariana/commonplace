@@ -99,14 +99,6 @@
     </div>
     <div class="app-shell">
       <header class="app-header">
-        <div class="header-left">
-          <div class="app-branding">
-            <img class="app-icon" src="./lotus.png" alt="" />
-            <div class="app-branding-text">
-              <h1 class="app-title">Commonplace</h1>
-            </div>
-          </div>
-        </div>
         <div class="header-right">
           <!-- Search Dropdown (positioned from nav-link) -->
           <div class="search-dropdown" id="search-container">
@@ -151,26 +143,38 @@
             </div>
           </div>
           <nav class="nav-links" aria-label="Primary navigation">
-            <button class="nav-link" data-tab-target="rss">
-              <i class="fa-solid fa-compass" aria-hidden="true"></i>
-              <span>Explore</span>
-            </button>
-            <button class="nav-link" data-tab-target="library">
-              <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-              <span>Library</span>
-            </button>
-            <button class="nav-link" data-tab-target="projects">
-              <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
-              <span>Projects</span>
-            </button>
-            <button class="nav-link nav-link--icon" id="search-toggle">
-              <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-              <span>Search</span>
-            </button>
-            <button class="nav-link nav-link--icon" data-tab-target="settings" aria-label="Settings">
-              <i class="fa-solid fa-gear" aria-hidden="true"></i>
-              <span>Settings</span>
-            </button>
+            <div class="nav-links__brand">
+              <div class="app-branding">
+                <img class="app-icon" src="./lotus.png" alt="" />
+                <div class="app-branding-text">
+                  <h1 class="app-title">Commonplace</h1>
+                </div>
+              </div>
+            </div>
+            <div class="nav-links__center">
+              <button class="nav-link" data-tab-target="rss">
+                <i class="fa-solid fa-compass" aria-hidden="true"></i>
+                <span>Explore</span>
+              </button>
+              <button class="nav-link" data-tab-target="library">
+                <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+                <span>Library</span>
+              </button>
+              <button class="nav-link" data-tab-target="projects">
+                <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
+                <span>Projects</span>
+              </button>
+            </div>
+            <div class="nav-links__actions">
+              <button class="nav-link nav-link--icon" id="search-toggle">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <span>Search</span>
+              </button>
+              <button class="nav-link nav-link--icon" data-tab-target="settings" aria-label="Settings">
+                <i class="fa-solid fa-gear" aria-hidden="true"></i>
+                <span>Settings</span>
+              </button>
+            </div>
           </nav>
           <!-- Desktop FAB -->
           <button class="desktop-fab" id="add-article-open-button" aria-label="Add">
@@ -502,6 +506,16 @@
                       <i class="fa-solid fa-tags" aria-hidden="true"></i>
                     </button>
                   </div>
+                  <div class="library-sort-options library-sort-options--search" aria-label="Search">
+                    <button
+                      type="button"
+                      class="mobile-search-fab view-btn sort-btn"
+                      id="mobile-search-fab"
+                      aria-label="Search"
+                    >
+                      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -726,6 +740,16 @@
                       aria-label="Sort by latest opened"
                     >
                       <i class="fa-solid fa-clock" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                  <div class="library-sort-options library-sort-options--search" aria-label="Search">
+                    <button
+                      type="button"
+                      class="mobile-search-fab view-btn sort-btn"
+                      id="mobile-search-fab-projects"
+                      aria-label="Search"
+                    >
+                      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
                     </button>
                   </div>
                 </div>
@@ -1865,16 +1889,6 @@
         ></button>
       </div>
     </dialog>
-
-    <!-- Mobile Search FAB -->
-    <button
-      type="button"
-      class="mobile-search-fab"
-      id="mobile-search-fab"
-      aria-label="Search"
-    >
-      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-    </button>
 
     <!-- Mobile Search Overlay -->
     <div class="search-overlay" id="search-overlay">
