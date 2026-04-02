@@ -78,30 +78,36 @@ export async function pullSync(localState, serializeMetaFn) {
     // Smart merge with conflict resolution
     const merged = mergeAll(localData, remoteData);
 
-    // Check if anything actually changed versus local
-    const localBookmarkIds = new Set(
-      (localState.bookmarks || []).map((b) => b.id),
+    // Check if anything actually changed versus local (content-aware)
+    function itemsChanged(localItems, mergedItems) {
+      if (localItems.length !== mergedItems.length) return true;
+      const localMap = new Map(localItems.map((i) => [i.id, i]));
+      return mergedItems.some((m) => {
+        const l = localMap.get(m.id);
+        return !l || (m._sv || 0) !== (l._sv || 0);
+      });
+    }
+
+    const bookmarksChanged = itemsChanged(
+      localState.bookmarks || [],
+      merged.bookmarks,
     );
-    const mergedBookmarkIds = new Set(merged.bookmarks.map((b) => b.id));
-    const bookmarksChanged =
-      localBookmarkIds.size !== mergedBookmarkIds.size ||
-      [...mergedBookmarkIds].some((id) => !localBookmarkIds.has(id));
-
-    const localProjectIds = new Set(
-      (localState.projects || []).map((p) => p.id),
+    const projectsChanged = itemsChanged(
+      localState.projects || [],
+      merged.projects,
     );
-    const mergedProjectIds = new Set(merged.projects.map((p) => p.id));
-    const projectsChanged =
-      localProjectIds.size !== mergedProjectIds.size ||
-      [...mergedProjectIds].some((id) => !localProjectIds.has(id));
+    const feedsChanged = itemsChanged(
+      localState.rssFeeds || [],
+      merged.rssFeeds,
+    );
 
-    const localFeedIds = new Set((localState.rssFeeds || []).map((f) => f.id));
-    const mergedFeedIds = new Set(merged.rssFeeds.map((f) => f.id));
-    const feedsChanged =
-      localFeedIds.size !== mergedFeedIds.size ||
-      [...mergedFeedIds].some((id) => !localFeedIds.has(id));
+    // Also detect meta/settings changes
+    const metaChanged =
+      JSON.stringify(merged.meta._metaTimestamps || {}) !==
+      JSON.stringify(localState._metaTimestamps || {});
 
-    const hasChanges = bookmarksChanged || projectsChanged || feedsChanged;
+    const hasChanges =
+      bookmarksChanged || projectsChanged || feedsChanged || metaChanged;
 
     setLocalSyncTimestamp(Date.now());
 
@@ -385,6 +391,7 @@ export function applyRemoteSyncData(remoteData, deps) {
     persistState,
     renderAndSyncUrl,
     rebuildIndex,
+    applyDisplayPreferences,
   } = deps;
 
   if (Array.isArray(remoteData.bookmarks)) {
@@ -428,6 +435,7 @@ export function applyRemoteSyncData(remoteData, deps) {
     if (m._metaTimestamps) state._metaTimestamps = m._metaTimestamps;
   }
   persistState(state);
+  if (applyDisplayPreferences) applyDisplayPreferences();
   renderAndSyncUrl();
   rebuildIndex(state.bookmarks, state.projects).catch(() => {});
 }

@@ -1074,6 +1074,7 @@ function getSyncDeps() {
     persistState,
     renderAndSyncUrl,
     rebuildIndex,
+    applyDisplayPreferences,
   };
 }
 
