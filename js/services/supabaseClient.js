@@ -73,7 +73,9 @@ async function authRequest(endpoint, body) {
 
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data.error_description || data.msg || data.error || "Auth request failed");
+    throw new Error(
+      data.error_description || data.msg || data.error || "Auth request failed",
+    );
   }
   return data;
 }
@@ -102,7 +104,10 @@ export async function signUp(email, password) {
  * Sign in with email + password.
  */
 export async function signIn(email, password) {
-  const data = await authRequest("token?grant_type=password", { email, password });
+  const data = await authRequest("token?grant_type=password", {
+    email,
+    password,
+  });
   persistSession({
     access_token: data.access_token,
     refresh_token: data.refresh_token,
@@ -153,7 +158,11 @@ export async function handleAuthRedirect() {
   persistSession(session);
 
   // Clean the hash from the URL
-  window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  window.history.replaceState(
+    null,
+    "",
+    window.location.pathname + window.location.search,
+  );
   return true;
 }
 
@@ -202,7 +211,10 @@ async function authedHeaders() {
   let session = restoreSession();
 
   // Auto-refresh if token is close to expiry (within 60s)
-  if (session?.expires_at && session.expires_at - Math.floor(Date.now() / 1000) < 60) {
+  if (
+    session?.expires_at &&
+    session.expires_at - Math.floor(Date.now() / 1000) < 60
+  ) {
     await refreshAccessToken();
     session = restoreSession();
   }

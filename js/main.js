@@ -261,7 +261,9 @@ async function init() {
         // Sync failure should not block app init
       }
       // Start background polling for cross-device changes
-      startAutoPull(state, serializeMetaState, (data) => applyRemoteSyncData(data, getSyncDeps()));
+      startAutoPull(state, serializeMetaState, (data) =>
+        applyRemoteSyncData(data, getSyncDeps()),
+      );
     }
 
     // Only show splash delay if not clearing data and splash is enabled
@@ -1047,7 +1049,15 @@ async function handleDeleteAllData() {
 }
 
 function getSyncDeps() {
-  return { state, touchBookmarks, touchProjects, touchRss, persistState, renderAndSyncUrl, rebuildIndex };
+  return {
+    state,
+    touchBookmarks,
+    touchProjects,
+    touchRss,
+    persistState,
+    renderAndSyncUrl,
+    rebuildIndex,
+  };
 }
 
 async function handleMarkdownFolderExport() {
