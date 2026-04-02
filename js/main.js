@@ -125,6 +125,7 @@ import {
   search,
   isSearchReady,
 } from "./services/search.js";
+import { createFocusModeController } from "./focusMode.js";
 
 let statusTimeoutId = null;
 let projectLinkSelection = null;
@@ -148,7 +149,7 @@ let rssOpenRequestVersion = 0;
 let savedRssScrollPosition = 0;
 let suspendedLibraryArticleId = null;
 let suspendedRssReaderArticle = false;
-let pendingFocusModePage = null;
+let focusModeController = null;
 // Search state
 let searchDebounceTimer = null;
 let searchFocusedIndex = -1;
@@ -241,6 +242,20 @@ async function init() {
     pruneRssReaderCacheByRetention(state).catch(() => {});
     initImageCache(state.bookmarks).catch(() => {});
     initSearchIndex(state.bookmarks, state.projects).catch(() => {});
+    focusModeController = createFocusModeController({
+      dom,
+      state,
+      getActiveReaderArticle,
+      getLibraryReadingOrder,
+      markArticleAsOpened,
+      renderAndSyncUrl,
+      applyDisplayPreferences,
+      getIsApplyingRoute: () => isApplyingRoute,
+      setIsApplyingRoute: (next) => {
+        isApplyingRoute = Boolean(next);
+      },
+      onSelectionDetected: () => handleSelectionChange(dom),
+    });
     applyRouteFromUrl();
     try {
       await restorePendingRssArticle();
@@ -493,7 +508,7 @@ function bindEvents() {
         renderAndSyncUrl();
 
         // Sync focus mode content if it's open (with delay for DOM update)
-        requestAnimationFrame(() => syncFocusModeContent());
+        requestAnimationFrame(() => focusModeController?.syncContent());
 
         if (didSave) {
           showTransientStatus(
@@ -686,108 +701,7 @@ function bindEvents() {
     switchTab("library");
   });
 
-  // Focus reading mode handlers
-  dom.readerFocusButton?.addEventListener("click", () => {
-    openFocusMode();
-  });
-
-  dom.focusModeClose?.addEventListener("click", () => {
-    closeFocusMode();
-  });
-
-  // Focus mode reading settings
-  const focusModeReadingToggle = document.getElementById(
-    "focus-mode-reading-toggle",
-  );
-  const focusModeReadingMenu = document.getElementById(
-    "focus-mode-reading-menu",
-  );
-  if (focusModeReadingToggle && focusModeReadingMenu) {
-    focusModeReadingToggle.addEventListener("click", () => {
-      focusModeReadingMenu.hidden = !focusModeReadingMenu.hidden;
-    });
-
-    const fontOptions = focusModeReadingMenu.querySelectorAll(
-      ".focus-mode-font-option",
-    );
-    fontOptions.forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        const font = e.target.dataset.font;
-        if (font && ["mono", "sans", "guardian", "josefin"].includes(font)) {
-          state.displayFont = font;
-          applyDisplayPreferences();
-          refreshFocusModeReadingMenu();
-        }
-      });
-    });
-
-    const themeOptions = focusModeReadingMenu.querySelectorAll(
-      ".focus-mode-theme-option",
-    );
-    themeOptions.forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        const theme = e.target.dataset.focusTheme;
-        if (theme === "black" || theme === "paper") {
-          focusModeState.theme = theme;
-          applyFocusModeTheme();
-          refreshFocusModeReadingMenu();
-        }
-      });
-    });
-
-    document.addEventListener("click", (event) => {
-      if (
-        !focusModeReadingMenu.hidden &&
-        !event.target.closest(".focus-mode-setting-group")
-      ) {
-        focusModeReadingMenu.hidden = true;
-      }
-    });
-  }
-
-  const focusModeSizeUp = document.getElementById("focus-mode-size-up");
-  const focusModeSizeDown = document.getElementById("focus-mode-size-down");
-  const focusModeSizeLabel = document.getElementById("focus-mode-size-label");
-
-  if (focusModeSizeUp) {
-    focusModeSizeUp.addEventListener("click", () => {
-      if (focusModeState.textSize < 200) {
-        focusModeState.textSize = Math.min(200, focusModeState.textSize + 10);
-        updateFocusModeTextSize();
-      }
-    });
-  }
-
-  if (focusModeSizeDown) {
-    focusModeSizeDown.addEventListener("click", () => {
-      if (focusModeState.textSize > 80) {
-        focusModeState.textSize = Math.max(80, focusModeState.textSize - 10);
-        updateFocusModeTextSize();
-      }
-    });
-  }
-
-  // Focus mode keyboard navigation
-  document.addEventListener("keydown", (event) => {
-    if (!dom.focusModeOverlay || dom.focusModeOverlay.hidden) {
-      return;
-    }
-
-    if (event.key === "Escape") {
-      closeFocusMode();
-    } else if (event.key === "ArrowLeft") {
-      focusModePrevPage();
-    } else if (event.key === "ArrowRight") {
-      focusModeNextPage();
-    }
-  });
-
-  // Recalculate pages on resize (important for foldables)
-  window.addEventListener("resize", () => {
-    if (dom.focusModeOverlay && !dom.focusModeOverlay.hidden) {
-      calculateFocusModePages();
-    }
-  });
+  focusModeController?.attachEventHandlers();
 
   dom.projectBackButton.addEventListener("click", () => {
     closeProjectLinkPopover();
@@ -2681,7 +2595,7 @@ function render() {
     renderReader(state, dom, selectedArticle);
     renderReaderRssContext(selectedArticle);
     updateReaderBackButton();
-    reconcileFocusModeWithRoute();
+    focusModeController?.reconcileWithRoute();
     readerTtsPlayer?.mount(selectedArticle);
     wasReaderRendered = true;
   } else {
@@ -2690,9 +2604,7 @@ function render() {
       wasReaderRendered = false;
     }
 
-    if (dom.focusModeOverlay && !dom.focusModeOverlay.hidden) {
-      closeFocusMode({ skipRouteSync: true });
-    }
+    focusModeController?.close({ skipRouteSync: true });
   }
 
   if (state.activeTab === "projects") {
@@ -2749,469 +2661,32 @@ function getActiveReaderArticle() {
 
 // ─── Focus Reading Mode (Paginated Two-Column) ─────────────────────────────────
 
-let focusModeState = {
-  currentPage: 0,
-  totalPages: 1,
-  pageWidth: 0,
-  verticalWheelDelta: 0,
-  touchStartX: 0,
-  touchStartY: 0,
-  textSize: 100,
-  theme: "black",
-};
-
 function openFocusMode(options = {}) {
-  if (!dom.focusModeOverlay || !dom.focusModeContent || !dom.readerSurface) {
-    return;
-  }
-
-  const {
-    initialPage = 0,
-    pushHistory = true,
-    replaceHistory = false,
-  } = options;
-
-  // Clone the reader content into focus mode
-  dom.focusModeContent.innerHTML = dom.readerSurface.innerHTML;
-
-  // Copy the highlight color attribute from the document
-  const highlightColor =
-    document.documentElement.getAttribute("data-highlight-color") || "green";
-  dom.focusModeOverlay.setAttribute("data-highlight-color", highlightColor);
-  applyFocusModeTheme();
-
-  // Show the overlay
-  dom.focusModeOverlay.hidden = false;
-
-  // Prevent body scroll
-  document.body.style.overflow = "hidden";
-
-  // Reset pagination state
-  focusModeState.currentPage = Math.max(0, initialPage);
-  focusModeState.verticalWheelDelta = 0;
-  pendingFocusModePage = focusModeState.currentPage;
-
-  // Initialize reading settings UI
-  const focusModeReadingMenu = document.getElementById(
-    "focus-mode-reading-menu",
-  );
-  if (focusModeReadingMenu) {
-    focusModeReadingMenu.hidden = true;
-  }
-
-  refreshFocusModeReadingMenu();
-
-  updateFocusModeTextSize();
-
-  // Wait for layout, then calculate pages
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      calculateFocusModePages();
-
-      if (pushHistory || replaceHistory) {
-        syncFocusModeRoute({ replace: replaceHistory });
-      }
-    });
-  });
-
-  // Set up swipe handlers
-  dom.focusModeContentWrapper?.addEventListener(
-    "touchstart",
-    handleFocusModeTouchStart,
-    { passive: true },
-  );
-  dom.focusModeContentWrapper?.addEventListener(
-    "touchend",
-    handleFocusModeTouchEnd,
-  );
-  dom.focusModeContentWrapper?.addEventListener("wheel", handleFocusModeWheel, {
-    passive: false,
-  });
+  focusModeController?.open(options);
 }
 
 function closeFocusMode(options = {}) {
-  if (!dom.focusModeOverlay) {
-    return;
-  }
-
-  const { skipRouteSync = false } = options;
-
-  dom.focusModeOverlay.hidden = true;
-  document.body.style.overflow = "";
-  focusModeState.verticalWheelDelta = 0;
-  pendingFocusModePage = null;
-
-  if (!skipRouteSync) {
-    syncFocusModeRoute({ closing: true });
-  }
-
-  // Remove event handlers
-  dom.focusModeContentWrapper?.removeEventListener(
-    "touchstart",
-    handleFocusModeTouchStart,
-  );
-  dom.focusModeContentWrapper?.removeEventListener(
-    "touchend",
-    handleFocusModeTouchEnd,
-  );
-  dom.focusModeContentWrapper?.removeEventListener(
-    "wheel",
-    handleFocusModeWheel,
-  );
-
-  // Reset styles
-  if (dom.focusModeContent) {
-    dom.focusModeContent.style.transform = "";
-    dom.focusModeContent.style.left = "";
-    dom.focusModeContent.style.width = "";
-    dom.focusModeContent.style.height = "";
-  }
-
-  const focusModeReadingMenu = document.getElementById(
-    "focus-mode-reading-menu",
-  );
-  if (focusModeReadingMenu) {
-    focusModeReadingMenu.hidden = true;
-  }
+  focusModeController?.close(options);
 }
 
 function calculateFocusModePages() {
-  if (!dom.focusModeContentWrapper || !dom.focusModeContent) {
-    return;
-  }
-
-  const wrapper = dom.focusModeContentWrapper;
-  const content = dom.focusModeContent;
-  const wrapperStyles = window.getComputedStyle(wrapper);
-  const paddingLeft = Number.parseFloat(wrapperStyles.paddingLeft) || 0;
-  const paddingRight = Number.parseFloat(wrapperStyles.paddingRight) || 0;
-
-  // Use clientWidth/clientHeight to get inner dimensions (excluding padding)
-  // This is the actual visible viewport through the wrapper
-  const viewportWidth = Math.max(
-    0,
-    wrapper.clientWidth - paddingLeft - paddingRight,
-  );
-  const viewportHeight = wrapper.clientHeight;
-
-  // Column gap between the two columns
-  const columnGap = 48;
-
-  // Vertical padding for text readability
-  const verticalPadding = 24;
-
-  // Calculate column width: 2 columns per page with gap between
-  // Each column = (viewportWidth - gap) / 2
-  const columnWidth = (viewportWidth - columnGap) / 2;
-
-  // Reset for measurement
-  content.style.transform = "none";
-  content.style.left = `${paddingLeft}px`;
-  content.style.height = `${viewportHeight - verticalPadding * 2}px`;
-  content.style.width = `${viewportWidth}px`;
-  content.style.padding = `${verticalPadding}px 0`;
-  content.style.columnWidth = `${columnWidth}px`;
-  content.style.columnGap = `${columnGap}px`;
-  content.style.columnFill = "auto";
-
-  // Force reflow
-  void content.offsetHeight;
-
-  // Measure actual scrollWidth (how wide the columns extend)
-  const scrollWidth = content.scrollWidth;
-
-  // The repeating unit in CSS columns is (columnWidth + gap)
-  // For 2 columns per page, page width = 2 * (columnWidth + gap)
-  // This ensures each page starts exactly at a column boundary
-  const pageWidth = 2 * (columnWidth + columnGap);
-
-  // Calculate total pages
-  const totalPages = Math.max(1, Math.ceil(scrollWidth / pageWidth));
-
-  // Store state
-  focusModeState.pageWidth = pageWidth;
-  focusModeState.totalPages = totalPages;
-  focusModeState.currentPage = Math.min(
-    focusModeState.currentPage,
-    totalPages - 1,
-  );
-
-  // Go to current page
-  goToFocusModePage(focusModeState.currentPage, { updateHistory: false });
-}
-
-function goToFocusModePage(page, options = {}) {
-  if (!dom.focusModeContent) return;
-
-  const { updateHistory = true, replaceHistory = false } = options;
-
-  focusModeState.currentPage = Math.max(
-    0,
-    Math.min(page, focusModeState.totalPages - 1),
-  );
-  pendingFocusModePage = focusModeState.currentPage;
-  const offset = -focusModeState.currentPage * focusModeState.pageWidth;
-  dom.focusModeContent.style.transform = `translateX(${offset}px)`;
-  updateFocusModePageIndicator();
-
-  if (updateHistory) {
-    syncFocusModeRoute({ replace: replaceHistory });
-  }
+  focusModeController?.calculatePages();
 }
 
 function focusModePrevPage() {
-  if (focusModeState.currentPage > 0) {
-    goToFocusModePage(focusModeState.currentPage - 1);
-    return true;
-  }
-
-  return openAdjacentArticleInFocusMode(-1, "end");
+  return focusModeController?.prevPage();
 }
 
 function focusModeNextPage() {
-  if (focusModeState.currentPage < focusModeState.totalPages - 1) {
-    goToFocusModePage(focusModeState.currentPage + 1);
-    return true;
-  }
-
-  return openAdjacentArticleInFocusMode(1, "start");
-}
-
-function updateFocusModePageIndicator() {
-  if (!dom.focusModePageIndicator) return;
-  dom.focusModePageIndicator.textContent = `${focusModeState.currentPage + 1} / ${focusModeState.totalPages}`;
+  return focusModeController?.nextPage();
 }
 
 function syncFocusModeContent() {
-  // Sync focus mode content with reader surface if focus mode is open
-  if (
-    !dom.focusModeOverlay ||
-    dom.focusModeOverlay.hidden ||
-    !dom.focusModeContent ||
-    !dom.readerSurface
-  ) {
-    return;
-  }
-
-  // Remember current page
-  const currentPage = focusModeState.currentPage;
-
-  // Re-clone content from reader (which now has updated highlights)
-  dom.focusModeContent.innerHTML = dom.readerSurface.innerHTML;
-
-  // Recalculate pages and restore position
-  requestAnimationFrame(() => {
-    calculateFocusModePages();
-    // Try to go back to the same page
-    goToFocusModePage(Math.min(currentPage, focusModeState.totalPages - 1), {
-      updateHistory: false,
-    });
-  });
+  focusModeController?.syncContent();
 }
 
 function reconcileFocusModeWithRoute() {
-  if (!dom.focusModeOverlay) {
-    return;
-  }
-
-  if (pendingFocusModePage == null) {
-    if (!dom.focusModeOverlay.hidden) {
-      closeFocusMode({ skipRouteSync: true });
-    }
-    return;
-  }
-
-  if (dom.focusModeOverlay.hidden) {
-    openFocusMode({
-      initialPage: pendingFocusModePage,
-      pushHistory: false,
-      replaceHistory: false,
-    });
-    return;
-  }
-
-  const targetPage = pendingFocusModePage;
-  syncFocusModeContent();
-  requestAnimationFrame(() => {
-    goToFocusModePage(Math.min(targetPage, focusModeState.totalPages - 1), {
-      updateHistory: false,
-    });
-  });
-}
-
-function getFocusModeBaseHash() {
-  const currentHash = window.location.hash || "#reader";
-  return currentHash.replace(/\/f\/\d+$/, "");
-}
-
-function syncFocusModeRoute(options = {}) {
-  const { replace = false, closing = false } = options;
-
-  if (isApplyingRoute) {
-    return;
-  }
-
-  const baseHash = getFocusModeBaseHash();
-  const nextHash = closing
-    ? baseHash
-    : `${baseHash}/f/${focusModeState.currentPage + 1}`;
-
-  if (window.location.hash === nextHash) {
-    return;
-  }
-
-  isApplyingRoute = true;
-  window.history[replace ? "replaceState" : "pushState"]({}, "", nextHash);
-  isApplyingRoute = false;
-}
-
-function getAdjacentReadableArticle(direction) {
-  if (!state.selectedArticleId) {
-    return null;
-  }
-
-  const readingOrder = getLibraryReadingOrder(state);
-  const currentIndex = readingOrder.findIndex(
-    (article) => article.id === state.selectedArticleId,
-  );
-
-  if (currentIndex === -1) {
-    return null;
-  }
-
-  return readingOrder[currentIndex + direction] || null;
-}
-
-function openAdjacentArticleInFocusMode(direction, edge = "start") {
-  const adjacentArticle = getAdjacentReadableArticle(direction);
-  if (!adjacentArticle) {
-    return false;
-  }
-
-  state.selectedArticleId = adjacentArticle.id;
-  state.activeTab = "reader";
-  markArticleAsOpened(adjacentArticle.id);
-  pendingFocusModePage = edge === "end" ? Number.MAX_SAFE_INTEGER : 0;
-
-  renderAndSyncUrl();
-  syncFocusModeContent();
-
-  requestAnimationFrame(() => {
-    const targetPage = edge === "end" ? focusModeState.totalPages - 1 : 0;
-    pendingFocusModePage = Math.max(0, targetPage);
-    goToFocusModePage(pendingFocusModePage, { updateHistory: false });
-    syncFocusModeRoute({ replace: true });
-  });
-
-  return true;
-}
-
-function handleFocusModeTouchStart(e) {
-  const touch = e.touches[0];
-  focusModeState.touchStartX = touch.clientX;
-  focusModeState.touchStartY = touch.clientY;
-}
-
-function handleFocusModeTouchEnd(e) {
-  const touch = e.changedTouches[0];
-  const deltaX = touch.clientX - focusModeState.touchStartX;
-  const deltaY = touch.clientY - focusModeState.touchStartY;
-
-  // Must be horizontal swipe (not vertical scroll attempt)
-  if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
-    if (deltaX < 0) {
-      // Swipe left = next page
-      focusModeNextPage();
-    } else {
-      // Swipe right = prev page
-      focusModePrevPage();
-    }
-    e.preventDefault();
-  }
-}
-
-function handleFocusModeWheel(e) {
-  const dominantDelta =
-    Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-
-  if (Math.abs(dominantDelta) < 4) {
-    return;
-  }
-
-  e.preventDefault();
-  focusModeState.verticalWheelDelta += dominantDelta;
-
-  if (focusModeState.verticalWheelDelta >= 70) {
-    focusModeState.verticalWheelDelta = 0;
-    focusModeNextPage();
-  } else if (focusModeState.verticalWheelDelta <= -70) {
-    focusModeState.verticalWheelDelta = 0;
-    focusModePrevPage();
-  }
-}
-
-function updateFocusModeTextSize() {
-  const focusModeSizeLabel = document.getElementById("focus-mode-size-label");
-  const focusModeContent = document.getElementById("focus-mode-content");
-
-  if (focusModeSizeLabel) {
-    focusModeSizeLabel.textContent = `${focusModeState.textSize}%`;
-  }
-
-  if (focusModeContent) {
-    focusModeContent.style.fontSize = `${focusModeState.textSize}%`;
-  }
-}
-
-function applyFocusModeTheme() {
-  if (!dom.focusModeOverlay) {
-    return;
-  }
-
-  const theme = focusModeState.theme === "paper" ? "paper" : "black";
-  dom.focusModeOverlay.setAttribute("data-focus-theme", theme);
-}
-
-function refreshFocusModeReadingMenu() {
-  const focusModeReadingMenu = document.getElementById(
-    "focus-mode-reading-menu",
-  );
-  const focusModeSizeLabel = document.getElementById("focus-mode-size-label");
-
-  if (focusModeSizeLabel) {
-    focusModeSizeLabel.textContent = `${focusModeState.textSize}%`;
-  }
-
-  if (!focusModeReadingMenu) {
-    return;
-  }
-
-  const fontOptions = focusModeReadingMenu.querySelectorAll(
-    ".focus-mode-font-option",
-  );
-  fontOptions.forEach((btn) => {
-    btn.classList.toggle("is-active", btn.dataset.font === state.displayFont);
-  });
-
-  const themeOptions = focusModeReadingMenu.querySelectorAll(
-    ".focus-mode-theme-option",
-  );
-  themeOptions.forEach((btn) => {
-    btn.classList.toggle(
-      "is-active",
-      btn.dataset.focusTheme === focusModeState.theme,
-    );
-  });
-}
-
-function handleFocusModeSelection() {
-  // Allow selection handling to work
-  setTimeout(() => {
-    const selection = window.getSelection();
-    if (selection && selection.toString().trim()) {
-      handleSelectionChange(dom);
-    }
-  }, 10);
+  focusModeController?.reconcileWithRoute();
 }
 
 function updateReaderBackButton() {
@@ -3662,7 +3137,7 @@ function applyRouteFromUrl() {
   }
 
   if (routeHead === "settings") {
-    pendingFocusModePage = null;
+    focusModeController?.clearPendingPage();
     state.activeTab = "settings";
     state.settingsSection =
       segments[1] && VALID_SETTINGS_SECTIONS.has(segments[1])
@@ -3672,7 +3147,7 @@ function applyRouteFromUrl() {
   }
 
   if (routeHead === "projects") {
-    pendingFocusModePage = null;
+    focusModeController?.clearPendingPage();
     state.activeTab = "projects";
     const projectSlug = segments[1];
     const projectSlugMap = buildProjectSlugMap(state.projects);
@@ -3694,7 +3169,7 @@ function applyRouteFromUrl() {
     const allTags = getAllKnownTags(state);
     const tagSlugMap = buildTagSlugMap(allTags);
     const projectSlugMap = buildProjectSlugMap(state.projects);
-    pendingFocusModePage = null;
+    focusModeController?.clearPendingPage();
 
     const parseTagFilters = (value) =>
       value
@@ -3761,12 +3236,10 @@ function applyRouteFromUrl() {
       if (articleId) {
         state.selectedArticleId = articleId;
         state.activeTab = "reader";
-        if (segments[2] === "f" && segments[3]) {
-          const routePage = Number.parseInt(segments[3], 10);
-          pendingFocusModePage = Number.isFinite(routePage)
-            ? Math.max(0, routePage - 1)
-            : 0;
-        }
+        const pendingFocusPage =
+          focusModeController?.getRoutePageFromSegments(routeHead, segments) ??
+          null;
+        focusModeController?.setPendingPage(pendingFocusPage);
         return;
       }
     }
@@ -3782,32 +3255,28 @@ function applyRouteFromUrl() {
     if (segments[1]) {
       pendingRssReaderSlug = decodeURIComponent(segments[1]);
       state.activeTab = "reader";
-      if (segments[2] === "f" && segments[3]) {
-        const routePage = Number.parseInt(segments[3], 10);
-        pendingFocusModePage = Number.isFinite(routePage)
-          ? Math.max(0, routePage - 1)
-          : 0;
-      } else {
-        pendingFocusModePage = null;
-      }
+      const pendingFocusPage =
+        focusModeController?.getRoutePageFromSegments(routeHead, segments) ??
+        null;
+      focusModeController?.setPendingPage(pendingFocusPage);
       return;
     }
 
-    pendingFocusModePage = null;
+    focusModeController?.clearPendingPage();
     state.activeTab = "rss";
     return;
   }
 
   if (routeHead === "reader") {
-    pendingFocusModePage =
-      segments[1] === "f" && segments[2]
-        ? Math.max(0, (Number.parseInt(segments[2], 10) || 1) - 1)
-        : null;
+    const pendingFocusPage =
+      focusModeController?.getRoutePageFromSegments(routeHead, segments) ??
+      null;
+    focusModeController?.setPendingPage(pendingFocusPage);
     state.activeTab = "reader";
     return;
   }
 
-  pendingFocusModePage = null;
+  focusModeController?.clearPendingPage();
   state.activeTab = routeHead;
 }
 
@@ -3854,28 +3323,19 @@ function syncUrlFromState({ replace }) {
     const articleSlug = state.selectedArticleId
       ? articleSlugById.get(state.selectedArticleId)
       : null;
-    const isFocusOpen = dom.focusModeOverlay && !dom.focusModeOverlay.hidden;
+    const focusSuffix = focusModeController?.getReaderRouteSuffix() || "";
 
     if (articleSlug) {
       nextHash = `#library/${encodeURIComponent(articleSlug)}`;
-
-      if (isFocusOpen) {
-        nextHash += `/f/${focusModeState.currentPage + 1}`;
-      }
+      nextHash += focusSuffix;
     } else if (state.rssReaderArticle?.url) {
       // Transient RSS article - include slug in hash for refresh persistence
       const rssSlug = extractUrlSlug(state.rssReaderArticle.url);
       nextHash = `#rss/${encodeURIComponent(rssSlug)}`;
-
-      if (isFocusOpen) {
-        nextHash += `/f/${focusModeState.currentPage + 1}`;
-      }
+      nextHash += focusSuffix;
     } else {
       nextHash = "#reader";
-
-      if (isFocusOpen) {
-        nextHash += `/f/${focusModeState.currentPage + 1}`;
-      }
+      nextHash += focusSuffix;
     }
   } else if (state.activeTab === "projects") {
     const projectSlug = state.selectedProjectId

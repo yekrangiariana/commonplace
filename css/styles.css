@@ -332,7 +332,6 @@ button:disabled {
   align-items: center;
   gap: 10px;
   user-select: none;
-  padding-right: 3rem;
 }
 
 .app-branding-text {

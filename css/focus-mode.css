@@ -25,8 +25,8 @@
   overflow: hidden;
 }
 
-.focus-mode-overlay[data-focus-theme="paper"] {
-  background: #271814;
+.focus-mode-overlay[data-focus-theme="navy"] {
+  background: #141d27;
   color: #f5e8df;
 }
 
@@ -50,6 +50,19 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.focus-mode-title {
+  margin: 0;
+  flex: 1;
+  text-align: center;
+  color: #9a9a9a;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 12px;
 }
 
 .focus-mode-setting-group {
@@ -130,7 +143,8 @@
 
 .focus-mode-size-btn,
 .focus-mode-font-option,
-.focus-mode-theme-option {
+.focus-mode-theme-option,
+.focus-mode-layout-option {
   background: transparent;
   border: 1px solid #3a3a3a;
   color: #c2c2c2;
@@ -155,13 +169,15 @@
 
 .focus-mode-size-btn:hover,
 .focus-mode-font-option:hover,
-.focus-mode-theme-option:hover {
+.focus-mode-theme-option:hover,
+.focus-mode-layout-option:hover {
   border-color: #5d5d5d;
   color: #f2f2f2;
 }
 
 .focus-mode-font-option.is-active,
-.focus-mode-theme-option.is-active {
+.focus-mode-theme-option.is-active,
+.focus-mode-layout-option.is-active {
   border-color: #7ac9a3;
   color: #7ac9a3;
   background: rgba(122, 201, 163, 0.08);
