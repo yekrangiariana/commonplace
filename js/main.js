@@ -3496,9 +3496,7 @@ function applyDisplayPreferences() {
   root.setAttribute("data-theme", state.theme === "dark" ? "dark" : "light");
   root.setAttribute(
     "data-font",
-    ["mono", "sans", "serif", "slab", "guardian", "josefin"].includes(
-      state.displayFont,
-    )
+    ["mono", "sans", "guardian", "josefin"].includes(state.displayFont)
       ? state.displayFont
       : "mono",
   );
