@@ -141,63 +141,6 @@
   border: var(--border-light);
 }
 
-.sync-profile__avatar-wrap {
-  position: relative;
-  flex-shrink: 0;
-  width: 64px;
-  height: 64px;
-}
-
-.sync-profile__avatar,
-.sync-profile__avatar-fallback {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.sync-profile__avatar-fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(
-    135deg,
-    var(--accent-color, #5a9a5a),
-    var(--accent-color-hover, #4a8a4a)
-  );
-  color: #fff;
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.5px;
-  user-select: none;
-}
-
-.sync-profile__avatar-edit {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--bg-main, #fff);
-  border: var(--border-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 0.65rem;
-  color: var(--text-muted);
-  transition:
-    background 0.15s,
-    color 0.15s;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-}
-
-.sync-profile__avatar-edit:hover {
-  background: var(--surface-muted);
-  color: var(--text-main);
-}
-
 .sync-profile__info {
   display: flex;
   flex-direction: column;

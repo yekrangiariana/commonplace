@@ -237,8 +237,6 @@ export function applyRemoteSyncData(remoteData, deps) {
 
 // ── Sync UI ──
 
-const AVATAR_KEY = "commonplace-sync-avatar";
-
 /**
  * Initialise the cloud sync settings panel.
  * @param {object} deps - { formatRelativeTime, getState }
@@ -255,37 +253,9 @@ export function initSyncUI(deps) {
   const lastSyncedEl = document.getElementById("sync-last-synced");
   const logoutBtn = document.getElementById("sync-logout-button");
   const syncStatusEl = document.getElementById("sync-status");
-  const avatarImg = document.getElementById("sync-profile-avatar");
-  const avatarFallback = document.getElementById(
-    "sync-profile-avatar-fallback",
-  );
-  const avatarInput = document.getElementById("sync-avatar-input");
   const statArticles = document.getElementById("sync-stat-articles");
   const statProjects = document.getElementById("sync-stat-projects");
   const statFeeds = document.getElementById("sync-stat-feeds");
-
-  function getInitials(email) {
-    if (!email) return "?";
-    const name = email.split("@")[0] || "";
-    const parts = name.split(/[._-]/).filter(Boolean);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return name.slice(0, 2).toUpperCase() || "?";
-  }
-
-  function loadAvatar() {
-    const stored = localStorage.getItem(AVATAR_KEY);
-    if (stored) {
-      avatarImg.src = stored;
-      avatarImg.hidden = false;
-      avatarFallback.hidden = true;
-    } else {
-      avatarImg.hidden = true;
-      avatarFallback.hidden = false;
-      avatarFallback.textContent = getInitials(getSessionEmail());
-    }
-  }
 
   function updateStats() {
     const state = getState();
@@ -303,7 +273,6 @@ export function initSyncUI(deps) {
       lastSyncedEl.textContent = lastSync
         ? `Last synced ${formatRelativeTime(lastSync)}`
         : "Not synced yet";
-      loadAvatar();
       updateStats();
     } else {
       loginView.hidden = false;
@@ -349,35 +318,6 @@ export function initSyncUI(deps) {
   signupBtn?.addEventListener("click", () => {
     if (!authForm?.reportValidity()) return;
     handleAuth(true);
-  });
-
-  avatarInput?.addEventListener("change", (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !file.type.startsWith("image/")) return;
-
-    // Resize to 128x128 to keep localStorage small
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 128;
-        canvas.height = 128;
-        const ctx = canvas.getContext("2d");
-        // Center-crop to square
-        const size = Math.min(img.width, img.height);
-        const sx = (img.width - size) / 2;
-        const sy = (img.height - size) / 2;
-        ctx.drawImage(img, sx, sy, size, size, 0, 0, 128, 128);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-        localStorage.setItem(AVATAR_KEY, dataUrl);
-        loadAvatar();
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-    // Reset input so same file can be re-selected
-    avatarInput.value = "";
   });
 
   logoutBtn?.addEventListener("click", () => {
