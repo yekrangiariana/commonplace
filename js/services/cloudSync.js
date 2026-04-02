@@ -13,6 +13,10 @@ import {
   logout,
   getSessionEmail,
 } from "./supabaseClient.js";
+import {
+  startRealtime,
+  disconnect as disconnectRealtime,
+} from "./realtimeSync.js";
 
 const SYNC_DEBOUNCE_MS = 5000;
 const SYNC_COOLDOWN_MS = 30000;
@@ -299,8 +303,14 @@ export function startAutoPull(localState, serializeMetaFn, onNewData) {
     }
   };
 
+  // Polling is a fallback — realtime WebSocket is the primary notification
   autoPullTimerId = setInterval(autoPullHandler, AUTO_PULL_INTERVAL_MS);
   document.addEventListener("visibilitychange", handleVisibilityPull);
+
+  // Start Realtime WebSocket — triggers an immediate pull when another device pushes
+  startRealtime(() => {
+    autoPullHandler();
+  });
 }
 
 export function stopAutoPull() {
@@ -310,6 +320,7 @@ export function stopAutoPull() {
   }
   document.removeEventListener("visibilitychange", handleVisibilityPull);
   autoPullHandler = null;
+  disconnectRealtime();
 }
 
 function handleVisibilityPull() {
