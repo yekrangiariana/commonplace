@@ -87,6 +87,7 @@ import {
 import { initWorkspaceContextMenu } from "./contextMenu.js";
 import { initReaderTtsPlayer } from "./ttsPlayer.js";
 import { initSwipeNavigation } from "./swipeNavigation.js";
+import { injectAccentStyles, isValidAccent } from "./accentColors.js";
 import {
   initImageCache,
   ensurePageImagesLoaded,
@@ -268,6 +269,11 @@ async function init() {
     } catch {
       // Continue initialization even if RSS restoration fails
     }
+    injectAccentStyles();
+    // Re-query accent buttons after dynamic generation
+    dom.displayHighlightButtons = [
+      ...document.querySelectorAll("[data-display-highlight]"),
+    ];
     applyDisplayPreferences();
     bindEvents();
     initSwipeNavigation(switchTab, () => state.activeTab);
@@ -3497,16 +3503,10 @@ function removeHighlight(highlightId) {
 
 function applyDisplayPreferences() {
   const root = document.documentElement;
-  const highlightColor = ["yellow", "green", "red", "orange"].includes(
-    state.displayHighlightColor,
-  )
+  const highlightColor = isValidAccent(state.displayHighlightColor)
     ? state.displayHighlightColor
     : "green";
-  const accentColor = ["yellow", "green", "red", "orange"].includes(
-    highlightColor,
-  )
-    ? highlightColor
-    : "green";
+  const accentColor = isValidAccent(highlightColor) ? highlightColor : "green";
 
   root.setAttribute("data-theme", state.theme === "dark" ? "dark" : "light");
   root.setAttribute(

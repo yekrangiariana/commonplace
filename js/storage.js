@@ -1,4 +1,5 @@
 import { STORAGE_KEY, initializeRuntimeState, touchMeta } from "./state.js";
+import { isValidAccent } from "./accentColors.js";
 import {
   collectTagsFromBookmarks,
   dedupeTags,
@@ -463,9 +464,7 @@ function applyParsedState(state, parsedState) {
   state.theme = ["light", "dark"].includes(parsedState.theme)
     ? parsedState.theme
     : "light";
-  state.displayHighlightColor = ["green", "red", "orange", "yellow"].includes(
-    parsedState.displayHighlightColor,
-  )
+  state.displayHighlightColor = isValidAccent(parsedState.displayHighlightColor)
     ? parsedState.displayHighlightColor
     : "green";
   state.splashEnabled = parsedState.splashEnabled !== false;
