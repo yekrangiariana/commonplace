@@ -220,7 +220,10 @@ export async function mergeSync(localState, serializeMetaFn) {
     const remoteProjects = remote.projects || [];
     const remoteFeeds = remote.rss_feeds || [];
 
-    const mergedBookmarks = mergeArraysById(localState.bookmarks, remoteBookmarks);
+    const mergedBookmarks = mergeArraysById(
+      localState.bookmarks,
+      remoteBookmarks,
+    );
     const mergedProjects = mergeArraysById(localState.projects, remoteProjects);
     const mergedFeeds = mergeArraysById(localState.rssFeeds, remoteFeeds);
 
@@ -382,7 +385,13 @@ export function applyRemoteSyncData(remoteData, deps) {
  * @param {object} deps - { formatRelativeTime, getState, getSyncDeps, serializeMetaState, applyRemote }
  */
 export function initSyncUI(deps) {
-  const { formatRelativeTime, getState, getSyncDeps, serializeMetaState, applyRemote } = deps;
+  const {
+    formatRelativeTime,
+    getState,
+    getSyncDeps,
+    serializeMetaState,
+    applyRemote,
+  } = deps;
 
   const loginView = document.getElementById("sync-login-view");
   const accountView = document.getElementById("sync-account-view");
@@ -464,7 +473,12 @@ export function initSyncUI(deps) {
   });
 
   forcePullBtn?.addEventListener("click", async () => {
-    if (!confirm("Replace all local data with cloud data? Any unsynced local changes will be lost.")) return;
+    if (
+      !confirm(
+        "Replace all local data with cloud data? Any unsynced local changes will be lost.",
+      )
+    )
+      return;
     forcePullBtn.disabled = true;
     try {
       const remoteData = await forcePull();
@@ -478,7 +492,12 @@ export function initSyncUI(deps) {
   });
 
   forcePushBtn?.addEventListener("click", async () => {
-    if (!confirm("Replace all cloud data with local data? Any unsynced changes on other devices will be lost.")) return;
+    if (
+      !confirm(
+        "Replace all cloud data with local data? Any unsynced changes on other devices will be lost.",
+      )
+    )
+      return;
     forcePushBtn.disabled = true;
     try {
       await forcePush(getState(), serializeMetaState);
