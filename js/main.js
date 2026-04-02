@@ -233,7 +233,8 @@ async function init() {
     // Skip if the page was recently hidden (e.g. fold-triggered reload) so the
     // user doesn't see a black screen when unfolding their phone.
     const lastHiddenAt = Number(localStorage.getItem("__lastHiddenAt") || 0);
-    const recentlyHidden = lastHiddenAt > 0 && Date.now() - lastHiddenAt < 30_000;
+    const recentlyHidden =
+      lastHiddenAt > 0 && Date.now() - lastHiddenAt < 30_000;
     if (!didClearData && state.splashEnabled !== false && !recentlyHidden) {
       splashDone = new Promise((r) => setTimeout(r, 1000));
     } else if (!didClearData) {
