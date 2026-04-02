@@ -6058,7 +6058,12 @@ function saveReaderEditedContent() {
     // Update preview text
     bookmark.previewText = previewText(flattenBlocks(newBlocks), 180);
 
-    bumpItemSync(bookmark, contentChanged ? ["blocks", "highlights", "previewText"] : ["blocks", "previewText"]);
+    bumpItemSync(
+      bookmark,
+      contentChanged
+        ? ["blocks", "highlights", "previewText"]
+        : ["blocks", "previewText"],
+    );
     touchBookmarks(state);
     persistState(state);
   }

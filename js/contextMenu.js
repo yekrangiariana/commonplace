@@ -1,4 +1,8 @@
-import { normalizeTag, syncSavedTags, deleteProject as deleteProjectFromState } from "./taxonomy.js";
+import {
+  normalizeTag,
+  syncSavedTags,
+  deleteProject as deleteProjectFromState,
+} from "./taxonomy.js";
 import {
   touchBookmarks,
   touchProjects,
