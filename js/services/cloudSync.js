@@ -19,8 +19,8 @@ import {
 } from "./realtimeSync.js";
 import { mergeAll, stampSyncFields } from "./syncMerge.js";
 
-const SYNC_DEBOUNCE_MS = 5000;
-const SYNC_COOLDOWN_MS = 30000;
+const SYNC_DEBOUNCE_MS = 1000;
+const SYNC_COOLDOWN_MS = 5000;
 const AUTO_PULL_INTERVAL_MS = 30000;
 
 let syncTimerId = null;
@@ -153,7 +153,11 @@ export async function pushSyncNow(localState, serializeMetaFn) {
   if (!isLoggedIn() || syncInFlight) return;
 
   const elapsed = Date.now() - lastSyncPushedAt;
-  if (elapsed < SYNC_COOLDOWN_MS && lastSyncPushedAt > 0) return;
+  if (elapsed < SYNC_COOLDOWN_MS && lastSyncPushedAt > 0) {
+    // Schedule a retry after the cooldown expires instead of silently dropping
+    schedulePushSync(localState, serializeMetaFn);
+    return;
+  }
 
   syncInFlight = true;
   notifyStatus("pushing", "Saving to cloud…");

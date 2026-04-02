@@ -1,4 +1,4 @@
-import { normalizeTag, syncSavedTags } from "./taxonomy.js";
+import { normalizeTag, syncSavedTags, deleteProject as deleteProjectFromState } from "./taxonomy.js";
 import {
   touchBookmarks,
   touchProjects,
@@ -209,20 +209,9 @@ export function initWorkspaceContextMenu({
       return;
     }
 
-    state.projects = state.projects.filter((item) => item.id !== projectId);
-    state.bookmarks = state.bookmarks.map((bookmark) => ({
-      ...bookmark,
-      projectIds: (bookmark.projectIds || []).filter((id) => id !== projectId),
-    }));
-
-    if (state.selectedProjectId === projectId) {
-      state.selectedProjectId = null;
-      state.selectedProjectSidebarArticleId = null;
-    }
-
+    deleteProjectFromState(state, projectId);
+    state.selectedProjectSidebarArticleId = null;
     selectedProjectIds.delete(projectId);
-    touchProjects(state);
-    touchBookmarks(state);
     persistState(state);
     render();
     syncSelectionClasses();
@@ -284,6 +273,7 @@ export function initWorkspaceContextMenu({
 
       if (!current.includes(projectId)) {
         article.projectIds = [...current, projectId];
+        bumpItemSync(article, ["projectIds"]);
       }
     });
 

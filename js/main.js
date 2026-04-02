@@ -343,6 +343,7 @@ async function init() {
       state,
       dom,
       persistState,
+      stampSettingKey,
       setStatus,
       getSelectedArticle: getActiveReaderArticle,
     });
@@ -1719,6 +1720,7 @@ function handleDocumentClick(event) {
 
   if (libraryViewTrigger) {
     state.libraryView = libraryViewTrigger.dataset.libraryView;
+    stampSettingKey(state, "libraryView");
     persistState(state);
     renderArticleList(state, dom);
     return;
@@ -1728,6 +1730,7 @@ function handleDocumentClick(event) {
 
   if (librarySortTrigger) {
     state.librarySort = librarySortTrigger.dataset.librarySort;
+    stampSettingKey(state, "librarySort");
     persistState(state);
     renderArticleList(state, dom);
     return;
@@ -1739,6 +1742,7 @@ function handleDocumentClick(event) {
 
   if (libraryToggleImagesTrigger) {
     state.libraryShowImages = !(state.libraryShowImages !== false);
+    stampSettingKey(state, "libraryShowImages");
     persistState(state);
     renderArticleList(state, dom);
     return;
@@ -1750,6 +1754,7 @@ function handleDocumentClick(event) {
 
   if (libraryToggleTagsTrigger) {
     state.libraryShowTags = !(state.libraryShowTags !== false);
+    stampSettingKey(state, "libraryShowTags");
     persistState(state);
     renderArticleList(state, dom);
     return;
@@ -2588,6 +2593,7 @@ function handleProjectStageChange(stage) {
 
   project.stage = stage;
   project.updatedAt = new Date().toISOString();
+  bumpItemSync(project, ["stage"]);
   touchProjects(state);
   persistState(state);
   renderProjectFilters(state, dom);
@@ -4255,6 +4261,7 @@ function saveCustomAutoTagRule() {
   ]);
 
   state.autoTagCustomRules = merged;
+  stampSettingKey(state, "autoTagCustomRules");
   persistState(state);
   dom.autoTagRuleForm?.reset();
   if (dom.autoTagRuleDetails) {
@@ -4274,6 +4281,7 @@ function deleteCustomAutoTagRule(tag) {
   state.autoTagCustomRules = (state.autoTagCustomRules || []).filter(
     (rule) => normalizeTag(rule.tag || "") !== normalizedTag,
   );
+  stampSettingKey(state, "autoTagCustomRules");
   persistState(state);
   renderSettings(state, dom);
   setStatus(`Deleted auto-tag rule "${normalizedTag}".`);
@@ -4294,6 +4302,7 @@ function importAutoTagRulesFromInput() {
       ...(state.autoTagCustomRules || []),
       ...imported,
     ]);
+    stampSettingKey(state, "autoTagCustomRules");
     persistState(state);
     renderSettings(state, dom);
     setStatus(
@@ -6049,6 +6058,7 @@ function saveReaderEditedContent() {
     // Update preview text
     bookmark.previewText = previewText(flattenBlocks(newBlocks), 180);
 
+    bumpItemSync(bookmark, contentChanged ? ["blocks", "highlights", "previewText"] : ["blocks", "previewText"]);
     touchBookmarks(state);
     persistState(state);
   }
