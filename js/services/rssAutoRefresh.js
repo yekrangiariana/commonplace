@@ -21,6 +21,7 @@ export function createRssAutoRefreshController(options) {
   const onRefresh = options?.onRefresh || (async () => {});
 
   let timerId = null;
+  let visibilityRefreshTimer = null;
   let isStarted = false;
   let isRefreshing = false;
 
@@ -121,10 +122,23 @@ export function createRssAutoRefreshController(options) {
     }
 
     if (isVisible()) {
-      void maybeRefresh("visible");
+      // Delay the refresh so fold/unfold animations complete before any
+      // network activity starts, preventing jank on foldable devices.
+      if (visibilityRefreshTimer !== null) {
+        window.clearTimeout(visibilityRefreshTimer);
+      }
+      visibilityRefreshTimer = window.setTimeout(() => {
+        visibilityRefreshTimer = null;
+        void maybeRefresh("visible");
+      }, 600);
       return;
     }
 
+    // Page is hidden — cancel any pending visibility refresh and the interval.
+    if (visibilityRefreshTimer !== null) {
+      window.clearTimeout(visibilityRefreshTimer);
+      visibilityRefreshTimer = null;
+    }
     clearTimer();
   };
 

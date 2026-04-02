@@ -15,6 +15,7 @@ import {
   escapeHtml,
   formatDate,
   formatRelativeTime,
+  debounce,
 } from "./utils.js";
 import {
   normalizeTag,
@@ -229,7 +230,11 @@ async function init() {
     }
 
     // Only show splash delay if not clearing data and splash is enabled
-    if (!didClearData && state.splashEnabled !== false) {
+    // Skip if the page was recently hidden (e.g. fold-triggered reload) so the
+    // user doesn't see a black screen when unfolding their phone.
+    const lastHiddenAt = Number(localStorage.getItem("__lastHiddenAt") || 0);
+    const recentlyHidden = lastHiddenAt > 0 && Date.now() - lastHiddenAt < 30_000;
+    if (!didClearData && state.splashEnabled !== false && !recentlyHidden) {
       splashDone = new Promise((r) => setTimeout(r, 1000));
     } else if (!didClearData) {
       dismissSplash();
@@ -825,7 +830,7 @@ function bindEvents() {
     },
     { passive: true },
   );
-  window.addEventListener("resize", handleWindowResize);
+  window.addEventListener("resize", debounce(handleWindowResize, 150));
 
   document.addEventListener("selectionchange", () => {
     handleSelectionChange({
@@ -845,7 +850,7 @@ function bindEvents() {
   document.addEventListener("dragend", handleDocumentDragEnd);
   window.addEventListener("popstate", handleBrowserNavigation);
   window.addEventListener("hashchange", handleBrowserNavigation);
-  window.addEventListener("resize", positionRssSubscribePopover);
+  window.addEventListener("resize", debounce(positionRssSubscribePopover, 150));
   document.addEventListener("visibilitychange", handleDocumentVisibilityChange);
 
   // Search event bindings
@@ -1314,6 +1319,15 @@ async function runMarkdownSync(options = {}) {
 }
 
 function handleDocumentVisibilityChange() {
+  // Stamp the time so init() can skip the splash delay on a fold-triggered reload
+  if (document.visibilityState === "hidden") {
+    try {
+      localStorage.setItem("__lastHiddenAt", Date.now().toString());
+    } catch {
+      // ignore storage errors
+    }
+  }
+
   if (document.visibilityState !== "hidden") {
     return;
   }

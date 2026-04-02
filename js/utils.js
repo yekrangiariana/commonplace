@@ -2,6 +2,14 @@ export function flattenBlocks(blocks) {
   return blocks.map((block) => block.text).join("\n\n");
 }
 
+export function debounce(fn, ms) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
+
 export function previewText(text, length) {
   return text.length > length ? `${text.slice(0, length).trim()}...` : text;
 }
