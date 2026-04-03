@@ -194,7 +194,11 @@ export async function refreshAccessToken() {
     // Only logout on definitive auth rejection (invalid/revoked token).
     // Transient network errors should not wipe the session.
     const msg = (err?.message || "").toLowerCase();
-    if (msg.includes("invalid") || msg.includes("revoked") || msg.includes("expired")) {
+    if (
+      msg.includes("invalid") ||
+      msg.includes("revoked") ||
+      msg.includes("expired")
+    ) {
       logout();
     }
     return false;

@@ -163,7 +163,9 @@ function renderFeedList(state, dom) {
       ${state.rssFeeds
         .slice()
         .sort((left, right) =>
-          (left.title || left.url || "").localeCompare(right.title || right.url || ""),
+          (left.title || left.url || "").localeCompare(
+            right.title || right.url || "",
+          ),
         )
         .map((feed) => {
           const itemCount = Array.isArray(feed.items) ? feed.items.length : 0;
