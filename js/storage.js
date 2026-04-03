@@ -245,7 +245,7 @@ function queuePersistFlush() {
     .then(() => writePersistedState(stateSnapshot, dirtyScopes))
     .then(() => {
       try {
-        onAfterPersist?.(stateRef);
+        onAfterPersist?.(stateRef, dirtyScopes);
       } catch {
         /* non-critical */
       }

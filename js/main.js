@@ -142,6 +142,7 @@ import {
 import {
   pullSync,
   pushSyncNow,
+  forcePush,
   schedulePushSync,
   startAutoPull,
   stopAutoPull,
@@ -261,6 +262,11 @@ async function init() {
         if (remoteData) {
           applyRemoteSyncData(remoteData, getSyncDeps());
         }
+        // One-time migration: push all local data to new per-row tables
+        if (!localStorage.getItem("cp-v2-initial-push")) {
+          await forcePush(state, serializeMetaState);
+          localStorage.setItem("cp-v2-initial-push", "1");
+        }
       } catch {
         // Sync failure should not block app init
       }
@@ -290,8 +296,14 @@ async function init() {
     initImageCache(state.bookmarks).catch(() => {});
     initSearchIndex(state.bookmarks, state.projects).catch(() => {});
 
-    // Schedule cloud sync push after each local persist
-    setAfterPersistCallback((stateRef) => {
+    // Schedule cloud sync push after each local persist.
+    // consumeDirtyScopes() already cleared the flags for storage writes,
+    // so restore them from the dirtyScopes snapshot for cloud sync.
+    setAfterPersistCallback((stateRef, dirtyScopes) => {
+      if (dirtyScopes?.bookmarks) stateRef.__dirtyBookmarks = true;
+      if (dirtyScopes?.projects) stateRef.__dirtyProjects = true;
+      if (dirtyScopes?.rss) stateRef.__dirtyRss = true;
+      if (dirtyScopes?.meta) stateRef.__dirtyMeta = true;
       schedulePushSync(stateRef, serializeMetaState);
     });
 

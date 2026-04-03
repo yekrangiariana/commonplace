@@ -671,6 +671,25 @@ export function initSyncUI(deps) {
         await signIn(email, password);
       }
       loginStatus.textContent = "";
+
+      // Full sync after login: pull remote → merge → push local-only items
+      const localState = getState();
+      try {
+        localStorage.removeItem(LAST_PULL_KEY);
+        const remoteData = await pullSync(localState);
+        if (remoteData) {
+          applyRemote(remoteData);
+        }
+        // Push all local data so local-only items reach the cloud
+        await forcePush(getState(), serializeMetaState);
+      } catch {
+        /* sync failure after login is non-critical */
+      }
+      // Start background sync (polling + realtime)
+      startAutoPull(getState(), serializeMetaState, (data) =>
+        applyRemote(data),
+      );
+
       updateSyncView();
     } catch (err) {
       loginStatus.textContent = `Error: ${err.message}`;
