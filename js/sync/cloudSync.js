@@ -573,6 +573,18 @@ export function applyRemoteSyncData(remoteData, deps) {
     if (s.ttsVoiceId !== undefined) state.ttsVoiceId = s.ttsVoiceId;
     if (s.ttsRate !== undefined) state.ttsRate = s.ttsRate;
   }
+
+  // Clear dirty flags so the persist below doesn't trigger a push-back
+  // to the cloud (touch* bumped versions for derived indexes, but this
+  // data already came FROM the cloud — no need to push it back).
+  state.__dirtyBookmarks = false;
+  state.__dirtyProjects = false;
+  state.__dirtyRss = false;
+  state.__dirtyMeta = false;
+  state.__dirtyBookmarkIds = new Set();
+  state.__dirtyProjectIds = new Set();
+  state.__dirtyRssFeedIds = new Set();
+
   persistState(state);
   if (applyDisplayPreferences) applyDisplayPreferences();
   renderAndSyncUrl();
