@@ -4,7 +4,6 @@
  */
 
 import { runtimeConfig } from "../state.js";
-import { updateClockOffset } from "../syncClock.js";
 
 const AUTH_TOKEN_KEY = "sb-auth-token";
 
@@ -232,64 +231,203 @@ async function authedHeaders() {
   };
 }
 
-/**
- * Fetch the user's sync_data row. Returns null if not found.
- */
-export async function fetchSyncData() {
+// ── Per-table CRUD (bookmarks, projects, rss_feeds, user_settings) ──
+
+async function restGet(table, query, retried = false) {
   const base = getProjectUrl();
-  const userId = getUserId();
-  if (!base || !userId) return null;
-
+  if (!base) return null;
   const headers = await authedHeaders();
-  const res = await fetch(
-    `${base}/rest/v1/sync_data?user_id=eq.${userId}&select=bookmarks,projects,meta,rss_feeds,updated_at`,
-    { headers },
-  );
-
+  const res = await fetch(`${base}/rest/v1/${table}?${query}`, { headers });
   if (!res.ok) {
-    if (res.status === 401) {
-      const refreshed = await refreshAccessToken();
-      if (refreshed) return fetchSyncData();
+    if (res.status === 401 && !retried) {
+      const ok = await refreshAccessToken();
+      if (ok) return restGet(table, query, true);
     }
-    throw new Error(`Fetch sync data failed: ${res.status}`);
+    throw new Error(`GET ${table} failed: ${res.status}`);
   }
+  return res.json();
+}
 
-  const rows = await res.json();
-  updateClockOffset(res.headers.get("Date"));
-  return rows.length > 0 ? rows[0] : null;
+async function restUpsert(table, rows, retried = false) {
+  const base = getProjectUrl();
+  if (!base) throw new Error("Supabase URL not configured");
+  const headers = await authedHeaders();
+  headers.Prefer = "resolution=merge-duplicates,return=representation";
+  const res = await fetch(`${base}/rest/v1/${table}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(rows),
+  });
+  if (!res.ok) {
+    if (res.status === 401 && !retried) {
+      const ok = await refreshAccessToken();
+      if (ok) return restUpsert(table, rows, true);
+    }
+    throw new Error(`UPSERT ${table} failed: ${res.status}`);
+  }
+  return res.json();
 }
 
 /**
- * Upsert the user's sync_data row.
+ * Fetch bookmarks changed since `since` (ISO string). Pass null for all.
  */
-export async function upsertSyncData(payload) {
-  const base = getProjectUrl();
+export async function fetchBookmarks(since) {
   const userId = getUserId();
-  if (!base || !userId) throw new Error("Not authenticated");
+  if (!userId) return [];
+  let q = `user_id=eq.${userId}&select=*`;
+  if (since) q += `&updated_at=gt.${encodeURIComponent(since)}`;
+  q += "&order=updated_at.asc";
+  return (await restGet("bookmarks", q)) || [];
+}
 
-  const headers = await authedHeaders();
-  headers.Prefer = "resolution=merge-duplicates,return=representation";
-
-  const body = {
+/**
+ * Upsert one or more bookmarks to the cloud.
+ */
+export async function upsertBookmarks(items) {
+  const userId = getUserId();
+  if (!userId || !items.length) return [];
+  const rows = items.map((b) => ({
+    id: b.id,
     user_id: userId,
-    ...payload,
-    updated_at: new Date().toISOString(),
-  };
+    title: b.title || null,
+    url: b.url || null,
+    description: b.description || null,
+    source: b.source || null,
+    published_at: b.publishedAt || null,
+    preview_text: b.previewText || null,
+    image_url: b.imageUrl || null,
+    fetched_at: b.fetchedAt || null,
+    created_at: b.createdAt || null,
+    tweet_html: b.tweetHtml || null,
+    blocks: b.blocks || [],
+    tags: b.tags || [],
+    project_ids: b.projectIds || [],
+    highlights: b.highlights || [],
+    last_opened_at: b.lastOpenedAt || null,
+    _deleted: b._deleted || false,
+  }));
+  return restUpsert("bookmarks", rows);
+}
 
-  const res = await fetch(`${base}/rest/v1/sync_data`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-  });
+/**
+ * Soft-delete a bookmark.
+ */
+export async function deleteBookmark(id) {
+  return upsertBookmarks([{ id, _deleted: true }]);
+}
 
-  if (!res.ok) {
-    if (res.status === 401) {
-      const refreshed = await refreshAccessToken();
-      if (refreshed) return upsertSyncData(payload);
-    }
-    throw new Error(`Upsert sync data failed: ${res.status}`);
+/**
+ * Fetch projects changed since `since`.
+ */
+export async function fetchProjects(since) {
+  const userId = getUserId();
+  if (!userId) return [];
+  let q = `user_id=eq.${userId}&select=*`;
+  if (since) q += `&updated_at=gt.${encodeURIComponent(since)}`;
+  q += "&order=updated_at.asc";
+  return (await restGet("projects", q)) || [];
+}
+
+/**
+ * Upsert one or more projects.
+ */
+export async function upsertProjects(items) {
+  const userId = getUserId();
+  if (!userId || !items.length) return [];
+  const rows = items.map((p) => ({
+    id: p.id,
+    user_id: userId,
+    name: p.name || null,
+    description: p.description || null,
+    content: p.content || null,
+    stage: p.stage || null,
+    created_at: p.createdAt || null,
+    last_opened_at: p.lastOpenedAt || null,
+    _deleted: p._deleted || false,
+  }));
+  return restUpsert("projects", rows);
+}
+
+/**
+ * Soft-delete a project.
+ */
+export async function deleteProject(id) {
+  return upsertProjects([{ id, _deleted: true }]);
+}
+
+/**
+ * Fetch RSS feeds changed since `since`.
+ */
+export async function fetchRssFeeds(since) {
+  const userId = getUserId();
+  if (!userId) return [];
+  let q = `user_id=eq.${userId}&select=*`;
+  if (since) q += `&updated_at=gt.${encodeURIComponent(since)}`;
+  q += "&order=updated_at.asc";
+  return (await restGet("rss_feeds", q)) || [];
+}
+
+/**
+ * Upsert one or more RSS feeds.
+ */
+export async function upsertRssFeeds(items) {
+  const userId = getUserId();
+  if (!userId || !items.length) return [];
+  const rows = items.map((f) => ({
+    id: f.id,
+    user_id: userId,
+    feed_url: f.feedUrl || null,
+    title: f.title || null,
+    folder: f.folder || null,
+    items: f.items || [],
+    last_fetched_at: f.lastFetchedAt || null,
+    _deleted: f._deleted || false,
+  }));
+  return restUpsert("rss_feeds", rows);
+}
+
+/**
+ * Soft-delete an RSS feed.
+ */
+export async function deleteRssFeed(id) {
+  return upsertRssFeeds([{ id, _deleted: true }]);
+}
+
+/**
+ * Fetch the user's settings row.
+ */
+export async function fetchSettings() {
+  const userId = getUserId();
+  if (!userId) return null;
+  const rows = await restGet("user_settings", `user_id=eq.${userId}&select=*`);
+  return rows?.length ? rows[0] : null;
+}
+
+/**
+ * Upsert the user's settings.
+ */
+export async function upsertSettings(settings) {
+  const userId = getUserId();
+  if (!userId) throw new Error("Not authenticated");
+  const rows = await restUpsert("user_settings", [
+    { user_id: userId, settings },
+  ]);
+  return rows?.[0] || null;
+}
+
+/**
+ * Fetch the old sync_data row (for one-time migration).
+ */
+export async function fetchLegacySyncData() {
+  const userId = getUserId();
+  if (!userId) return null;
+  try {
+    const rows = await restGet(
+      "sync_data",
+      `user_id=eq.${userId}&select=bookmarks,projects,meta,rss_feeds,updated_at`,
+    );
+    return rows?.length ? rows[0] : null;
+  } catch {
+    return null;
   }
-
-  updateClockOffset(res.headers.get("Date"));
-  return (await res.json())[0];
 }

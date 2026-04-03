@@ -2,8 +2,8 @@ import {
   touchBookmarks,
   touchMeta,
   touchProjects,
-  recordTombstone,
-  bumpItemSync,
+  markBookmarkDirty,
+  markProjectDirty,
 } from "./state.js";
 
 export function normalizeTag(value) {
@@ -122,20 +122,20 @@ export function toggleArticleProject(state, articleId, projectId) {
     article.projectIds.push(projectId);
   }
 
-  bumpItemSync(article, ["projectIds"]);
+  markBookmarkDirty(state, article.id);
   touchBookmarks(state);
 }
 
 export function deleteProject(state, projectId) {
   state.projects = state.projects.filter((project) => project.id !== projectId);
-  recordTombstone(state, "projects", projectId);
+  markProjectDirty(state, projectId);
   state.bookmarks = state.bookmarks.map((bookmark) => {
     const filtered = bookmark.projectIds.filter(
       (currentProjectId) => currentProjectId !== projectId,
     );
     const changed = filtered.length !== bookmark.projectIds.length;
     const updated = { ...bookmark, projectIds: filtered };
-    if (changed) bumpItemSync(updated, ["projectIds"]);
+    if (changed) markBookmarkDirty(state, updated.id);
     return updated;
   });
   state.selectedProjectId =
@@ -155,7 +155,7 @@ export function renameProject(state, projectId, nextName) {
   }
 
   project.name = normalizeProjectName(nextName);
-  bumpItemSync(project, ["name"]);
+  markProjectDirty(state, project.id);
   touchProjects(state);
 }
 
@@ -166,7 +166,7 @@ export function renameTag(state, currentTag, nextTag) {
     );
     const changed = newTags.join(",") !== bookmark.tags.join(",");
     const updated = { ...bookmark, tags: newTags };
-    if (changed) bumpItemSync(updated, ["tags"]);
+    if (changed) markBookmarkDirty(state, updated.id);
     return updated;
   });
   state.savedTags = dedupeTags(
@@ -181,7 +181,7 @@ export function deleteTag(state, tagToDelete) {
     const newTags = bookmark.tags.filter((tag) => tag !== tagToDelete);
     const changed = newTags.length !== bookmark.tags.length;
     const updated = { ...bookmark, tags: newTags };
-    if (changed) bumpItemSync(updated, ["tags"]);
+    if (changed) markBookmarkDirty(state, updated.id);
     return updated;
   });
   state.savedTags = state.savedTags.filter((tag) => tag !== tagToDelete);

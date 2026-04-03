@@ -1,5 +1,3 @@
-import { syncNow } from "./syncClock.js";
-
 export const STORAGE_KEY = "bookmark-manager-state-v1";
 export const DEFAULT_FETCH_TIMEOUT_MS = 25000;
 
@@ -25,6 +23,9 @@ export function initializeRuntimeState(state) {
   state.__dirtyProjects = Boolean(state.__dirtyProjects);
   state.__dirtyRss = Boolean(state.__dirtyRss);
   state.__dirtyMeta = Boolean(state.__dirtyMeta);
+  if (!state.__dirtyBookmarkIds) state.__dirtyBookmarkIds = new Set();
+  if (!state.__dirtyProjectIds) state.__dirtyProjectIds = new Set();
+  if (!state.__dirtyRssFeedIds) state.__dirtyRssFeedIds = new Set();
 }
 
 export function touchBookmarks(state) {
@@ -51,48 +52,27 @@ export function touchMeta(state) {
 }
 
 /**
- * Record a deletion tombstone so it syncs across devices.
- * @param {object} state
- * @param {"bookmarks"|"projects"|"rssFeeds"} type
- * @param {string} id
+ * Mark a specific bookmark as dirty for incremental push.
  */
-export function recordTombstone(state, type, id) {
-  if (!state._tombstones) {
-    state._tombstones = { bookmarks: {}, projects: {}, rssFeeds: {} };
-  }
-  if (!state._tombstones[type]) {
-    state._tombstones[type] = {};
-  }
-  state._tombstones[type][id] = new Date().toISOString();
+export function markBookmarkDirty(state, id) {
+  initializeRuntimeState(state);
+  state.__dirtyBookmarkIds.add(id);
 }
 
 /**
- * Bump sync version and timestamp on an item after a local edit.
- * Optionally records per-field timestamps for field-level merge.
- * @param {object} item
- * @param {string[]} [changedFields] - names of fields that were modified
+ * Mark a specific project as dirty for incremental push.
  */
-export function bumpItemSync(item, changedFields) {
-  const now = syncNow();
-  item._sv = (item._sv || 0) + 1;
-  item._su = now;
-  if (changedFields && changedFields.length) {
-    if (!item._ft) item._ft = {};
-    for (const f of changedFields) {
-      item._ft[f] = now;
-    }
-  }
+export function markProjectDirty(state, id) {
+  initializeRuntimeState(state);
+  state.__dirtyProjectIds.add(id);
 }
 
 /**
- * Record a per-key timestamp for a settings change.
- * Used for per-key conflict resolution during sync.
- * @param {object} state
- * @param {string} key
+ * Mark a specific RSS feed as dirty for incremental push.
  */
-export function stampSettingKey(state, key) {
-  if (!state._metaTimestamps) state._metaTimestamps = {};
-  state._metaTimestamps[key] = syncNow();
+export function markRssFeedDirty(state, id) {
+  initializeRuntimeState(state);
+  state.__dirtyRssFeedIds.add(id);
 }
 
 export const state = {
@@ -134,8 +114,6 @@ export const state = {
   rssRetentionDays: 7,
   rssAutoRefreshMinutes: "off",
   rssReaderArticle: null,
-  _tombstones: { bookmarks: {}, projects: {}, rssFeeds: {} },
-  _metaTimestamps: {},
   __persistEpoch: 0,
   __bookmarksVersion: 0,
   __projectsVersion: 0,

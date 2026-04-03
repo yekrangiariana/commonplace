@@ -205,7 +205,7 @@ export function initReaderTtsPlayer({
   state,
   dom,
   persistState,
-  stampSettingKey,
+  touchMeta,
   setStatus,
   getSelectedArticle,
 }) {
@@ -333,7 +333,7 @@ export function initReaderTtsPlayer({
     }
 
     state.ttsVoiceId = pickPreferredVoiceId(voiceOptions);
-    stampSettingKey(state, "ttsVoiceId");
+    touchMeta(state);
     persistState(state);
   }
 
@@ -470,7 +470,7 @@ export function initReaderTtsPlayer({
     }
 
     state.ttsRate = snappedRate;
-    stampSettingKey(state, "ttsRate");
+    touchMeta(state);
     persistState(state);
 
     const article = getSelectedArticle();
@@ -992,7 +992,7 @@ export function initReaderTtsPlayer({
     }
 
     state.ttsVoiceId = voiceSelect.value;
-    stampSettingKey(state, "ttsVoiceId");
+    touchMeta(state);
     persistState(state);
 
     const article = getSelectedArticle();

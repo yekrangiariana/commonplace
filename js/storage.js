@@ -344,12 +344,6 @@ export function serializeMetaState(state) {
     rssReadFilter: state.rssReadFilter,
     rssRetentionDays: state.rssRetentionDays,
     rssAutoRefreshMinutes: state.rssAutoRefreshMinutes,
-    _tombstones: state._tombstones || {
-      bookmarks: {},
-      projects: {},
-      rssFeeds: {},
-    },
-    _metaTimestamps: state._metaTimestamps || {},
   };
 }
 
@@ -544,19 +538,6 @@ function applyParsedState(state, parsedState) {
     parsedState.rssAutoRefreshMinutes,
   );
   state.rssReaderArticle = null;
-  state._tombstones =
-    parsedState._tombstones && typeof parsedState._tombstones === "object"
-      ? {
-          bookmarks: parsedState._tombstones.bookmarks || {},
-          projects: parsedState._tombstones.projects || {},
-          rssFeeds: parsedState._tombstones.rssFeeds || {},
-        }
-      : { bookmarks: {}, projects: {}, rssFeeds: {} };
-  state._metaTimestamps =
-    parsedState._metaTimestamps &&
-    typeof parsedState._metaTimestamps === "object"
-      ? parsedState._metaTimestamps
-      : {};
 
   pruneRssItemsByRetention(state);
 

@@ -1,4 +1,4 @@
-import { bumpItemSync } from "./state.js";
+import { markBookmarkDirty } from "./state.js";
 
 export function renderBlock(block, highlights, escapeHtml) {
   const html = renderInlineContent(block, highlights, escapeHtml);
@@ -209,7 +209,7 @@ export function createHighlightFromSelection({
     createdAt: new Date().toISOString(),
   });
 
-  bumpItemSync(activeArticle, ["highlights"]);
+  markBookmarkDirty(state, activeArticle.id);
   onChanged();
   clearPendingSelection(state, dom);
 }

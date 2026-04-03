@@ -6,8 +6,8 @@ import {
 import {
   touchBookmarks,
   touchProjects,
-  recordTombstone,
-  bumpItemSync,
+  markBookmarkDirty,
+  markProjectDirty,
 } from "./state.js";
 
 const PROJECT_STAGES = ["idea", "research", "done"];
@@ -156,7 +156,7 @@ export function initWorkspaceContextMenu({
     }
 
     state.bookmarks = state.bookmarks.filter((item) => item.id !== articleId);
-    recordTombstone(state, "bookmarks", articleId);
+    markBookmarkDirty(state, articleId);
 
     if (state.selectedArticleId === articleId) {
       state.selectedArticleId = null;
@@ -243,7 +243,7 @@ export function initWorkspaceContextMenu({
 
       if (!currentTags.includes(normalized)) {
         article.tags = [...currentTags, normalized];
-        bumpItemSync(article, ["tags"]);
+        markBookmarkDirty(state, article.id);
       }
     });
 
@@ -277,7 +277,7 @@ export function initWorkspaceContextMenu({
 
       if (!current.includes(projectId)) {
         article.projectIds = [...current, projectId];
-        bumpItemSync(article, ["projectIds"]);
+        markBookmarkDirty(state, article.id);
       }
     });
 
@@ -336,7 +336,7 @@ export function initWorkspaceContextMenu({
 
     selectedProjects.forEach((project) => {
       project.stage = stage;
-      bumpItemSync(project, ["stage"]);
+      markProjectDirty(state, project.id);
     });
 
     touchProjects(state);

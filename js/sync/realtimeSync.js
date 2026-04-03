@@ -1,10 +1,10 @@
 /**
  * Lightweight Supabase Realtime client (no SDK).
  * Uses the Phoenix WebSocket protocol v1.0.0 to listen for
- * Postgres changes on the sync_data table.
+ * Postgres changes on bookmarks, projects, rss_feeds, user_settings.
  *
  * SETUP REQUIRED (run once in Supabase SQL editor):
- *   ALTER PUBLICATION supabase_realtime ADD TABLE sync_data;
+ *   ALTER PUBLICATION supabase_realtime ADD TABLE bookmarks, projects, rss_feeds, user_settings;
  */
 
 import { getAccessToken, getUserId } from "./supabaseClient.js";
@@ -79,6 +79,19 @@ function joinChannel() {
   const token = getAccessToken();
   joinRef = nextRef();
 
+  const pgFilter = `user_id=eq.${userId}`;
+  const tables = ["bookmarks", "projects", "rss_feeds", "user_settings"];
+  const events = ["INSERT", "UPDATE", "DELETE"];
+
+  const postgres_changes = tables.flatMap((table) =>
+    events.map((event) => ({
+      event,
+      schema: "public",
+      table,
+      filter: pgFilter,
+    })),
+  );
+
   send({
     topic: "realtime:sync-changes",
     event: "phx_join",
@@ -86,14 +99,7 @@ function joinChannel() {
       config: {
         broadcast: { ack: false, self: false },
         presence: { enabled: false },
-        postgres_changes: [
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "sync_data",
-            filter: `user_id=eq.${userId}`,
-          },
-        ],
+        postgres_changes,
         private: false,
       },
       access_token: token,
@@ -119,9 +125,11 @@ function handleMessage(data) {
     return;
   }
 
-  if (event === "postgres_changes" && payload?.data?.type === "UPDATE") {
-    // Another device pushed new data — notify
-    onChange?.();
+  if (event === "postgres_changes") {
+    const type = payload?.data?.type;
+    if (type === "INSERT" || type === "UPDATE" || type === "DELETE") {
+      onChange?.();
+    }
   }
 
   if (event === "phx_error" || event === "phx_close") {
