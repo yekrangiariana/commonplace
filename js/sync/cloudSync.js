@@ -201,7 +201,10 @@ export async function pullSync(localState) {
 
     // Apply remote settings (LWW - entire settings object)
     let mergedSettings = null;
-    if (remoteSettings?.settings && typeof remoteSettings.settings === "object") {
+    if (
+      remoteSettings?.settings &&
+      typeof remoteSettings.settings === "object"
+    ) {
       mergedSettings = remoteSettings.settings;
       trackTimestamp(remoteSettings.updated_at);
       hasChanges = true;
