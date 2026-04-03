@@ -190,8 +190,13 @@ export async function refreshAccessToken() {
       user: data.user || session.user,
     });
     return true;
-  } catch {
-    logout();
+  } catch (err) {
+    // Only logout on definitive auth rejection (invalid/revoked token).
+    // Transient network errors should not wipe the session.
+    const msg = (err?.message || "").toLowerCase();
+    if (msg.includes("invalid") || msg.includes("revoked") || msg.includes("expired")) {
+      logout();
+    }
     return false;
   }
 }
@@ -376,7 +381,7 @@ export async function upsertRssFeeds(items) {
   const rows = items.map((f) => ({
     id: f.id,
     user_id: userId,
-    feed_url: f.feedUrl || null,
+    feed_url: f.feedUrl || f.url || null,
     title: f.title || null,
     folder: f.folder || null,
     items: f.items || [],

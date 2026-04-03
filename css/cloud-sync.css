@@ -1,260 +1,208 @@
-/* ── Cloud Sync: Login ── */
+/* ═══ Sync Panel: Window Frame ═══ */
+
+.sync-panel {
+  border: var(--border-light);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.sync-panel__titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  background: var(--surface-muted);
+  border-bottom: var(--border-light);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-label);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.sync-panel__titlebar-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sync-panel__titlebar-label i {
+  font-size: 0.7rem;
+}
+
+.sync-panel__titlebar-status {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--success);
+}
+
+.sync-panel__titlebar-status:empty {
+  display: none;
+}
+
+.sync-panel__body {
+  padding: 16px;
+}
+
+/* ═══ Sync Login (logged-out) ═══ */
 
 .sync-login {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 32px 16px 16px;
+  gap: 12px;
 }
 
 .sync-login[hidden] {
   display: none;
 }
 
-.sync-login__hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-.sync-login__icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    var(--accent-color, #5a9a5a),
-    var(--accent-color-hover, #4a8a4a)
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-  font-size: 1.6rem;
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.sync-login__title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0 0 6px;
-  color: var(--text-main);
-}
-
-.sync-login__subtitle {
+.sync-login__desc {
   font-size: var(--font-size-sm);
   color: var(--text-muted);
   margin: 0;
-  max-width: 280px;
   line-height: 1.5;
 }
 
 .sync-login__form {
-  width: 100%;
-  max-width: 320px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.sync-login__input-wrap {
-  position: relative;
-  display: flex;
+.sync-login__field {
+  display: grid;
+  grid-template-columns: 56px 1fr;
   align-items: center;
+  gap: 10px;
 }
 
-.sync-login__input-icon {
-  position: absolute;
-  left: 12px;
+.sync-login__label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-label);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
   color: var(--text-muted);
-  font-size: 0.85rem;
-  pointer-events: none;
+  text-align: right;
 }
 
-.sync-login__input-wrap input {
+.sync-login__field input {
   width: 100%;
-  padding: 10px 12px 10px 36px;
+  padding: 8px 10px;
   border: var(--border-light);
-  border-radius: 8px;
-  background: var(--surface-muted);
-  color: var(--text-main);
-  font-size: 0.9rem;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: var(--font-size-sm);
   font-family: inherit;
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
+  transition: border-color 0.15s;
 }
 
-.sync-login__input-wrap input:focus {
+.sync-login__field input:focus {
   outline: none;
   border-color: var(--accent-color, #5a9a5a);
-  box-shadow: 0 0 0 3px rgba(90, 154, 90, 0.15);
 }
 
 .sync-login__actions {
   display: flex;
   gap: 8px;
+  margin-left: 66px;
 }
 
 .sync-login__submit {
   flex: 1;
   justify-content: center;
-  padding: 10px 16px;
-  border-radius: 8px;
   font-weight: 500;
 }
 
 .sync-login__status {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
-  text-align: center;
+  margin: 4px 0 0 66px;
   min-height: 1.4em;
-  margin: 8px 0 0;
 }
 
 .sync-login__status:empty {
   display: none;
 }
 
-/* ── Cloud Sync: Profile (logged-in) ── */
+/* ═══ Sync Account (logged-in) ═══ */
 
-.sync-profile {
+.sync-account {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 14px;
 }
 
-.sync-profile[hidden] {
+.sync-account[hidden] {
   display: none;
 }
 
-.sync-profile__card {
+.sync-account__header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 24px 20px;
-  background: var(--surface-muted);
-  border-radius: 12px;
-  border: var(--border-light);
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.sync-profile__info {
+.sync-account__user {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
 }
 
-.sync-profile__email {
-  font-size: 0.95rem;
+.sync-account__email {
+  font-size: var(--font-size-sm);
   font-weight: 600;
-  color: var(--text-main);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.sync-profile__sync-time {
+.sync-account__last-sync {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
 }
 
-.sync-profile__sync-indicator {
+.sync-account__indicator {
   font-size: var(--font-size-xs);
   color: var(--accent-color, #5a9a5a);
-  min-height: 1.2em;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.sync-profile__sync-indicator:empty {
+.sync-account__indicator:empty {
   display: none;
 }
 
-/* ── Stats rows ── */
+/* ── Actions row ── */
 
-.sync-profile__details {
-  display: flex;
-  flex-direction: column;
-  margin-top: 12px;
-  border: var(--border-light);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.sync-profile__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  font-size: var(--font-size-sm);
-}
-
-.sync-profile__row + .sync-profile__row {
-  border-top: var(--border-light);
-}
-
-.sync-profile__row-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-main);
-}
-
-.sync-profile__row-label i {
-  width: 16px;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-}
-
-.sync-profile__row-value {
-  font-weight: 500;
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── Footer ── */
-
-.sync-profile__manual-actions {
+.sync-account__actions {
   display: flex;
   gap: 8px;
-  width: 100%;
-  padding: 0 20px;
-  margin-top: 12px;
+  align-items: center;
 }
 
-.sync-profile__manual-actions .button {
+.sync-account__spacer {
   flex: 1;
-  justify-content: center;
 }
 
-.sync-profile__footer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-  padding-top: 12px;
-}
-
-.sync-profile__privacy {
+.sync-account__signout {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
-  text-align: center;
-  margin: 0;
+}
+
+.sync-account__privacy {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin: -4px 0 0;
   line-height: 1.5;
-  max-width: 340px;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
-.sync-profile__privacy i {
-  margin-right: 4px;
-}
-
-.sync-profile__signout {
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-  padding: 6px 16px;
+.sync-account__privacy i {
+  margin-right: 3px;
 }

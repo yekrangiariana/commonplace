@@ -93,9 +93,11 @@ function projectFromRow(row) {
 }
 
 function rssFeedFromRow(row) {
+  const feedUrl = row.feed_url || "";
   return {
     id: row.id,
-    feedUrl: row.feed_url || "",
+    url: feedUrl,
+    feedUrl,
     title: row.title || "",
     folder: row.folder || "",
     items: row.items || [],
@@ -618,18 +620,9 @@ export function initSyncUI(deps) {
   const lastSyncedEl = document.getElementById("sync-last-synced");
   const logoutBtn = document.getElementById("sync-logout-button");
   const syncStatusEl = document.getElementById("sync-status");
-  const statArticles = document.getElementById("sync-stat-articles");
-  const statProjects = document.getElementById("sync-stat-projects");
-  const statFeeds = document.getElementById("sync-stat-feeds");
   const forcePullBtn = document.getElementById("sync-force-pull-button");
   const forcePushBtn = document.getElementById("sync-force-push-button");
-
-  function updateStats() {
-    const state = getState();
-    if (statArticles) statArticles.textContent = state.bookmarks?.length || 0;
-    if (statProjects) statProjects.textContent = state.projects?.length || 0;
-    if (statFeeds) statFeeds.textContent = state.rssFeeds?.length || 0;
-  }
+  const titlebarStatus = document.getElementById("sync-titlebar-status");
 
   function updateSyncView() {
     if (isLoggedIn()) {
@@ -640,16 +633,22 @@ export function initSyncUI(deps) {
       lastSyncedEl.textContent = lastSync
         ? `Last synced ${formatRelativeTime(lastSync)}`
         : "Not synced yet";
-      updateStats();
+      if (titlebarStatus) titlebarStatus.textContent = "● Connected";
     } else {
       loginView.hidden = false;
       accountView.hidden = true;
+      if (titlebarStatus) titlebarStatus.textContent = "";
     }
   }
 
   setSyncStatusCallback(({ status, message }) => {
     if (syncStatusEl) {
       syncStatusEl.textContent = message || "";
+    }
+    if (titlebarStatus) {
+      if (status === "syncing") titlebarStatus.textContent = "⟳ Syncing…";
+      else if (status === "error") titlebarStatus.textContent = "● Error";
+      else if (status === "done") titlebarStatus.textContent = "● Connected";
     }
     if (status === "done" || status === "error") {
       updateSyncView();

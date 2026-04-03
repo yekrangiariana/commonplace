@@ -933,183 +933,119 @@
           <div class="panel-grid panel-grid--settings">
             <section class="panel-card panel-card--settings-detail">
               <section class="settings-panel" data-settings-panel="export">
-                <div class="section-heading section-heading--compact">
-                  <h2>Cloud Sync</h2>
-                </div>
 
-                <!-- Logged-out state -->
-                <div id="sync-login-view" class="sync-login">
-                  <div class="sync-login__hero">
-                    <div class="sync-login__icon">
+                <!-- ═══ Cloud Sync Panel ═══ -->
+                <div class="sync-panel">
+                  <div class="sync-panel__titlebar">
+                    <span class="sync-panel__titlebar-label">
                       <i class="fa-solid fa-cloud" aria-hidden="true"></i>
-                    </div>
-                    <p class="sync-login__subtitle">
-                      Sign in to sync your library, projects, and settings
-                      across all your devices.
-                    </p>
+                      Cloud Sync
+                    </span>
+                    <span class="sync-panel__titlebar-status" id="sync-titlebar-status"></span>
                   </div>
-                  <form id="sync-auth-form" class="sync-login__form">
-                    <div class="sync-login__input-wrap">
-                      <i
-                        class="fa-solid fa-envelope sync-login__input-icon"
-                        aria-hidden="true"
-                      ></i>
-                      <input
-                        type="email"
-                        id="sync-email-input"
-                        placeholder="Email address"
-                        required
-                        autocomplete="email"
-                      />
-                    </div>
-                    <div class="sync-login__input-wrap">
-                      <i
-                        class="fa-solid fa-lock sync-login__input-icon"
-                        aria-hidden="true"
-                      ></i>
-                      <input
-                        type="password"
-                        id="sync-password-input"
-                        placeholder="Password"
-                        required
-                        autocomplete="current-password"
-                        minlength="6"
-                      />
-                    </div>
-                    <div class="sync-login__actions">
-                      <button
-                        class="button button--primary sync-login__submit"
-                        type="submit"
-                      >
-                        Sign in
-                      </button>
-                      <button
-                        class="button button--secondary sync-login__submit"
-                        type="button"
-                        id="sync-signup-button"
-                      >
-                        Create account
-                      </button>
-                    </div>
-                  </form>
-                  <p
-                    class="sync-login__status"
-                    id="sync-login-status"
-                    aria-live="polite"
-                  ></p>
-                </div>
 
-                <!-- Logged-in state -->
-                <div id="sync-account-view" class="sync-profile" hidden>
-                  <div class="sync-profile__card">
-                    <div class="sync-profile__info">
-                      <strong
-                        class="sync-profile__email"
-                        id="sync-account-email"
-                      ></strong>
-                      <span
-                        class="sync-profile__sync-time"
-                        id="sync-last-synced"
-                        >Not synced yet</span
-                      >
-                      <span
-                        class="sync-profile__sync-indicator"
-                        id="sync-status"
+                  <div class="sync-panel__body">
+                    <!-- Logged-out state -->
+                    <div id="sync-login-view" class="sync-login">
+                      <p class="sync-login__desc">
+                        Sign in to sync your library, projects, and settings across devices.
+                      </p>
+                      <form id="sync-auth-form" class="sync-login__form">
+                        <div class="sync-login__field">
+                          <label class="sync-login__label" for="sync-email-input">Email</label>
+                          <input
+                            type="email"
+                            id="sync-email-input"
+                            placeholder="user@example.com"
+                            required
+                            autocomplete="email"
+                          />
+                        </div>
+                        <div class="sync-login__field">
+                          <label class="sync-login__label" for="sync-password-input">Pass</label>
+                          <input
+                            type="password"
+                            id="sync-password-input"
+                            placeholder="••••••"
+                            required
+                            autocomplete="current-password"
+                            minlength="6"
+                          />
+                        </div>
+                        <div class="sync-login__actions">
+                          <button
+                            class="button button--primary sync-login__submit"
+                            type="submit"
+                          >
+                            Sign in
+                          </button>
+                          <button
+                            class="button button--ghost sync-login__submit"
+                            type="button"
+                            id="sync-signup-button"
+                          >
+                            Create account
+                          </button>
+                        </div>
+                      </form>
+                      <p
+                        class="sync-login__status"
+                        id="sync-login-status"
                         aria-live="polite"
-                      ></span>
+                      ></p>
                     </div>
-                  </div>
 
-                  <div class="sync-profile__details">
-                    <div class="sync-profile__row">
-                      <div class="sync-profile__row-label">
-                        <i
-                          class="fa-solid fa-book-bookmark"
-                          aria-hidden="true"
-                        ></i>
-                        Articles
+                    <!-- Logged-in state -->
+                    <div id="sync-account-view" class="sync-account" hidden>
+                      <div class="sync-account__header">
+                        <div class="sync-account__user">
+                          <strong class="sync-account__email" id="sync-account-email"></strong>
+                          <span class="sync-account__last-sync" id="sync-last-synced">Not synced yet</span>
+                        </div>
+                        <span class="sync-account__indicator" id="sync-status" aria-live="polite"></span>
                       </div>
-                      <span
-                        class="sync-profile__row-value"
-                        id="sync-stat-articles"
-                        >0</span
-                      >
-                    </div>
-                    <div class="sync-profile__row">
-                      <div class="sync-profile__row-label">
-                        <i
-                          class="fa-solid fa-folder"
-                          aria-hidden="true"
-                        ></i>
-                        Projects
-                      </div>
-                      <span
-                        class="sync-profile__row-value"
-                        id="sync-stat-projects"
-                        >0</span
-                      >
-                    </div>
-                    <div class="sync-profile__row">
-                      <div class="sync-profile__row-label">
-                        <i class="fa-solid fa-rss" aria-hidden="true"></i>
-                        RSS Feeds
-                      </div>
-                      <span
-                        class="sync-profile__row-value"
-                        id="sync-stat-feeds"
-                        >0</span
-                      >
-                    </div>
-                  </div>
 
-                  <div class="sync-profile__footer">
-                    <div class="sync-profile__manual-actions">
-                      <button
-                        class="button button--ghost button--sm"
-                        id="sync-force-pull-button"
-                        type="button"
-                        title="Replace local data with cloud data"
-                      >
-                        <i class="fa-solid fa-cloud-arrow-down" aria-hidden="true"></i>
-                        Pull
-                      </button>
-                      <button
-                        class="button button--ghost button--sm"
-                        id="sync-force-push-button"
-                        type="button"
-                        title="Replace cloud data with local data"
-                      >
-                        <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
-                        Push
-                      </button>
+                      <div class="sync-account__actions">
+                        <button
+                          class="button button--ghost button--sm"
+                          id="sync-force-pull-button"
+                          type="button"
+                          title="Replace local data with cloud data"
+                        >
+                          <i class="fa-solid fa-cloud-arrow-down" aria-hidden="true"></i>
+                          Pull
+                        </button>
+                        <button
+                          class="button button--ghost button--sm"
+                          id="sync-force-push-button"
+                          type="button"
+                          title="Replace cloud data with local data"
+                        >
+                          <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+                          Push
+                        </button>
+                        <span class="sync-account__spacer"></span>
+                        <button
+                          class="button button--ghost button--sm sync-account__signout"
+                          id="sync-logout-button"
+                          type="button"
+                        >
+                          <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+                          Sign out
+                        </button>
+                      </div>
+
+                      <p class="sync-account__privacy">
+                        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                        Data is stored unencrypted: articles, highlights, projects, feeds, tags, and preferences.
+                      </p>
                     </div>
-                    <p class="sync-profile__privacy">
-                      <i
-                        class="fa-solid fa-shield-halved"
-                        aria-hidden="true"
-                      ></i>
-                      Synced data is stored unencrypted. This includes your
-                      saved articles, highlights, projects, RSS feeds, tags,
-                      and display preferences.
-                    </p>
-                    <button
-                      class="button button--ghost sync-profile__signout"
-                      id="sync-logout-button"
-                      type="button"
-                    >
-                      <i
-                        class="fa-solid fa-right-from-bracket"
-                        aria-hidden="true"
-                      ></i>
-                      Sign out
-                    </button>
                   </div>
                 </div>
 
-                <hr class="panel-divider" />
-
+                <!-- ═══ Local Data ═══ -->
                 <div class="section-heading section-heading--compact">
-                  <h2>Export</h2>
+                  <h2>Local</h2>
                 </div>
 
                 <div class="stack-form">
@@ -1117,8 +1053,7 @@
                     <div class="settings-action-row__text">
                       <strong>Markdown export</strong>
                       <small
-                        >Export library and projects as Markdown files to a
-                        local folder.</small
+                        >Export library and projects as Markdown files.</small
                       >
                     </div>
                     <button
@@ -1135,51 +1070,35 @@
                     id="export-markdown-status"
                     aria-live="polite"
                   ></p>
-                </div>
 
-                <hr class="panel-divider" />
-
-                <div class="section-heading section-heading--compact">
-                  <h2>Quick Share</h2>
-                </div>
-
-                <div class="stack-form">
-                  <p class="meta-text" style="margin-top: 0">
-                    Move bookmarks between devices via clipboard
-                  </p>
-                  <div class="quick-share-buttons">
-                    <button
-                      class="button button--primary"
-                      id="data-transfer-export-button"
-                      type="button"
-                    >
-                      <i
-                        class="fa-solid fa-share-from-square"
-                        aria-hidden="true"
-                      ></i>
-                      Share
-                    </button>
-                    <button
-                      class="button button--ghost"
-                      id="data-transfer-import-button"
-                      type="button"
-                    >
-                      <i class="fa-solid fa-paste" aria-hidden="true"></i>
-                      Receive
-                    </button>
-                  </div>
-                </div>
-
-                <hr class="panel-divider" />
-
-                <div class="section-heading section-heading--compact">
-                  <h2>Storage</h2>
-                </div>
-
-                <div class="stack-form">
                   <div class="settings-action-row">
                     <div class="settings-action-row__text">
-                      <strong>Calculate usage</strong>
+                      <strong>Quick Share</strong>
+                      <small>Move bookmarks between devices via clipboard.</small>
+                    </div>
+                    <div class="settings-action-row__buttons">
+                      <button
+                        class="button button--primary button--sm"
+                        id="data-transfer-export-button"
+                        type="button"
+                      >
+                        <i class="fa-solid fa-share-from-square" aria-hidden="true"></i>
+                        Share
+                      </button>
+                      <button
+                        class="button button--ghost button--sm"
+                        id="data-transfer-import-button"
+                        type="button"
+                      >
+                        <i class="fa-solid fa-paste" aria-hidden="true"></i>
+                        Receive
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="settings-action-row">
+                    <div class="settings-action-row__text">
+                      <strong>Storage usage</strong>
                       <small>Check how much space your data is using.</small>
                     </div>
                     <button

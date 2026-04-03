@@ -2775,6 +2775,13 @@ html[data-theme="dark"] .reader-highlight {
   justify-content: center;
 }
 
+/* Multi-button action row */
+.settings-action-row__buttons {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 /* About section */
 .about-branding {
   display: flex;

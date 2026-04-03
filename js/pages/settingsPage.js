@@ -163,7 +163,7 @@ function renderFeedList(state, dom) {
       ${state.rssFeeds
         .slice()
         .sort((left, right) =>
-          (left.title || left.url).localeCompare(right.title || right.url),
+          (left.title || left.url || "").localeCompare(right.title || right.url || ""),
         )
         .map((feed) => {
           const itemCount = Array.isArray(feed.items) ? feed.items.length : 0;
@@ -173,9 +173,9 @@ function renderFeedList(state, dom) {
           return `
           <div class="settings-feed-item">
             <div class="settings-feed-item__main">
-              <div class="settings-feed-item__title" title="${escapeHtml(feed.url)}">
+              <div class="settings-feed-item__title" title="${escapeHtml(feed.url || "")}">
                 <i class="fa-solid fa-rss" aria-hidden="true"></i>
-                ${escapeHtml(feed.title || feed.url)}
+                ${escapeHtml(feed.title || feed.url || "")}
               </div>
               <div class="settings-feed-item__meta">
                 <span>${itemCount} items</span>
