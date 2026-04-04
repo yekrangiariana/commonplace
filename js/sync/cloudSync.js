@@ -357,7 +357,8 @@ export async function pushSyncNow(localState, serializeMetaFn) {
     }
 
     // Only clear the IDs that were in the pre-request snapshot
-    for (const id of pushedBookmarkIds) localState.__dirtyBookmarkIds.delete(id);
+    for (const id of pushedBookmarkIds)
+      localState.__dirtyBookmarkIds.delete(id);
     for (const id of pushedProjectIds) localState.__dirtyProjectIds.delete(id);
     for (const id of pushedRssFeedIds) localState.__dirtyRssFeedIds.delete(id);
     localState.__dirtyBookmarks = localState.__dirtyBookmarkIds.size > 0;
@@ -602,7 +603,10 @@ export function applyRemoteSyncData(remoteData, deps) {
   persistState(state, { forceAllScopes: true });
   if (applyDisplayPreferences) applyDisplayPreferences();
   renderAndSyncUrl();
-  if (Array.isArray(remoteData.bookmarks) || Array.isArray(remoteData.projects)) {
+  if (
+    Array.isArray(remoteData.bookmarks) ||
+    Array.isArray(remoteData.projects)
+  ) {
     rebuildIndex(state.bookmarks, state.projects).catch(() => {});
   }
 }
