@@ -36,6 +36,8 @@ let syncInFlight = false;
 let onSyncStatusChange = null;
 let autoPullTimerId = null;
 let autoPullHandler = null;
+let pushRetryCount = 0;
+const MAX_PUSH_RETRIES = 3;
 
 function setSyncStatusCallback(callback) {
   onSyncStatusChange = callback;
@@ -123,7 +125,7 @@ export async function pullSync(localState) {
         fetchBookmarks(since),
         fetchProjects(since),
         fetchRssFeeds(since),
-        fetchSettings(),
+        fetchSettings(since),
       ]);
 
     let hasChanges = false;
@@ -144,6 +146,7 @@ export async function pullSync(localState) {
       for (const row of remoteBookmarks) {
         const mapped = bookmarkFromRow(row);
         trackTimestamp(row.updated_at);
+        if (localState.__dirtyBookmarkIds?.has(row.id)) continue;
         if (mapped._deleted) {
           if (localMap.has(row.id)) {
             localMap.delete(row.id);
@@ -166,6 +169,7 @@ export async function pullSync(localState) {
       for (const row of remoteProjects) {
         const mapped = projectFromRow(row);
         trackTimestamp(row.updated_at);
+        if (localState.__dirtyProjectIds?.has(row.id)) continue;
         if (mapped._deleted) {
           if (localMap.has(row.id)) {
             localMap.delete(row.id);
@@ -188,6 +192,7 @@ export async function pullSync(localState) {
       for (const row of remoteFeeds) {
         const mapped = rssFeedFromRow(row);
         trackTimestamp(row.updated_at);
+        if (localState.__dirtyRssFeedIds?.has(row.id)) continue;
         if (mapped._deleted) {
           if (localMap.has(row.id)) {
             localMap.delete(row.id);
@@ -340,24 +345,36 @@ export async function pushSyncNow(localState, serializeMetaFn) {
       promises.push(upsertSettings(meta));
     }
 
+    // Snapshot IDs before the network request so edits made during
+    // the await are not accidentally cleared.
+    const pushedBookmarkIds = new Set(localState.__dirtyBookmarkIds);
+    const pushedProjectIds = new Set(localState.__dirtyProjectIds);
+    const pushedRssFeedIds = new Set(localState.__dirtyRssFeedIds);
+    const pushedMeta = localState.__dirtyMeta;
+
     if (promises.length) {
       await Promise.all(promises);
     }
 
-    // Clear dirty flags after successful push
-    localState.__dirtyBookmarks = false;
-    localState.__dirtyProjects = false;
-    localState.__dirtyRss = false;
-    localState.__dirtyMeta = false;
-    localState.__dirtyBookmarkIds = new Set();
-    localState.__dirtyProjectIds = new Set();
-    localState.__dirtyRssFeedIds = new Set();
+    // Only clear the IDs that were in the pre-request snapshot
+    for (const id of pushedBookmarkIds) localState.__dirtyBookmarkIds.delete(id);
+    for (const id of pushedProjectIds) localState.__dirtyProjectIds.delete(id);
+    for (const id of pushedRssFeedIds) localState.__dirtyRssFeedIds.delete(id);
+    localState.__dirtyBookmarks = localState.__dirtyBookmarkIds.size > 0;
+    localState.__dirtyProjects = localState.__dirtyProjectIds.size > 0;
+    localState.__dirtyRss = localState.__dirtyRssFeedIds.size > 0;
+    if (pushedMeta) localState.__dirtyMeta = false;
 
+    pushRetryCount = 0;
     lastSyncPushedAt = Date.now();
     setLocalSyncTimestamp(Date.now());
     notifyStatus("done", "Saved to cloud");
   } catch (err) {
     notifyStatus("error", `Sync push failed: ${err.message}`);
+    if (pushRetryCount < MAX_PUSH_RETRIES) {
+      pushRetryCount++;
+      setTimeout(() => schedulePushSync(localState, serializeMetaFn), 10000);
+    }
   } finally {
     syncInFlight = false;
   }
@@ -532,26 +549,25 @@ function handleVisibilityPull() {
 export function applyRemoteSyncData(remoteData, deps) {
   const {
     state,
-    touchBookmarks,
-    touchProjects,
-    touchRss,
     persistState,
     renderAndSyncUrl,
     rebuildIndex,
     applyDisplayPreferences,
   } = deps;
 
+  // Bump version counters directly (for derived indexes) without setting
+  // dirty flags — this data came from the cloud, not from a local edit.
   if (Array.isArray(remoteData.bookmarks)) {
     state.bookmarks = remoteData.bookmarks;
-    touchBookmarks(state);
+    state.__bookmarksVersion = (state.__bookmarksVersion || 0) + 1;
   }
   if (Array.isArray(remoteData.projects)) {
     state.projects = remoteData.projects;
-    touchProjects(state);
+    state.__projectsVersion = (state.__projectsVersion || 0) + 1;
   }
   if (Array.isArray(remoteData.rssFeeds)) {
     state.rssFeeds = remoteData.rssFeeds;
-    touchRss(state);
+    state.__rssVersion = (state.__rssVersion || 0) + 1;
   }
   if (remoteData.settings && typeof remoteData.settings === "object") {
     const s = remoteData.settings;
@@ -579,21 +595,16 @@ export function applyRemoteSyncData(remoteData, deps) {
     if (s.ttsRate !== undefined) state.ttsRate = s.ttsRate;
   }
 
-  // Clear dirty flags so the persist below doesn't trigger a push-back
-  // to the cloud (touch* bumped versions for derived indexes, but this
-  // data already came FROM the cloud — no need to push it back).
-  state.__dirtyBookmarks = false;
-  state.__dirtyProjects = false;
-  state.__dirtyRss = false;
-  state.__dirtyMeta = false;
-  state.__dirtyBookmarkIds = new Set();
-  state.__dirtyProjectIds = new Set();
-  state.__dirtyRssFeedIds = new Set();
-
-  persistState(state);
+  // No dirty flag clearing — pre-existing local edits must survive for push.
+  // forceAllScopes ensures pulled data is written to IndexedDB regardless of
+  // dirty flags; afterPersist receives the original (pre-existing) dirty
+  // scopes so only genuine local edits trigger a push-back.
+  persistState(state, { forceAllScopes: true });
   if (applyDisplayPreferences) applyDisplayPreferences();
   renderAndSyncUrl();
-  rebuildIndex(state.bookmarks, state.projects).catch(() => {});
+  if (Array.isArray(remoteData.bookmarks) || Array.isArray(remoteData.projects)) {
+    rebuildIndex(state.bookmarks, state.projects).catch(() => {});
+  }
 }
 
 // ── Sync UI ──

@@ -403,12 +403,14 @@ export async function deleteRssFeed(id) {
 }
 
 /**
- * Fetch the user's settings row.
+ * Fetch the user's settings row. Pass `since` (ISO string) to skip if unchanged.
  */
-export async function fetchSettings() {
+export async function fetchSettings(since) {
   const userId = getUserId();
   if (!userId) return null;
-  const rows = await restGet("user_settings", `user_id=eq.${userId}&select=*`);
+  let q = `user_id=eq.${userId}&select=*`;
+  if (since) q += `&updated_at=gt.${encodeURIComponent(since)}`;
+  const rows = await restGet("user_settings", q);
   return rows?.length ? rows[0] : null;
 }
 

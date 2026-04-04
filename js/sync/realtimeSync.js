@@ -2,9 +2,6 @@
  * Lightweight Supabase Realtime client (no SDK).
  * Uses the Phoenix WebSocket protocol v1.0.0 to listen for
  * Postgres changes on bookmarks, projects, rss_feeds, user_settings.
- *
- * SETUP REQUIRED (run once in Supabase SQL editor):
- *   ALTER PUBLICATION supabase_realtime ADD TABLE bookmarks, projects, rss_feeds, user_settings;
  */
 
 import { getAccessToken, getUserId } from "./supabaseClient.js";

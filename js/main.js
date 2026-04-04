@@ -231,7 +231,6 @@ function dismissSplash() {
 async function init() {
   // Safety: always dismiss splash even if init fails
   const splashTimeout = setTimeout(dismissSplash, 6000);
-  let splashDone = Promise.resolve();
   let didClearData = false;
 
   try {
@@ -255,43 +254,14 @@ async function init() {
       await hydrateState(state);
     }
 
-    // If logged in, try to pull remote sync data and merge
-    if (isLoggedIn() && !didClearData) {
-      try {
-        const remoteData = await pullSync(state);
-        if (remoteData) {
-          applyRemoteSyncData(remoteData, getSyncDeps());
-        }
-        // One-time migration: push all local data to new per-row tables
-        if (!localStorage.getItem("cp-v2-initial-push")) {
-          await forcePush(state, serializeMetaState);
-          localStorage.setItem("cp-v2-initial-push", "1");
-        }
-      } catch {
-        // Sync failure should not block app init
-      }
-      // Start background polling for cross-device changes
-      startAutoPull(state, serializeMetaState, (data) =>
-        applyRemoteSyncData(data, getSyncDeps()),
-      );
-    }
-
-    // Only show splash delay if not clearing data and splash is enabled
-    // Skip if the page was recently hidden (e.g. fold-triggered reload) so the
-    // user doesn't see a black screen when unfolding their phone.
-    const lastHiddenAt = Number(localStorage.getItem("__lastHiddenAt") || 0);
-    const recentlyHidden =
-      lastHiddenAt > 0 && Date.now() - lastHiddenAt < 30_000;
-    if (!didClearData && state.splashEnabled !== false && !recentlyHidden) {
-      splashDone = new Promise((r) => setTimeout(r, 1000));
-    } else if (!didClearData) {
-      dismissSplash();
-    }
-
     if (state.activeTab === "add") {
       state.activeTab = "library";
     }
     pruneRssItemsForRetention();
+
+    // ── Render from local data immediately ──
+    // Cloud sync runs in the background AFTER the UI is visible.
+
     pruneRssReaderCacheByRetention(state).catch(() => {});
     initImageCache(state.bookmarks).catch(() => {});
     initSearchIndex(state.bookmarks, state.projects).catch(() => {});
@@ -388,9 +358,31 @@ async function init() {
       new Promise((resolve) => setTimeout(resolve, 3000)),
     ]).catch(() => {});
 
-    await splashDone;
+    // Dismiss splash now that UI is rendered
     clearTimeout(splashTimeout);
     dismissSplash();
+
+    // ── Background cloud sync (runs AFTER first paint) ──
+    if (isLoggedIn() && !didClearData) {
+      (async () => {
+        try {
+          const remoteData = await pullSync(state);
+          if (remoteData) {
+            applyRemoteSyncData(remoteData, getSyncDeps());
+          }
+          // One-time migration: push all local data to new per-row tables
+          if (!localStorage.getItem("cp-v2-initial-push")) {
+            await forcePush(state, serializeMetaState);
+            localStorage.setItem("cp-v2-initial-push", "1");
+          }
+        } catch {
+          // Sync failure is non-critical
+        }
+        startAutoPull(state, serializeMetaState, (data) =>
+          applyRemoteSyncData(data, getSyncDeps()),
+        );
+      })();
+    }
   } catch (err) {
     console.error("Init error:", err);
     // Attempt to render even on error so UI is visible

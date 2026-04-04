@@ -209,12 +209,15 @@ function getApproxValueSizeBytes(value) {
   }
 }
 
-export function persistState(state) {
+let pendingForceAll = false;
+
+export function persistState(state, { forceAllScopes = false } = {}) {
   initializeRuntimeState(state);
   state.__persistEpoch = Number(state.__persistEpoch || 0) + 1;
   touchMeta(state);
   pendingStateRef = state;
   hasPendingChanges = true;
+  if (forceAllScopes) pendingForceAll = true;
 
   if (persistTimerId !== null) {
     return;
@@ -234,15 +237,20 @@ function queuePersistFlush() {
   isPersistFlushQueued = true;
   hasPendingChanges = false;
   const stateRef = pendingStateRef;
+  const forceAll = pendingForceAll;
+  pendingForceAll = false;
   const dirtyScopes = consumeDirtyScopes(stateRef);
+  const persistScopes = forceAll
+    ? { bookmarks: true, projects: true, rss: true, meta: true }
+    : dirtyScopes;
   const stateSnapshot = buildPersistSnapshot(
     stateRef,
-    dirtyScopes,
+    persistScopes,
     lastPersistedSnapshot,
   );
 
   Promise.resolve()
-    .then(() => writePersistedState(stateSnapshot, dirtyScopes))
+    .then(() => writePersistedState(stateSnapshot, persistScopes))
     .then(() => {
       try {
         onAfterPersist?.(stateRef, dirtyScopes);
