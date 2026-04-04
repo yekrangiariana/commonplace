@@ -358,9 +358,9 @@ async function init() {
       new Promise((resolve) => setTimeout(resolve, 3000)),
     ]).catch(() => {});
 
-    // Dismiss splash now that UI is rendered
+    // Dismiss splash after a short branding display + fonts loaded
     clearTimeout(splashTimeout);
-    dismissSplash();
+    dismissSplashWhenReady();
 
     // ── Background cloud sync (runs AFTER first paint) ──
     if (isLoggedIn() && !didClearData) {
@@ -392,8 +392,22 @@ async function init() {
       // Last resort: just show the library tab
     }
     clearTimeout(splashTimeout);
-    dismissSplash();
+    dismissSplashWhenReady();
   }
+}
+
+const SPLASH_MIN_MS = 800;
+const splashShownAt = performance.now();
+
+function dismissSplashWhenReady() {
+  const elapsed = performance.now() - splashShownAt;
+  const remaining = Math.max(0, SPLASH_MIN_MS - elapsed);
+  const fontsReady = document.fonts ? document.fonts.ready : Promise.resolve();
+
+  Promise.all([
+    fontsReady,
+    new Promise((resolve) => setTimeout(resolve, remaining)),
+  ]).then(() => dismissSplash());
 }
 
 function consumeShareTarget() {
