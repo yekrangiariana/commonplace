@@ -127,12 +127,17 @@ import {
 import {
   initSearchIndex,
   rebuildIndex,
-  updateBookmarkInIndex,
-  updateProjectInIndex,
-  removeFromIndex,
-  search,
-  isSearchReady,
+  initSearchUI,
+  bindSearchEvents,
+  openDesktopSearch,
+  openMobileSearch,
+  closeDesktopSearch,
+  getSearchExpanded,
+  updateSearchIndexForBookmark,
+  updateSearchIndexForProject,
+  removeFromSearchIndex,
 } from "./services/search.js";
+import { initCommandActions } from "./services/commandActions.js";
 import { createFocusModeController } from "./focusMode.js";
 import {
   handleAuthRedirect,
@@ -173,11 +178,6 @@ let savedRssScrollPosition = 0;
 let suspendedLibraryArticleId = null;
 let suspendedRssReaderArticle = false;
 let focusModeController = null;
-// Search state
-let searchDebounceTimer = null;
-let searchFocusedIndex = -1;
-let isSearchExpanded = false;
-let isMobileSearchOpen = false;
 let lastTabClickTime = 0;
 let lastTabClickTarget = null;
 let storageUsageRequestInFlight = false;
@@ -265,6 +265,23 @@ async function init() {
     pruneRssReaderCacheByRetention(state).catch(() => {});
     initImageCache(state.bookmarks).catch(() => {});
     initSearchIndex(state.bookmarks, state.projects).catch(() => {});
+    initSearchUI({
+      switchTab,
+      pushUrlFromState,
+      markArticleAsOpened,
+      scrollReaderToTop,
+      resetReaderContext() {
+        rssReaderContext = null;
+        readerSideTab = "highlights";
+      },
+    });
+    initCommandActions({
+      openAddModal,
+      openExportDialog,
+      openImportDialog,
+      openFocusMode,
+      setStatus,
+    });
 
     // Schedule cloud sync push after each local persist.
     // consumeDirtyScopes() already cleared the flags for storage writes,
@@ -458,6 +475,12 @@ function bindEvents() {
   document
     .querySelector("#add-dialog-close-fab")
     ?.addEventListener("click", () => closeAddModal());
+  // Native <dialog> closes itself on Escape, bypassing closeAddModal().
+  // Intercept the cancel event so our cleanup (remove body class, etc.) still runs.
+  dom.addArticleDialog?.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeAddModal();
+  });
   dom.addArticleDialog?.addEventListener("click", (event) => {
     if (event.target === dom.addArticleDialog) {
       closeAddModal();
@@ -952,31 +975,7 @@ function bindEvents() {
   document.addEventListener("visibilitychange", handleDocumentVisibilityChange);
 
   // Search event bindings
-  dom.searchToggle?.addEventListener("click", toggleDesktopSearch);
-  dom.searchInput?.addEventListener("input", handleSearchInput);
-  dom.searchInput?.addEventListener("keydown", handleSearchKeydown);
-  dom.searchInput?.addEventListener("focus", () => {
-    if (isSearchExpanded) {
-      showSearchResults();
-    }
-  });
-  dom.searchClear?.addEventListener("click", clearDesktopSearch);
-  dom.searchResults?.addEventListener("click", handleSearchResultClick);
-  dom.searchBackdrop?.addEventListener("click", closeDesktopSearch);
-
-  // Mobile search
-  dom.mobileSearchFab?.addEventListener("click", openMobileSearch);
-  document
-    .querySelector("#mobile-search-fab-projects")
-    ?.addEventListener("click", openMobileSearch);
-  dom.searchOverlayBack?.addEventListener("click", closeMobileSearch);
-  dom.searchOverlayInput?.addEventListener("input", handleMobileSearchInput);
-  dom.searchOverlayInput?.addEventListener(
-    "keydown",
-    handleMobileSearchKeydown,
-  );
-  dom.searchOverlayClear?.addEventListener("click", clearMobileSearch);
-  dom.searchOverlayResults?.addEventListener("click", handleSearchResultClick);
+  bindSearchEvents();
 }
 
 async function handleBookmarkSubmit(event) {
@@ -1722,7 +1721,7 @@ function handleDocumentClick(event) {
 
   // Close desktop search if clicking outside
   if (
-    isSearchExpanded &&
+    getSearchExpanded() &&
     !dom.searchContainer?.contains(event.target) &&
     !dom.searchToggle?.contains(event.target)
   ) {
@@ -2422,7 +2421,6 @@ function hasActiveReaderSelection() {
 }
 
 function handleDocumentKeydown(event) {
-  // Cmd/Ctrl+K to open search
   if ((event.metaKey || event.ctrlKey) && event.key === "k") {
     event.preventDefault();
     if (window.innerWidth <= 761) {
@@ -6195,273 +6193,4 @@ function showRssStatus(message) {
 
 function clearRssStatus() {
   // messages issued via showTransientStatus clear automatically
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Search Functions
-// ═══════════════════════════════════════════════════════════════════════════
-
-function toggleDesktopSearch() {
-  if (isSearchExpanded) {
-    closeDesktopSearch();
-  } else {
-    openDesktopSearch();
-  }
-}
-
-function openDesktopSearch() {
-  isSearchExpanded = true;
-  dom.searchContainer?.classList.add("is-visible");
-  dom.searchToggle?.classList.add("is-active");
-  dom.searchInput?.focus();
-  showSearchResults();
-}
-
-function closeDesktopSearch() {
-  isSearchExpanded = false;
-  searchFocusedIndex = -1;
-  dom.searchContainer?.classList.remove("is-visible");
-  dom.searchToggle?.classList.remove("is-active");
-  dom.searchResults?.classList.remove("is-visible");
-  dom.searchInput.value = "";
-  dom.searchClear?.classList.remove("is-visible");
-  // Reset to empty state
-  if (dom.searchResultsList) {
-    dom.searchResultsList.innerHTML = "";
-  }
-  dom.searchResults?.classList.add("is-empty");
-  const emptyEl = dom.searchResults?.querySelector(".search-dropdown__empty");
-  if (emptyEl) {
-    emptyEl.textContent = "Start typing to search...";
-  }
-}
-
-function showSearchResults() {
-  dom.searchResults?.classList.add("is-visible");
-}
-
-function hideSearchResults() {
-  dom.searchResults?.classList.remove("is-visible");
-  searchFocusedIndex = -1;
-}
-
-function clearDesktopSearch() {
-  dom.searchInput.value = "";
-  dom.searchClear?.classList.remove("is-visible");
-  renderSearchResults([], dom.searchResultsList);
-  dom.searchInput?.focus();
-}
-
-function handleSearchInput(event) {
-  const query = event.target.value;
-  dom.searchClear?.classList.toggle("is-visible", query.length > 0);
-  debouncedSearch(query, dom.searchResultsList);
-}
-
-function handleMobileSearchInput(event) {
-  const query = event.target.value;
-  dom.searchOverlayClear?.classList.toggle("is-visible", query.length > 0);
-  debouncedSearch(query, dom.searchOverlayList);
-}
-
-function debouncedSearch(query, listElement) {
-  if (searchDebounceTimer) {
-    clearTimeout(searchDebounceTimer);
-  }
-
-  searchDebounceTimer = setTimeout(() => {
-    searchDebounceTimer = null;
-    const results = search(query, { limit: 30 });
-    renderSearchResults(results, listElement);
-  }, 150);
-}
-
-function renderSearchResults(results, listElement) {
-  if (!listElement) return;
-
-  const container = listElement.closest(
-    ".search-dropdown__results, .search-overlay__results",
-  );
-  const emptyEl = container?.querySelector(
-    ".search-dropdown__empty, .search-overlay__empty",
-  );
-
-  if (results.length === 0) {
-    listElement.innerHTML = "";
-    container?.classList.add("is-empty");
-    if (emptyEl) {
-      emptyEl.textContent =
-        dom.searchInput?.value || dom.searchOverlayInput?.value
-          ? "No results found"
-          : "Start typing to search...";
-    }
-    return;
-  }
-
-  container?.classList.remove("is-empty");
-
-  listElement.innerHTML = results
-    .map(
-      (result, index) => `
-      <li
-        class="search-result-item${index === searchFocusedIndex ? " is-focused" : ""}"
-        data-search-result-id="${escapeHtml(result.id)}"
-        data-search-result-type="${escapeHtml(result.type)}"
-        tabindex="0"
-      >
-        <div class="search-result-item__icon search-result-item__icon--${result.type}">
-          <i class="fa-solid ${result.type === "bookmark" ? "fa-bookmark" : "fa-folder"}" aria-hidden="true"></i>
-        </div>
-        <div class="search-result-item__content">
-          <div class="search-result-item__title">${escapeHtml(result.title || "Untitled")}</div>
-          ${result.preview ? `<div class="search-result-item__preview">${escapeHtml(result.preview)}</div>` : ""}
-        </div>
-      </li>
-    `,
-    )
-    .join("");
-}
-
-function handleSearchKeydown(event) {
-  handleSearchNavigation(event, dom.searchResultsList, () => {
-    closeDesktopSearch();
-  });
-}
-
-function handleMobileSearchKeydown(event) {
-  handleSearchNavigation(event, dom.searchOverlayList, () => {
-    closeMobileSearch();
-  });
-}
-
-function handleSearchNavigation(event, listElement, onClose) {
-  const items = listElement?.querySelectorAll(".search-result-item") || [];
-
-  if (event.key === "Escape") {
-    event.preventDefault();
-    onClose();
-    return;
-  }
-
-  if (event.key === "ArrowDown") {
-    event.preventDefault();
-    searchFocusedIndex = Math.min(searchFocusedIndex + 1, items.length - 1);
-    updateSearchFocus(items);
-    return;
-  }
-
-  if (event.key === "ArrowUp") {
-    event.preventDefault();
-    searchFocusedIndex = Math.max(searchFocusedIndex - 1, 0);
-    updateSearchFocus(items);
-    return;
-  }
-
-  if (event.key === "Enter") {
-    event.preventDefault();
-    const focusedItem = items[searchFocusedIndex];
-    if (focusedItem) {
-      selectSearchResult(focusedItem);
-      onClose();
-    }
-    return;
-  }
-}
-
-function updateSearchFocus(items) {
-  items.forEach((item, index) => {
-    item.classList.toggle("is-focused", index === searchFocusedIndex);
-  });
-
-  const focusedItem = items[searchFocusedIndex];
-  if (focusedItem) {
-    focusedItem.scrollIntoView({ block: "nearest" });
-  }
-}
-
-function handleSearchResultClick(event) {
-  const item = event.target.closest(".search-result-item");
-  if (!item) return;
-
-  selectSearchResult(item);
-
-  // Close search UI
-  if (isMobileSearchOpen) {
-    closeMobileSearch();
-  } else {
-    closeDesktopSearch();
-  }
-}
-
-function selectSearchResult(item) {
-  const id = item.dataset.searchResultId;
-  const type = item.dataset.searchResultType;
-
-  if (type === "bookmark") {
-    rssReaderContext = null;
-    readerSideTab = "highlights";
-    state.selectedArticleId = id;
-    state.rssReaderArticle = null;
-    markArticleAsOpened(id);
-    persistState(state);
-    switchTab("reader");
-    scrollReaderToTop();
-  } else if (type === "project") {
-    state.selectedProjectId = id;
-    state.selectedProjectSidebarArticleId = null;
-    persistState(state);
-    switchTab("projects");
-    renderProjects(state, dom);
-    pushUrlFromState();
-  }
-}
-
-function openMobileSearch() {
-  isMobileSearchOpen = true;
-  dom.searchOverlay?.classList.add("is-visible");
-  dom.searchOverlayInput?.focus();
-}
-
-function closeMobileSearch() {
-  isMobileSearchOpen = false;
-  dom.searchOverlay?.classList.remove("is-visible");
-  dom.searchOverlayInput.value = "";
-  dom.searchOverlayClear?.classList.remove("is-visible");
-  if (dom.searchOverlayList) {
-    dom.searchOverlayList.innerHTML = "";
-  }
-  // Reset to empty state
-  dom.searchOverlayResults?.classList.add("is-empty");
-  const emptyEl = dom.searchOverlayResults?.querySelector(
-    ".search-overlay__empty",
-  );
-  if (emptyEl) {
-    emptyEl.textContent = "Start typing to search...";
-  }
-}
-
-function clearMobileSearch() {
-  dom.searchOverlayInput.value = "";
-  dom.searchOverlayClear?.classList.remove("is-visible");
-  renderSearchResults([], dom.searchOverlayList);
-  dom.searchOverlayInput?.focus();
-}
-
-// Update search index when bookmarks/projects change
-function updateSearchIndexForBookmark(bookmark) {
-  if (isSearchReady()) {
-    updateBookmarkInIndex(bookmark);
-  }
-}
-
-function updateSearchIndexForProject(project) {
-  if (isSearchReady()) {
-    updateProjectInIndex(project);
-  }
-}
-
-function removeFromSearchIndex(id) {
-  if (isSearchReady()) {
-    removeFromIndex(id);
-  }
 }

@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "commonplace-v";
-const DEFAULT_VERSION = "2.0.1";
+const DEFAULT_VERSION = "2.2.1";
 
 // Fetch app version from settings (once, at SW load time)
 const cacheNamePromise = fetch("./app-settings.json", { cache: "no-store" })
@@ -49,6 +49,7 @@ const PRECACHE_URLS = [
   "./js/services/rssAutoRefresh.js",
   "./js/services/rssFetch.js",
   "./js/services/search.js",
+  "./js/services/commandActions.js",
   "./js/services/tweetFetch.js",
   "./js/sync/cloudSync.js",
   "./js/sync/realtimeSync.js",
