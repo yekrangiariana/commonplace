@@ -686,11 +686,17 @@
   #add-article-open-button-mobile .mobile-fab-icon--close {
     display: none;
   }
-  body.mobile-search-open #add-article-open-button-mobile .mobile-fab-icon--default,
-  body.add-dialog-open #add-article-open-button-mobile .mobile-fab-icon--default {
+  body.mobile-search-open
+    #add-article-open-button-mobile
+    .mobile-fab-icon--default,
+  body.add-dialog-open
+    #add-article-open-button-mobile
+    .mobile-fab-icon--default {
     display: none;
   }
-  body.mobile-search-open #add-article-open-button-mobile .mobile-fab-icon--close,
+  body.mobile-search-open
+    #add-article-open-button-mobile
+    .mobile-fab-icon--close,
   body.add-dialog-open #add-article-open-button-mobile .mobile-fab-icon--close {
     display: inline;
   }
