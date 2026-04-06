@@ -396,7 +396,6 @@ export function initSearchUI({
  */
 export function bindSearchEvents() {
   // Desktop search
-  dom.searchToggle?.addEventListener("click", toggleDesktopSearch);
   dom.searchInput?.addEventListener("input", handleSearchInput);
   dom.searchInput?.addEventListener("keydown", handleSearchKeydown);
   dom.searchInput?.addEventListener("focus", () => {
@@ -431,18 +430,10 @@ export function getMobileSearchOpen() {
 
 // ── Desktop search ────────────────────────────────────────────────────────
 
-function toggleDesktopSearch() {
-  if (isSearchExpanded) {
-    closeDesktopSearch();
-  } else {
-    openDesktopSearch();
-  }
-}
-
 export function openDesktopSearch() {
   isSearchExpanded = true;
   dom.searchContainer?.classList.add("is-visible");
-  dom.searchToggle?.classList.add("is-active");
+  document.body.classList.add("desktop-search-open");
   dom.searchInput?.focus();
   showSearchResults();
   debouncedSearch("", dom.searchResultsList);
@@ -454,7 +445,7 @@ export function closeDesktopSearch() {
   _searchMode = null;
   _pickerCache = null;
   dom.searchContainer?.classList.remove("is-visible");
-  dom.searchToggle?.classList.remove("is-active");
+  document.body.classList.remove("desktop-search-open");
   dom.searchResults?.classList.remove("is-visible");
   dom.searchInput.value = "";
   if (dom.searchInput) dom.searchInput.placeholder = "Search or jump to...";
@@ -561,7 +552,12 @@ function debouncedSearch(query, listElement) {
       return;
     }
 
-    const commands = matchCommands(query);
+    let commands = matchCommands(query);
+    // On mobile with no query, only show "Add" commands — other categories
+    // are easily reachable via the tab bar, so reduce clutter.
+    if (isMobileSearchOpen && !query?.trim()) {
+      commands = commands.filter((cmd) => cmd.category === "Add");
+    }
     const contentResults = search(query, { limit: 30 });
     renderSearchResults(commands, contentResults, listElement);
   }, 150);

@@ -411,9 +411,17 @@ html[data-theme="dark"] .nav-link.is-active {
   transition: transform 0.2s ease;
 }
 
-body.add-dialog-open .desktop-fab {
-  pointer-events: none;
-  opacity: 0;
+/* FAB icon states: default shows bolt, close shows × */
+.desktop-fab .fab-icon--close {
+  display: none;
+}
+body.desktop-search-open .desktop-fab .fab-icon--default,
+body.add-dialog-open .desktop-fab .fab-icon--default {
+  display: none;
+}
+body.desktop-search-open .desktop-fab .fab-icon--close,
+body.add-dialog-open .desktop-fab .fab-icon--close {
+  display: inline;
 }
 
 /* Header Actions */

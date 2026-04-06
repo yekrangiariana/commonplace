@@ -470,7 +470,16 @@ function bindEvents() {
   dom.bookmarkForm.addEventListener("submit", handleBookmarkSubmit);
   document
     .querySelector("#add-article-open-button")
-    ?.addEventListener("click", () => openAddModal());
+    ?.addEventListener("click", () => {
+      // 3-state toggle: add-modal-open → close modal, search-open → close search, default → open search
+      if (dom.addArticleDialog?.open) {
+        closeAddModal();
+      } else if (getSearchExpanded()) {
+        closeDesktopSearch();
+      } else {
+        openDesktopSearch();
+      }
+    });
   document
     .querySelector("#add-article-open-button-mobile")
     ?.addEventListener("click", () => {
@@ -1734,7 +1743,7 @@ function handleDocumentClick(event) {
   if (
     getSearchExpanded() &&
     !dom.searchContainer?.contains(event.target) &&
-    !dom.searchToggle?.contains(event.target)
+    !event.target.closest("#add-article-open-button")
   ) {
     closeDesktopSearch();
   }
@@ -2435,9 +2444,9 @@ function handleDocumentKeydown(event) {
   if ((event.metaKey || event.ctrlKey) && event.key === "k") {
     event.preventDefault();
     if (window.innerWidth <= 761) {
-      openMobileSearch();
+      getMobileSearchOpen() ? closeMobileSearch() : openMobileSearch();
     } else {
-      openDesktopSearch();
+      getSearchExpanded() ? closeDesktopSearch() : openDesktopSearch();
     }
     return;
   }

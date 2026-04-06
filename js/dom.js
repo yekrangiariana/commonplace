@@ -156,7 +156,6 @@ export const dom = {
   searchContainer: document.querySelector("#search-container"),
   searchBackdrop: document.querySelector("#search-backdrop"),
   searchInput: document.querySelector("#search-input"),
-  searchToggle: document.querySelector("#search-toggle"),
   searchClear: document.querySelector("#search-clear"),
   searchResults: document.querySelector("#search-results"),
   searchResultsList: document.querySelector("#search-results-list"),
