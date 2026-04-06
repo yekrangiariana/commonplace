@@ -40,7 +40,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 16px;
+  padding: 6px 16px;
   background: transparent;
   flex-shrink: 0;
   gap: 12px;
@@ -210,7 +210,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 12px 20px;
+  padding: 4px 20px;
   background: transparent;
   flex-shrink: 0;
 }
@@ -228,7 +228,7 @@
   position: relative;
   overflow: hidden;
   /* Horizontal padding for content margins */
-  padding: 0 32px;
+  padding: 0 20px;
   box-sizing: border-box;
 }
 
@@ -255,6 +255,7 @@
   font-size: 1em;
   line-height: 1.85;
   color: #d8d5d0;
+  white-space: normal;
   /* Allow paragraphs to flow across pages like a book */
 }
 
@@ -310,7 +311,7 @@
 /* ─── Focus Mode Selection ─────────────────────────────────────────────────── */
 
 .focus-mode-content ::selection {
-  background: rgba(122, 201, 163, 0.45);
+  background: color-mix(in srgb, var(--success) 45%, transparent);
   color: #fff;
 }
 

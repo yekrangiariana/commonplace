@@ -98,7 +98,7 @@ export const state = {
   autoTagUseDefaultCountries: true,
   autoTagCustomRules: [],
   displayFont: "mono",
-  theme: "light",
+  theme: "system",
   displayHighlightColor: "green",
   splashEnabled: true,
   ttsVoiceId: "",

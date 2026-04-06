@@ -285,7 +285,7 @@ export function createFocusModeController(deps) {
     const viewportHeight = wrapper.clientHeight;
 
     const columnGap = 48;
-    const verticalPadding = 24;
+    const verticalPadding = 12;
 
     const columnsPerPage = focusModeState.columnMode === "single" ? 1 : 2;
 

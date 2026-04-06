@@ -5,6 +5,36 @@
  * 1. Add a color entry to ACCENT_COLORS below
  * 2. Add a <button> to the accent picker in index.html
  * 3. Add the color name to the inline flash-prevention script array in index.html
+ *
+ * ── Color property reference ──────────────────────────────────────────────
+ *
+ * swatch            Settings accent picker swatch (small color button)
+ *
+ * light {           Light-mode overrides
+ *   success         --success variable: text, icons, active tab color, links
+ *   rgb / customBg  --success-bg: header bar, tab pills, card badges, nav active state
+ *   hoverOpacity /  --success-bg-hover: hover state for the above elements
+ *     customBgHover
+ *   borderRgb,      --success-border: header bar border, active tab borders
+ *     borderOpacity
+ * }
+ *
+ * dark {            Dark-mode overrides (same properties as light)
+ *   ...
+ * }
+ *
+ * reader {          Reader page text highlights (saved highlights)
+ *   lightRgb,       Light-mode highlight background
+ *     lightOpacity
+ *     / customLight
+ *   darkRgba        Dark-mode highlight background
+ *     / customDark
+ * }
+ *
+ * focusRgba         Focus-mode reader highlight background
+ *
+ * fabBg             (optional) Override for the floating action button (+ button)
+ *                   If omitted, FAB uses var(--success) from light/dark
  */
 
 const ACCENT_COLORS = {
@@ -155,13 +185,12 @@ const ACCENT_COLORS = {
       borderOpacity: 0.44,
     },
     reader: {
-      customLight:
-        "linear-gradient(90deg, rgba(238,68,68,0.22), rgba(238,170,51,0.22), rgba(68,187,68,0.22), rgba(51,136,238,0.22), rgba(136,68,204,0.22))",
-      customDark:
-        "linear-gradient(90deg, rgba(255,120,120,0.5), rgba(255,200,100,0.5), rgba(120,230,120,0.5), rgba(100,170,255,0.5), rgba(180,120,240,0.5))",
+      customLight: "rgba(212, 64, 144, 0.22)",
+      customDark: "rgba(240, 160, 208, 0.5)",
     },
-    focusRgba:
-      "linear-gradient(90deg, rgba(238,68,68,0.3), rgba(238,170,51,0.3), rgba(68,187,68,0.3), rgba(51,136,238,0.3), rgba(136,68,204,0.3))",
+    focusRgba: "rgba(212, 64, 144, 0.35)",
+    fabBg:
+      "linear-gradient(135deg, #ee4444, #eeaa33, #44bb44, #3388ee, #8844cc)",
   },
 };
 
@@ -244,6 +273,16 @@ export function injectAccentStyles() {
         `  background: ${swatchBg};\n` +
         `}`,
     );
+
+    // FAB button override (e.g. rainbow gradient)
+    if (color.fabBg) {
+      rules.push(
+        `html[data-highlight-color="${name}"] .desktop-fab,\n` +
+          `html[data-highlight-color="${name}"] .dialog-close-fab {\n` +
+          `  background: ${color.fabBg};\n` +
+          `}`,
+      );
+    }
 
     // Settings tile preview — light
     rules.push(

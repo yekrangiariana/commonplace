@@ -439,6 +439,15 @@ function consumeShareTarget() {
 }
 
 function bindEvents() {
+  // React to OS dark/light mode changes when theme is set to "system"
+  window
+    .matchMedia("(prefers-color-scheme: dark)")
+    .addEventListener("change", () => {
+      if (state.theme === "system") {
+        applyDisplayPreferences();
+      }
+    });
+
   dom.bookmarkForm.addEventListener("submit", handleBookmarkSubmit);
   document
     .querySelector("#add-article-open-button")
@@ -3611,7 +3620,16 @@ function applyDisplayPreferences() {
     : "green";
   const accentColor = isValidAccent(highlightColor) ? highlightColor : "green";
 
-  root.setAttribute("data-theme", state.theme === "dark" ? "dark" : "light");
+  const resolvedTheme =
+    state.theme === "system"
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+      : state.theme === "dark"
+        ? "dark"
+        : "light";
+
+  root.setAttribute("data-theme", resolvedTheme);
   root.setAttribute(
     "data-font",
     ["mono", "sans", "guardian", "josefin"].includes(state.displayFont)
@@ -3624,7 +3642,7 @@ function applyDisplayPreferences() {
   // Update theme-color meta for status bar / notch area
   const themeColorMeta = document.getElementById("theme-color-meta");
   if (themeColorMeta) {
-    themeColorMeta.content = state.theme === "dark" ? "#181716" : "#f8f5ed";
+    themeColorMeta.content = resolvedTheme === "dark" ? "#181716" : "#f8f5ed";
   }
 }
 

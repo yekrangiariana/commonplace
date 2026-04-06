@@ -24,7 +24,9 @@
           var stored = localStorage.getItem("bookmark-manager-state-v1");
           if (stored) {
             var state = JSON.parse(stored);
-            var theme = state.theme === "dark" ? "dark" : "light";
+            var theme = state.theme === "system"
+              ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+              : state.theme === "dark" ? "dark" : "light";
             var highlight = state.displayHighlightColor || "green";
             var font = ["mono", "sans", "guardian", "josefin"].includes(
               state.displayFont,
@@ -1375,6 +1377,13 @@
                       role="group"
                       aria-label="Theme"
                     >
+                      <button
+                        type="button"
+                        class="settings-segmented__btn"
+                        data-display-theme="system"
+                      >
+                        <i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i> System
+                      </button>
                       <button
                         type="button"
                         class="settings-segmented__btn"

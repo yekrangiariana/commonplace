@@ -384,7 +384,9 @@ function buildMetaSnapshot(snapshot) {
       ? snapshot.autoTagCustomRules
       : [],
     displayFont: snapshot.displayFont || "mono",
-    theme: snapshot.theme || "light",
+    theme: ["light", "dark", "system"].includes(snapshot.theme)
+      ? snapshot.theme
+      : "system",
     displayHighlightColor: snapshot.displayHighlightColor || "green",
     splashEnabled: snapshot.splashEnabled !== false,
     ttsVoiceId: snapshot.ttsVoiceId || "",
@@ -486,9 +488,9 @@ function applyParsedState(state, parsedState) {
   )
     ? parsedState.displayFont
     : "mono";
-  state.theme = ["light", "dark"].includes(parsedState.theme)
+  state.theme = ["light", "dark", "system"].includes(parsedState.theme)
     ? parsedState.theme
-    : "light";
+    : "system";
   state.displayHighlightColor = isValidAccent(parsedState.displayHighlightColor)
     ? parsedState.displayHighlightColor
     : "green";
