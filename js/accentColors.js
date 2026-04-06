@@ -278,7 +278,8 @@ export function injectAccentStyles() {
     if (color.fabBg) {
       rules.push(
         `html[data-highlight-color="${name}"] .desktop-fab,\n` +
-          `html[data-highlight-color="${name}"] .dialog-close-fab {\n` +
+          `html[data-highlight-color="${name}"] .dialog-close-fab,\n` +
+          `html[data-highlight-color="${name}"] #add-article-open-button-mobile {\n` +
           `  background: ${color.fabBg};\n` +
           `}`,
       );
