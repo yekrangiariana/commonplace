@@ -281,6 +281,7 @@ export function injectAccentStyles() {
           `html[data-highlight-color="${name}"] .dialog-close-fab,\n` +
           `html[data-highlight-color="${name}"] #add-article-open-button-mobile {\n` +
           `  background: ${color.fabBg};\n` +
+          `  color: #fff;\n` +
           `}`,
       );
     }

@@ -110,7 +110,7 @@
     color: var(--success);
   }
 
-  /* Add button - circular raised style */
+  /* Action button - circular raised style (matches .desktop-fab) */
   #add-article-open-button-mobile {
     position: relative;
     top: -20px;
@@ -119,19 +119,19 @@
     padding: 0;
     border-radius: 50%;
     background: var(--success);
-    color: var(--surface);
-    border: 1px solid var(--border-light);
+    color: var(--bg);
+    border: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     font-size: 0; /* Hide text */
     order: 3; /* Position in middle */
     transition:
-      background-color 0s,
-      border-color 0s; /* No transition to prevent flash */
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
     -webkit-tap-highlight-color: transparent;
+    z-index: 101;
   }
 
   html[data-theme="dark"] #add-article-open-button-mobile {
-    border-color: var(--surface);
     background: var(--success);
     color: var(--bg);
   }
@@ -144,7 +144,7 @@
 
   #add-article-open-button-mobile:hover {
     transform: scale(1.05);
-    background: var(--success);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   }
 
   /* Reorder tabs: Explore(2), Library(3), [Add button center via order:3], Projects(4), Settings(5) */
@@ -682,8 +682,17 @@
   .add-article-dialog__close {
     display: none;
   }
-  body.add-dialog-open #add-article-open-button-mobile i {
-    transform: rotate(45deg);
+  /* FAB icon states: default shows bolt, close shows × */
+  #add-article-open-button-mobile .mobile-fab-icon--close {
+    display: none;
+  }
+  body.mobile-search-open #add-article-open-button-mobile .mobile-fab-icon--default,
+  body.add-dialog-open #add-article-open-button-mobile .mobile-fab-icon--default {
+    display: none;
+  }
+  body.mobile-search-open #add-article-open-button-mobile .mobile-fab-icon--close,
+  body.add-dialog-open #add-article-open-button-mobile .mobile-fab-icon--close {
+    display: inline;
   }
   #add-article-open-button-mobile i {
     transition: transform 0.2s ease;

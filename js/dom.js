@@ -161,7 +161,6 @@ export const dom = {
   searchResults: document.querySelector("#search-results"),
   searchResultsList: document.querySelector("#search-results-list"),
   // Mobile search
-  mobileSearchFab: document.querySelector("#mobile-search-fab"),
   searchOverlay: document.querySelector("#search-overlay"),
   searchOverlayBack: document.querySelector("#search-overlay-back"),
   searchOverlayInput: document.querySelector("#search-overlay-input"),

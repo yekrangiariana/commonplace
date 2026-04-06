@@ -131,6 +131,8 @@ import {
   bindSearchEvents,
   openDesktopSearch,
   openMobileSearch,
+  closeMobileSearch,
+  getMobileSearchOpen,
   closeDesktopSearch,
   getSearchExpanded,
   updateSearchIndexForBookmark,
@@ -471,7 +473,16 @@ function bindEvents() {
     ?.addEventListener("click", () => openAddModal());
   document
     .querySelector("#add-article-open-button-mobile")
-    ?.addEventListener("click", () => openAddModal());
+    ?.addEventListener("click", () => {
+      // 3-state toggle: add-modal-open → close modal, search-open → close search, default → open search
+      if (dom.addArticleDialog?.open) {
+        closeAddModal();
+      } else if (getMobileSearchOpen()) {
+        closeMobileSearch();
+      } else {
+        openMobileSearch();
+      }
+    });
   document
     .querySelector("#add-dialog-close-fab")
     ?.addEventListener("click", () => closeAddModal());

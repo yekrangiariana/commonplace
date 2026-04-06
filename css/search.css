@@ -282,11 +282,6 @@ html[data-theme="dark"] .search-dropdown__content {
   display: none;
 }
 
-/* Mobile search button - inline in library toolbar (desktop: hidden) */
-.mobile-search-fab {
-  display: none;
-}
-
 /* Mobile search overlay */
 .search-overlay {
   display: none;
@@ -294,9 +289,9 @@ html[data-theme="dark"] .search-dropdown__content {
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: 54px;
   background: var(--bg);
-  z-index: 300;
+  z-index: 99;
   flex-direction: column;
 }
 
@@ -380,7 +375,7 @@ html[data-theme="dark"] .search-dropdown__content {
   flex: 1;
   overflow-y: auto;
   padding: 8px 12px;
-  padding-bottom: 100px; /* Space for bottom nav */
+  padding-bottom: 24px;
 }
 
 .search-overlay__empty {
@@ -434,16 +429,6 @@ html[data-theme="dark"] .search-dropdown__content {
   /* Hide desktop search */
   .search-container {
     display: none;
-  }
-
-  /* Hide tab bar search button */
-  .mobile-search-button {
-    display: none !important;
-  }
-
-  /* Search button lives inline inside the library toolbar on mobile */
-  .mobile-search-fab {
-    display: flex !important;
   }
 }
 

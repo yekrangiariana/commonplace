@@ -409,10 +409,6 @@ export function bindSearchEvents() {
   dom.searchBackdrop?.addEventListener("click", closeDesktopSearch);
 
   // Mobile search
-  dom.mobileSearchFab?.addEventListener("click", openMobileSearch);
-  document
-    .querySelector("#mobile-search-fab-projects")
-    ?.addEventListener("click", openMobileSearch);
   dom.searchOverlayBack?.addEventListener("click", closeMobileSearch);
   dom.searchOverlayInput?.addEventListener("input", handleMobileSearchInput);
   dom.searchOverlayInput?.addEventListener(
@@ -426,6 +422,11 @@ export function bindSearchEvents() {
 /** @returns {boolean} Whether the desktop search dropdown is open. */
 export function getSearchExpanded() {
   return isSearchExpanded;
+}
+
+/** @returns {boolean} Whether the mobile search overlay is open. */
+export function getMobileSearchOpen() {
+  return isMobileSearchOpen;
 }
 
 // ── Desktop search ────────────────────────────────────────────────────────
@@ -485,15 +486,17 @@ function clearDesktopSearch() {
 export function openMobileSearch() {
   isMobileSearchOpen = true;
   dom.searchOverlay?.classList.add("is-visible");
+  document.body.classList.add("mobile-search-open");
   dom.searchOverlayInput?.focus();
   debouncedSearch("", dom.searchOverlayList);
 }
 
-function closeMobileSearch() {
+export function closeMobileSearch() {
   isMobileSearchOpen = false;
   _searchMode = null;
   _pickerCache = null;
   dom.searchOverlay?.classList.remove("is-visible");
+  document.body.classList.remove("mobile-search-open");
   dom.searchOverlayInput.value = "";
   if (dom.searchOverlayInput)
     dom.searchOverlayInput.placeholder = "Search or jump to...";
@@ -533,7 +536,7 @@ function handleMobileSearchInput(event) {
 }
 
 function matchCommands(query) {
-  const allCommands = [...SEARCH_COMMANDS, ...ACTION_COMMANDS];
+  const allCommands = [...ACTION_COMMANDS, ...SEARCH_COMMANDS];
   if (!query?.trim()) return allCommands;
   const terms = query.toLowerCase().split(/\s+/);
   return allCommands.filter((cmd) => {
