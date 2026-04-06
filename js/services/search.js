@@ -495,7 +495,8 @@ function closeMobileSearch() {
   _pickerCache = null;
   dom.searchOverlay?.classList.remove("is-visible");
   dom.searchOverlayInput.value = "";
-  if (dom.searchOverlayInput) dom.searchOverlayInput.placeholder = "Search or jump to...";
+  if (dom.searchOverlayInput)
+    dom.searchOverlayInput.placeholder = "Search or jump to...";
   dom.searchOverlayClear?.classList.remove("is-visible");
   if (dom.searchOverlayList) {
     dom.searchOverlayList.innerHTML = "";
@@ -705,7 +706,9 @@ function enterPickerMode(mode) {
   _searchMode = mode;
   _pickerCache = getBookmarksWithHighlights();
   const input = isMobileSearchOpen ? dom.searchOverlayInput : dom.searchInput;
-  const list = isMobileSearchOpen ? dom.searchOverlayList : dom.searchResultsList;
+  const list = isMobileSearchOpen
+    ? dom.searchOverlayList
+    : dom.searchResultsList;
 
   if (input) {
     input.value = "";
