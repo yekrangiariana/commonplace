@@ -2,7 +2,7 @@
   "fetchServiceUrl": "https://xlnkwauklzyqijnvuytf.supabase.co/functions/v1/fetch-article",
   "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhsbmt3YXVrbHp5cWlqbnZ1eXRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0ODc0NzgsImV4cCI6MjA4OTA2MzQ3OH0.r7zkN9cXfR1q5CJlu0xlBmuWIremzgKHuM5eMtbU8ls",
   "requestTimeoutMs": 25000,
-  "appVersion": "2.2.0",
+  "appVersion": "2.2.1",
   "appDescription": "A personal reading and research workspace for journalists and writers. Collect articles, highlight what matters, organise sources into projects and turn research into writing.",
   "suggestedFeeds": [
     { "name": "BBC News", "url": "http://feeds.bbci.co.uk/news/rss.xml" },
