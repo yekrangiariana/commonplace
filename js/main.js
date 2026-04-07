@@ -67,6 +67,9 @@ import {
   goToPreviousLibraryPage,
   updateLibraryVirtualWindow,
   getLibraryReadingOrder,
+  initLibraryFilterModal,
+  isFilterModalOpen,
+  closeFilterModalDirect,
 } from "./pages/libraryPage.js";
 import { renderReader } from "./pages/readerPage.js";
 import {
@@ -160,6 +163,7 @@ import {
 let statusTimeoutId = null;
 let projectLinkSelection = null;
 let isApplyingRoute = false;
+let filterModal = null;
 let draggedProjectId = null;
 let workspaceContextMenu = null;
 let selectionMenuWasOpenAtPointerDown = false;
@@ -597,20 +601,12 @@ function bindEvents() {
   );
   dom.rssRefreshActiveButton?.addEventListener("click", refreshAllRssFeeds);
 
-  dom.libraryTagClear.addEventListener("click", () => {
-    state.libraryTagFilters = [];
-    persistState(state);
-    renderLibraryFilters(state, dom);
-    renderArticleList(state, dom);
-    pushUrlFromState();
-  });
-
-  dom.libraryProjectClear.addEventListener("click", () => {
-    state.libraryProjectFilters = [];
-    persistState(state);
-    renderLibraryFilters(state, dom);
-    renderArticleList(state, dom);
-    pushUrlFromState();
+  // ── Filter modal (wired in libraryPage.js) ──
+  filterModal = initLibraryFilterModal({
+    state,
+    dom,
+    persistState,
+    pushUrlFromState,
   });
 
   dom.projectsProjectClear.addEventListener("click", () => {
@@ -2064,12 +2060,49 @@ function handleDocumentClick(event) {
     return;
   }
 
+  // ── Filter dialog: toggle tag ──
+  const filterTagTrigger = event.target.closest("[data-filter-tag]");
+  if (filterTagTrigger) {
+    filterModal.toggleTag(filterTagTrigger.dataset.filterTag);
+    return;
+  }
+
+  // ── Filter dialog: toggle project ──
+  const filterProjectTrigger = event.target.closest("[data-filter-project]");
+  if (filterProjectTrigger) {
+    filterModal.toggleProject(filterProjectTrigger.dataset.filterProject);
+    return;
+  }
+
+  // ── Filter dialog: see more / show less ──
+  const filterExpandTrigger = event.target.closest("[data-filter-expand]");
+  if (filterExpandTrigger) {
+    filterModal.toggleSection(filterExpandTrigger.dataset.filterExpand);
+    return;
+  }
+
+  // ── Sidebar pill: remove tag filter ──
+  const removeTagPill = event.target.closest("[data-remove-tag-filter]");
+  if (removeTagPill) {
+    filterModal.toggleTag(removeTagPill.dataset.removeTagFilter);
+    return;
+  }
+
+  // ── Sidebar pill: remove project filter ──
+  const removeProjectPill = event.target.closest(
+    "[data-remove-project-filter]",
+  );
+  if (removeProjectPill) {
+    filterModal.toggleProject(removeProjectPill.dataset.removeProjectFilter);
+    return;
+  }
+
   const toggleLibraryTagTrigger = event.target.closest(
     "[data-toggle-library-tag]",
   );
 
   if (toggleLibraryTagTrigger) {
-    toggleLibraryTagFilter(toggleLibraryTagTrigger.dataset.toggleLibraryTag);
+    filterModal.toggleTag(toggleLibraryTagTrigger.dataset.toggleLibraryTag);
     return;
   }
 
@@ -2119,7 +2152,7 @@ function handleDocumentClick(event) {
   );
 
   if (toggleLibraryProjectTrigger) {
-    toggleLibraryProjectFilter(
+    filterModal.toggleProject(
       toggleLibraryProjectTrigger.dataset.toggleLibraryProject,
     );
     return;
@@ -3258,6 +3291,12 @@ async function handleBrowserNavigation() {
     return;
   }
 
+  // If the filter modal is open and user pressed back, just close it
+  if (isFilterModalOpen(dom)) {
+    closeFilterModalDirect(dom);
+    return;
+  }
+
   applyRouteFromUrl();
   try {
     await restorePendingRssArticle();
@@ -4368,44 +4407,6 @@ function importAutoTagRulesFromInput() {
   } catch (error) {
     setStatus(error?.message || "Could not import rules. Check JSON format.");
   }
-}
-
-function toggleLibraryTagFilter(tag) {
-  if (!tag) {
-    return;
-  }
-
-  if (state.libraryTagFilters.includes(tag)) {
-    state.libraryTagFilters = state.libraryTagFilters.filter(
-      (currentTag) => currentTag !== tag,
-    );
-  } else {
-    state.libraryTagFilters = [...state.libraryTagFilters, tag];
-  }
-
-  persistState(state);
-  renderLibraryFilters(state, dom);
-  renderArticleList(state, dom);
-  pushUrlFromState();
-}
-
-function toggleLibraryProjectFilter(projectId) {
-  if (!projectId) {
-    return;
-  }
-
-  if (state.libraryProjectFilters.includes(projectId)) {
-    state.libraryProjectFilters = state.libraryProjectFilters.filter(
-      (currentProjectId) => currentProjectId !== projectId,
-    );
-  } else {
-    state.libraryProjectFilters = [...state.libraryProjectFilters, projectId];
-  }
-
-  persistState(state);
-  renderLibraryFilters(state, dom);
-  renderArticleList(state, dom);
-  pushUrlFromState();
 }
 
 function toggleProjectsStageFilter(stage) {

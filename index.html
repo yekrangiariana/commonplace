@@ -78,6 +78,7 @@
     />
     <link rel="stylesheet" href="./css/styles.css" />
     <link rel="stylesheet" href="./css/context-menu.css" />
+    <link rel="stylesheet" href="./css/filter-modal.css" />
     <link rel="stylesheet" href="./css/tts-player.css" />
     <link rel="stylesheet" href="./css/mobile-responsive.css" />
     <link rel="stylesheet" href="./css/splash.css" />
@@ -513,37 +514,22 @@
             <aside
               class="panel-card panel-card--highlights panel-card--library-filters"
             >
-              <div class="section-heading section-heading--compact">
-                <h2>Tags</h2>
-              </div>
+              <button
+                type="button"
+                class="filter-modal-trigger"
+                id="library-filter-trigger"
+                aria-haspopup="dialog"
+              >
+                <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+                <span>Filters</span>
+                <span class="chip chip--count filter-badge" id="library-filter-badge" hidden></span>
+              </button>
 
               <div
-                id="library-tag-filters"
+                id="library-active-filters"
                 class="chip-row"
                 aria-live="polite"
               ></div>
-
-              <div class="highlights-actions" id="library-tag-clear" hidden>
-                <button type="button" class="button button--ghost">
-                  Clear tags
-                </button>
-              </div>
-
-              <div class="section-heading section-heading--compact">
-                <h2>Projects</h2>
-              </div>
-
-              <div
-                id="library-project-filters"
-                class="chip-row"
-                aria-live="polite"
-              ></div>
-
-              <div class="highlights-actions" id="library-project-clear" hidden>
-                <button type="button" class="button button--ghost">
-                  Clear projects
-                </button>
-              </div>
             </aside>
           </div>
         </section>
@@ -2167,6 +2153,49 @@
         <span class="focus-mode-page-indicator" id="focus-mode-page-indicator"></span>
       </div>
     </div>
+
+    <dialog id="library-filter-dialog" class="filter-dialog" aria-labelledby="filter-dialog-title">
+      <div class="filter-dialog__inner">
+        <header class="filter-dialog__header">
+          <h2 id="filter-dialog-title" class="filter-dialog__title">Filters</h2>
+          <button type="button" class="button button--ghost button--small" id="filter-dialog-close" aria-label="Close">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </header>
+
+        <div class="filter-dialog__search">
+          <i class="fa-solid fa-magnifying-glass filter-dialog__search-icon" aria-hidden="true"></i>
+          <input
+            type="text"
+            id="filter-dialog-search"
+            class="filter-dialog__search-input"
+            placeholder="Search tags and projects…"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="filter-dialog__body">
+          <section class="filter-dialog__section field-group" id="filter-dialog-tags-section">
+            <span>Tags</span>
+            <div class="filter-dialog__options" id="filter-dialog-tags"></div>
+          </section>
+
+          <section class="filter-dialog__section field-group" id="filter-dialog-projects-section">
+            <span>Projects</span>
+            <div class="filter-dialog__options" id="filter-dialog-projects"></div>
+          </section>
+        </div>
+
+        <footer class="filter-dialog__footer">
+          <button type="button" class="button button--ghost" id="filter-dialog-clear">
+            Clear all
+          </button>
+          <button type="button" class="button button--primary" id="filter-dialog-apply">
+            Apply
+          </button>
+        </footer>
+      </div>
+    </dialog>
 
     <script type="module" src="./js/main.js"></script>
     <script>

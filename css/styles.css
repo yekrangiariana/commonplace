@@ -216,7 +216,7 @@ button:disabled {
   justify-content: center;
   align-items: center;
   gap: 0;
-  padding: 10px 15px;
+  padding: 10px 12px;
   background: var(--surface);
   position: sticky;
   top: 0;
@@ -1998,6 +1998,7 @@ html[data-theme="dark"] .selection-menu {
 .chip--removable {
   padding-right: 4px;
   gap: 2px;
+  border-radius: 4px;
 }
 
 .chip__label,
