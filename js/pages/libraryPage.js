@@ -235,7 +235,9 @@ export function initLibraryFilterModal({
     resetExpansion();
     renderLibraryFilters(state, dom);
     dom.libraryFilterDialog.showModal();
-    dom.filterDialogSearch?.focus();
+    if (window.matchMedia("(min-width: 762px)").matches) {
+      dom.filterDialogSearch?.focus();
+    }
     history.pushState({ filterModal: true }, "");
   }
 
