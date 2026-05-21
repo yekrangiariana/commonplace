@@ -67,6 +67,7 @@ export const dom = {
   projectToggleMarkdownButton: document.querySelector(
     "#project-toggle-markdown-button",
   ),
+  projectCopyPromptButton: document.querySelector("#project-copy-prompt-button"),
   projectStageMenuButton: document.querySelector("#project-stage-menu-button"),
   projectStageMenuLabel: document.querySelector("#project-stage-menu-label"),
   projectStageMenuList: document.querySelector("#project-stage-menu-list"),

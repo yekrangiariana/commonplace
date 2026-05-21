@@ -452,3 +452,72 @@ function renderInlineMarkdown(text) {
 
   return output;
 }
+
+export async function copyProjectAsPrompt(state, project, setStatus) {
+  if (!project) {
+    setStatus("No project selected.");
+    return;
+  }
+
+  const thoughts = (project.content || "").trim();
+  const projectArticles = getProjectArticles(state, project.id);
+  const highlightGroups = getProjectHighlightGroups(projectArticles);
+
+  let quotesText = "";
+  let quoteCount = 0;
+  highlightGroups.forEach((group) => {
+    group.highlights.forEach((highlight) => {
+      const quote = (highlight.quote || "").trim();
+      if (quote) {
+        const sourceTitle = group.article.title || "Unknown Source";
+        const sourceUrl = group.article.url || "";
+        const sourceStr = sourceUrl ? `${sourceTitle} (${sourceUrl})` : sourceTitle;
+        quotesText += `- "${quote}" (Source: ${sourceStr})\n`;
+        quoteCount++;
+      }
+    });
+  });
+
+  const pad = (num) => String(num).padStart(2, "0");
+  const now = new Date();
+  const offsetMinutes = now.getTimezoneOffset();
+  const offsetSign = offsetMinutes <= 0 ? "+" : "-";
+  const offsetHrs = pad(Math.floor(Math.abs(offsetMinutes) / 60));
+  const offsetMins = pad(Math.abs(offsetMinutes) % 60);
+  const formattedDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}${offsetSign}${offsetHrs}${offsetMins}`;
+
+  const promptText = [
+    "write an article using these thoughts and these quotes.",
+    "",
+    "First, you MUST include a frontmatter at the very beginning of the draft exactly in this YAML format:",
+    "",
+    "---",
+    `title: "[choose a good unique title that beautifully wraps the ideas of the article]"`,
+    `date: ${formattedDate}`,
+    `authors: ["Ariana Yekrangi"]`,
+    `slug: "[a succinct but descriptive URL-friendly slug for the article]"`,
+    `description: "[a British newspaper / Guardian-style standfirst that shows the reader what the article is about and does not tell what the article is about. It must be succinct, intriguing, and inviting]"`,
+    "categories:",
+    ` - "[choose a category based on the article]"`,
+    "tags:",
+    ` - "[choose a tag based on the article; if countries are mainly involved, add them here]"`,
+    `image: ""`,
+    `imageCaption: ""`,
+    `style: "1"`,
+    "---",
+    "",
+    "Thoughts:",
+    thoughts || "(No thoughts added yet)",
+    "",
+    "Quotes:",
+    quotesText || "(No quotes attached yet)"
+  ].join("\n");
+
+  try {
+    await navigator.clipboard.writeText(promptText);
+    setStatus(`Copied project prompt with frontmatter! (${quoteCount} quote(s) included)`);
+  } catch (error) {
+    console.error("Failed to copy project prompt:", error);
+    setStatus("Failed to copy to clipboard.");
+  }
+}

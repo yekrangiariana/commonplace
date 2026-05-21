@@ -82,6 +82,8 @@ import {
   saveProjectEditorContent,
   renderProjectMarkdownPreview,
   applyProjectMarkdownShortcut,
+  getSelectedProject,
+  copyProjectAsPrompt,
 } from "./pages/editor.js";
 import {
   renderSettings,
@@ -860,6 +862,10 @@ function bindEvents() {
     }
     persistState(state);
     renderProjects(state, dom);
+  });
+  dom.projectCopyPromptButton.addEventListener("click", () => {
+    const project = getSelectedProject(state);
+    copyProjectAsPrompt(state, project, setStatus);
   });
   dom.projectSidebarBackButton.addEventListener("click", () => {
     state.selectedProjectSidebarArticleId = null;
