@@ -48,6 +48,8 @@
   --font-size-lg: 18px;
   --font-weight-label: 600;
   --radius-cards: 7px;
+  /* Reading text size multiplier (1 = 100%, controlled by Display > Text size) */
+  --reading-size: 1;
 }
 
 html[data-font="mono"] {
@@ -2128,7 +2130,7 @@ html[data-theme="dark"] .selection-menu {
 
 .reader-block {
   margin: 0 0 1rem;
-  font-size: var(--font-size-base);
+  font-size: calc(var(--font-size-base) * var(--reading-size));
   line-height: 1.8;
   white-space: pre-wrap; /* Preserve line breaks in tweets */
 }
@@ -2141,8 +2143,12 @@ html[data-theme="dark"] .selection-menu {
 
 .reader-block--heading {
   margin-top: 1.4rem;
-  font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+  font-size: calc(clamp(1.05rem, 1.4vw, 1.25rem) * var(--reading-size));
   line-height: 1.3;
+}
+
+.reader-title {
+  font-size: calc(clamp(1.45rem, 2vw, 1.9rem) * var(--reading-size));
 }
 
 .reader-highlight {
@@ -2166,7 +2172,7 @@ html[data-theme="dark"] .reader-highlight {
   border-left: 3px solid var(--success);
   color: var(--text);
   white-space: pre-wrap;
-  font-size: var(--font-size-base);
+  font-size: calc(var(--font-size-base) * var(--reading-size));
 }
 
 .highlight-card__footer,
@@ -2974,6 +2980,61 @@ html[data-theme="dark"] .reader-highlight {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-muted);
+}
+
+/* Text size stepper control */
+.settings-text-size-control {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: var(--border-light);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface-muted);
+  flex-shrink: 0;
+}
+
+.settings-text-size-btn {
+  width: 36px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.12s ease;
+}
+
+.settings-text-size-btn:hover:not(:disabled) {
+  background: var(--surface);
+}
+
+.settings-text-size-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.settings-text-size-btn:first-child {
+  border-right: var(--border-light);
+}
+
+.settings-text-size-btn:last-child {
+  border-left: var(--border-light);
+}
+
+.settings-text-size-label {
+  min-width: 46px;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-label);
+  color: var(--text);
+  letter-spacing: 0.2px;
+  user-select: none;
 }
 
 /* Storage results display */

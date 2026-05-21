@@ -45,6 +45,23 @@ export function renderSettings(state, dom) {
     button.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
 
+  // Text size label and button states
+  const TEXT_SIZE_STEPS = [0.8, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15, 1.2, 1.3, 1.4, 1.5];
+  const currentTextSize = Number(state.displayTextSize) || 1.0;
+  const clampedTextSize = Math.min(1.5, Math.max(0.8, currentTextSize));
+  if (dom.displayTextSizeLabel) {
+    dom.displayTextSizeLabel.textContent =
+      Math.round(clampedTextSize * 100) + "%";
+  }
+  if (dom.displayTextSizeDecreaseButton) {
+    dom.displayTextSizeDecreaseButton.disabled =
+      clampedTextSize <= TEXT_SIZE_STEPS[0];
+  }
+  if (dom.displayTextSizeIncreaseButton) {
+    dom.displayTextSizeIncreaseButton.disabled =
+      clampedTextSize >= TEXT_SIZE_STEPS[TEXT_SIZE_STEPS.length - 1];
+  }
+
   if (dom.splashEnabled) {
     dom.splashEnabled.checked = state.splashEnabled !== false;
   }

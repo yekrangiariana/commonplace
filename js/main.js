@@ -745,6 +745,42 @@ function bindEvents() {
     } catch {}
     persistState(state);
   });
+
+  const TEXT_SIZE_STEPS = [0.8, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15, 1.2, 1.3, 1.4, 1.5];
+
+  function getCurrentTextSizeStep() {
+    const current = Number(state.displayTextSize) || 1.0;
+    let closest = 0;
+    let minDiff = Infinity;
+    TEXT_SIZE_STEPS.forEach((step, index) => {
+      const diff = Math.abs(step - current);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = index;
+      }
+    });
+    return closest;
+  }
+
+  dom.displayTextSizeDecreaseButton?.addEventListener("click", () => {
+    const currentIndex = getCurrentTextSizeStep();
+    if (currentIndex <= 0) return;
+    state.displayTextSize = TEXT_SIZE_STEPS[currentIndex - 1];
+    touchMeta(state);
+    persistState(state);
+    applyDisplayPreferences();
+    renderSettings(state, dom);
+  });
+
+  dom.displayTextSizeIncreaseButton?.addEventListener("click", () => {
+    const currentIndex = getCurrentTextSizeStep();
+    if (currentIndex >= TEXT_SIZE_STEPS.length - 1) return;
+    state.displayTextSize = TEXT_SIZE_STEPS[currentIndex + 1];
+    touchMeta(state);
+    persistState(state);
+    applyDisplayPreferences();
+    renderSettings(state, dom);
+  });
   dom.rssRetentionSelect?.addEventListener("change", () => {
     const raw = dom.rssRetentionSelect.value;
     state.rssRetentionDays = raw === "never" ? "never" : Number(raw) || 7;
@@ -3701,6 +3737,11 @@ function applyDisplayPreferences() {
   );
   root.setAttribute("data-highlight-color", accentColor);
   root.setAttribute("data-accent-color", accentColor);
+
+  // Apply reading text size
+  const textSize = Number(state.displayTextSize) || 1.0;
+  const clampedSize = Math.min(1.5, Math.max(0.8, textSize));
+  root.style.setProperty("--reading-size", String(clampedSize));
 
   // Update theme-color meta for status bar / notch area
   const themeColorMeta = document.getElementById("theme-color-meta");

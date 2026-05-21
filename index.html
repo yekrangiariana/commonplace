@@ -43,6 +43,13 @@
               highlight,
             );
             document.documentElement.setAttribute("data-font", font);
+            var textSize = parseFloat(state.displayTextSize);
+            if (!isNaN(textSize) && textSize >= 0.8 && textSize <= 1.5) {
+              document.documentElement.style.setProperty(
+                "--reading-size",
+                String(textSize),
+              );
+            }
             // Update theme-color meta for status bar / notch
             var themeColorMeta = document.getElementById("theme-color-meta");
             if (themeColorMeta) {
@@ -1477,6 +1484,44 @@
                     >
                     <span class="settings-font-tile__name">Josefin</span>
                   </button>
+                </div>
+
+                <hr class="panel-divider" />
+
+                <div class="section-heading section-heading--compact">
+                  <h2>Text size</h2>
+                </div>
+
+                <div class="stack-form">
+                  <div class="settings-select-row">
+                    <div class="settings-select-row__text">
+                      <strong>Reading size</strong>
+                      <small>Scales article text, titles, and highlights.</small>
+                    </div>
+                    <div class="settings-text-size-control">
+                      <button
+                        type="button"
+                        class="settings-text-size-btn"
+                        id="display-text-size-decrease"
+                        aria-label="Decrease text size"
+                      >
+                        <i class="fa-solid fa-minus" aria-hidden="true"></i>
+                      </button>
+                      <span
+                        class="settings-text-size-label"
+                        id="display-text-size-label"
+                        aria-live="polite"
+                      >100%</span>
+                      <button
+                        type="button"
+                        class="settings-text-size-btn"
+                        id="display-text-size-increase"
+                        aria-label="Increase text size"
+                      >
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </section>
 

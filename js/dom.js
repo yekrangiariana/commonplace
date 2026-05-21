@@ -108,6 +108,13 @@ export const dom = {
   displayHighlightButtons: [
     ...document.querySelectorAll("[data-display-highlight]"),
   ],
+  displayTextSizeDecreaseButton: document.querySelector(
+    "#display-text-size-decrease",
+  ),
+  displayTextSizeIncreaseButton: document.querySelector(
+    "#display-text-size-increase",
+  ),
+  displayTextSizeLabel: document.querySelector("#display-text-size-label"),
   rssRetentionSelect: document.querySelector("#rss-retention-select"),
   rssAutoRefreshSelect: document.querySelector("#rss-auto-refresh-select"),
   rssFeedSettingsList: document.querySelector("#rss-feed-settings-list"),
