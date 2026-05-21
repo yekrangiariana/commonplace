@@ -7,96 +7,6 @@ function isMobileBrowser() {
 const CHUNK_MAX_LENGTH = 200;
 const INTER_CHUNK_DELAY_MS = 80;
 
-// ---------------------------------------------------------------------------
-// Silent-audio keepalive
-// Plays a looping, near-silent audio clip so the OS treats this page as an
-// active audio session. This prevents iOS/Android from suspending speech
-// synthesis when the screen locks or the browser is backgrounded.
-// The WAV blob is generated inline — no external file required.
-// ---------------------------------------------------------------------------
-function createSilentAudioElement() {
-  // Minimal valid WAV: 44-byte header + 1 sample of silence (8-bit, 8 kHz, mono)
-  const wav = new Uint8Array([
-    0x52, 0x49, 0x46, 0x46, // "RIFF"
-    0x25, 0x00, 0x00, 0x00, // chunk size = 37
-    0x57, 0x41, 0x56, 0x45, // "WAVE"
-    0x66, 0x6d, 0x74, 0x20, // "fmt "
-    0x10, 0x00, 0x00, 0x00, // subchunk1 size = 16 (PCM)
-    0x01, 0x00,             // audio format = 1 (PCM)
-    0x01, 0x00,             // num channels = 1 (mono)
-    0x40, 0x1f, 0x00, 0x00, // sample rate = 8000
-    0x40, 0x1f, 0x00, 0x00, // byte rate = 8000
-    0x01, 0x00,             // block align = 1
-    0x08, 0x00,             // bits per sample = 8
-    0x64, 0x61, 0x74, 0x61, // "data"
-    0x01, 0x00, 0x00, 0x00, // subchunk2 size = 1
-    0x80,                   // single silent sample (128 = silence for 8-bit)
-  ]);
-  const blob = new Blob([wav], { type: "audio/wav" });
-  const url = URL.createObjectURL(blob);
-  const audio = document.createElement("audio");
-  audio.src = url;
-  audio.loop = true;
-  audio.volume = 0.01;
-  // Keep in DOM so browsers don't GC it
-  audio.style.display = "none";
-  document.body.appendChild(audio);
-  return audio;
-}
-
-// ---------------------------------------------------------------------------
-// Media Session helpers
-// Registers the current article with the OS lock-screen / notification player.
-// ---------------------------------------------------------------------------
-function supportsMediaSession() {
-  return "mediaSession" in navigator;
-}
-
-function setMediaSessionMetadata(title) {
-  if (!supportsMediaSession()) return;
-  try {
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: title || "Article",
-      artist: "Commonplace",
-    });
-  } catch {
-    // Non-critical — ignore if MediaMetadata isn't supported
-  }
-}
-
-function setMediaSessionPlaybackState(state) {
-  if (!supportsMediaSession()) return;
-  try {
-    navigator.mediaSession.playbackState = state; // "playing" | "paused" | "none"
-  } catch {}
-}
-
-function registerMediaSessionHandlers(handlers) {
-  if (!supportsMediaSession()) return;
-  const actions = ["play", "pause", "stop"];
-  actions.forEach((action) => {
-    try {
-      navigator.mediaSession.setActionHandler(
-        action,
-        handlers[action] || null,
-      );
-    } catch {
-      // Some actions may not be supported on all platforms
-    }
-  });
-}
-
-function clearMediaSession() {
-  if (!supportsMediaSession()) return;
-  try {
-    navigator.mediaSession.metadata = null;
-    navigator.mediaSession.playbackState = "none";
-    ["play", "pause", "stop"].forEach((action) => {
-      try { navigator.mediaSession.setActionHandler(action, null); } catch {}
-    });
-  } catch {}
-}
-
 function splitIntoChunks(text, maxLength = CHUNK_MAX_LENGTH) {
   const chunks = [];
   let remaining = text;
@@ -330,81 +240,64 @@ export function initReaderTtsPlayer({
   let renderedVersion = -1;
   let lastVoiceOptionsKey = "";
 
-  // ── Background play ──────────────────────────────────────────────────────
-  let silentAudio = null; // created lazily on first use
+  // ── Fix A: Utterance GC protection ────────────────────────────────────
+  // Chrome Android can garbage-collect SpeechSynthesisUtterance objects
+  // once they fall out of the loop scope, causing onend to never fire and
+  // silently breaking the playback chain. Keeping strong references here
+  // for the lifetime of each play session prevents that.
+  let activeUtterances = [];
 
-  function isBackgroundPlayEnabled() {
-    return Boolean(state.ttsBackgroundPlay);
-  }
+  // ── Fix D: Stuck-chunk watchdog ────────────────────────────────────────
+  // Chrome Android has a documented bug where onend never fires (the engine
+  // locks with speaking:true and no audio). The watchdog detects this and
+  // skips the hung chunk so playback can continue rather than freezing.
+  let chunkWatchdogTimer = null;
 
-  function getSilentAudio() {
-    if (!silentAudio) {
-      silentAudio = createSilentAudioElement();
-    }
-    return silentAudio;
-  }
-
-  function startKeepalive() {
-    if (!isBackgroundPlayEnabled()) return;
-    try {
-      const audio = getSilentAudio();
-      if (audio.paused) {
-        audio.play().catch(() => {
-          // Autoplay may be blocked before first user gesture — safe to ignore
-        });
-      }
-    } catch {
-      // Non-critical
+  function clearChunkWatchdog() {
+    if (chunkWatchdogTimer !== null) {
+      clearTimeout(chunkWatchdogTimer);
+      chunkWatchdogTimer = null;
     }
   }
 
-  function stopKeepalive() {
-    if (silentAudio && !silentAudio.paused) {
-      silentAudio.pause();
-    }
-  }
+  function startChunkWatchdog(token, idx) {
+    clearChunkWatchdog();
+    const wordsInChunk = (chunkQueue[idx] || "")
+      .split(/\s+/)
+      .filter(Boolean).length;
+    const rate = clampRate(state.ttsRate);
+    // Allow 4× the estimated speaking time, minimum 5 s, to avoid
+    // false positives on very short chunks or slow devices.
+    const timeoutMs = Math.max(
+      5000,
+      (wordsInChunk / (165 * rate)) * 60000 * 4,
+    );
 
-  function syncKeepalive() {
-    if (isBackgroundPlayEnabled() && isPlaying && !isPaused) {
-      startKeepalive();
-    } else {
-      stopKeepalive();
-    }
-  }
+    chunkWatchdogTimer = setTimeout(() => {
+      if (token !== playToken) return;
 
-  function syncMediaSession(article) {
-    if (!isBackgroundPlayEnabled()) {
-      clearMediaSession();
-      return;
-    }
+      // Engine appears hung — skip this chunk and continue from the next one
+      clearChunkWatchdog();
+      stopProgressInterpolation();
 
-    const title = article?.title || article?.url || "Article";
-
-    setMediaSessionMetadata(title);
-
-    if (isPlaying && !isPaused) {
-      setMediaSessionPlaybackState("playing");
-    } else if (isPaused) {
-      setMediaSessionPlaybackState("paused");
-    } else {
-      setMediaSessionPlaybackState("none");
-    }
-
-    registerMediaSessionHandlers({
-      play: () => {
-        const art = getSelectedArticle();
-        if (art) handlePlayToggle(art);
-      },
-      pause: () => {
-        const art = getSelectedArticle();
-        if (art) handlePlayToggle(art);
-      },
-      stop: () => {
-        cancelSpeech();
-        clearMediaSession();
+      const nextIndex = idx + 1;
+      if (nextIndex >= chunkQueue.length) {
+        chunkIndex = chunkQueue.length;
+        isPlaying = false;
+        isPaused = false;
+        activeUtterance = null;
+        activeUtterances = [];
+        updateProgress(100);
+        updateStatus("Finished");
         queueRender();
-      },
-    });
+        return;
+      }
+
+      chunkIndex = nextIndex;
+      const nextToken = playToken + 1;
+      playToken = nextToken;
+      speakChunkQueue(nextToken);
+    }, timeoutMs);
   }
 
   function getHost() {
@@ -616,12 +509,14 @@ export function initReaderTtsPlayer({
     }
 
     stopProgressInterpolation();
+    clearChunkWatchdog();
 
     if (synthesis) {
       synthesis.cancel();
     }
 
     activeUtterance = null;
+    activeUtterances = [];
 
     if (resetFlags) {
       isPlaying = false;
@@ -650,6 +545,11 @@ export function initReaderTtsPlayer({
     }
   }
 
+  // ── Fix B: Post-cancel delay on Android ───────────────────────────────
+  // Chrome Android's TTS engine needs ~50 ms after synthesis.cancel() to
+  // fully reset. Calling speak() immediately can result in utterances that
+  // queue successfully but produce no audio. The delay is safe because
+  // Chrome's user-activation window is several seconds — much longer than 50 ms.
   function speakChunkQueue(token) {
     if (token !== playToken) {
       return;
@@ -659,23 +559,38 @@ export function initReaderTtsPlayer({
       isPlaying = false;
       isPaused = false;
       activeUtterance = null;
+      activeUtterances = [];
       updateProgress(100);
       updateStatus("Finished");
-      stopKeepalive();
-      clearMediaSession();
       queueRender();
       return;
     }
 
     const selectedVoice = getVoiceById(getSelectedVoiceId());
 
-    // Cancel stale state before queuing — critical on mobile
     if (isMobile) {
+      // Cancel any stuck state, then give the engine a moment to reset
       synthesis.cancel();
+      setTimeout(() => doQueueChunks(token, selectedVoice), 50);
+    } else {
+      doQueueChunks(token, selectedVoice);
+    }
+  }
+
+  // Pre-queues all remaining chunks into the browser's speech queue in one
+  // synchronous pass so the user-gesture context is preserved for Android.
+  // Kept separate from speakChunkQueue so the 50 ms delay doesn't have to
+  // be inline in the same function body.
+  function doQueueChunks(token, selectedVoice) {
+    if (token !== playToken) {
+      return;
     }
 
-    // Pre-queue every chunk into the browser's native speech queue
-    // in one synchronous pass so the user-gesture context is preserved
+    // Repopulate the persistent reference array (Fix A).
+    // Every utterance created here is held until cancelSpeech() clears it,
+    // preventing the GC from destroying them before onend fires.
+    activeUtterances = [];
+
     const startChunkIndex = chunkIndex;
     for (let i = chunkIndex; i < chunkQueue.length; i++) {
       const chunkText = chunkQueue[i];
@@ -688,6 +603,9 @@ export function initReaderTtsPlayer({
         utterance.lang = selectedVoice.lang;
       }
 
+      // Persist the reference to prevent GC (Fix A)
+      activeUtterances.push(utterance);
+
       utterance.onstart = () => {
         if (token !== playToken) {
           return;
@@ -697,13 +615,9 @@ export function initReaderTtsPlayer({
         isPlaying = true;
         isPaused = false;
         updateStatus("Playing");
-        // Sync keepalive + MediaSession on the first chunk start only
-        if (idx === startChunkIndex) {
-          syncKeepalive();
-          syncMediaSession(getSelectedArticle());
-        }
         queueRender();
         startProgressInterpolation(token);
+        startChunkWatchdog(token, idx); // Fix D
       };
 
       utterance.onend = () => {
@@ -711,7 +625,12 @@ export function initReaderTtsPlayer({
           return;
         }
 
+        clearChunkWatchdog(); // Fix D
         stopProgressInterpolation();
+
+        // Remove the finished utterance from the persistent array
+        const utIdx = activeUtterances.indexOf(utterance);
+        if (utIdx !== -1) activeUtterances.splice(utIdx, 1);
 
         // Snap progress to this chunk's end
         const totalChars = Math.max(1, currentText.length);
@@ -730,10 +649,9 @@ export function initReaderTtsPlayer({
           isPlaying = false;
           isPaused = false;
           activeUtterance = null;
+          activeUtterances = [];
           updateProgress(100);
           updateStatus("Finished");
-          stopKeepalive();
-          clearMediaSession();
           queueRender();
         }
       };
@@ -747,16 +665,18 @@ export function initReaderTtsPlayer({
           return;
         }
 
+        clearChunkWatchdog(); // Fix D
         stopProgressInterpolation();
         isPlaying = false;
         isPaused = false;
         activeUtterance = null;
+        activeUtterances = [];
         updateStatus("Playback failed. Try again.", true);
         queueRender();
       };
 
-      // Keep a reference to the current utterance for the active chunk
-      if (i === chunkIndex) {
+      // Keep a reference to the first utterance of this batch
+      if (i === startChunkIndex) {
         activeUtterance = utterance;
       }
 
@@ -886,8 +806,6 @@ export function initReaderTtsPlayer({
       isPaused = true;
       isPlaying = false;
       updateStatus("Paused");
-      stopKeepalive();
-      syncMediaSession(article);
       queueRender();
       return;
     }
@@ -1018,17 +936,6 @@ export function initReaderTtsPlayer({
                   </button>
                 </div>
               </div>
-
-              <div class="tts-player__field tts-player__field--inline">
-                <span>Background play</span>
-                <button
-                  type="button"
-                  class="tts-player__toggle"
-                  data-tts-action="toggle-background"
-                  aria-label="Enable background play"
-                  title="Keep playing when screen locks (mobile)"
-                ></button>
-              </div>
             </div>
           </div>
         </div>
@@ -1080,7 +987,6 @@ export function initReaderTtsPlayer({
       '[data-tts-action="speed-down"]',
     );
     const speedUpButton = root.querySelector('[data-tts-action="speed-up"]');
-    const bgToggle = root.querySelector('[data-tts-action="toggle-background"]');
 
     if (playButton) {
       playButton.title = isPlaying && !isPaused ? "Pause" : "Play";
@@ -1129,19 +1035,6 @@ export function initReaderTtsPlayer({
       speedUpButton.title = "Increase speed";
     }
 
-    if (bgToggle) {
-      const bgEnabled = isBackgroundPlayEnabled();
-      bgToggle.classList.toggle("is-active", bgEnabled);
-      bgToggle.setAttribute(
-        "aria-label",
-        bgEnabled ? "Disable background play" : "Enable background play",
-      );
-      bgToggle.setAttribute(
-        "aria-pressed",
-        bgEnabled ? "true" : "false",
-      );
-    }
-
     if (voiceSelect) {
       const optionsMarkup = buildVoiceOptionsMarkup();
 
@@ -1176,20 +1069,6 @@ export function initReaderTtsPlayer({
       setRate(state.ttsRate - RATE_STEP);
     } else if (action === "speed-up") {
       setRate(state.ttsRate + RATE_STEP);
-    } else if (action === "toggle-background") {
-      state.ttsBackgroundPlay = !state.ttsBackgroundPlay;
-      touchMeta(state);
-      persistState(state);
-      // If turning off, stop keepalive and clear lock screen
-      if (!state.ttsBackgroundPlay) {
-        stopKeepalive();
-        clearMediaSession();
-      } else if (isPlaying && !isPaused) {
-        // If turning on while already playing, activate immediately
-        startKeepalive();
-        syncMediaSession(article);
-      }
-      queueRender();
     }
 
     return true;
@@ -1226,6 +1105,22 @@ export function initReaderTtsPlayer({
   function handleInput() {
     return false;
   }
+
+  // ── Fix C: Visibility recovery ─────────────────────────────────────────
+  // When Chrome Android backgrounds the PWA (screen dims, app switch, etc.)
+  // the TTS engine can be silently suspended. When the user returns to the
+  // app, we check whether the engine actually stopped and restart from the
+  // saved progress position if it did.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    if (!isPlaying || isPaused) return;
+    if (synthesis && !synthesis.speaking) {
+      const article = getSelectedArticle();
+      if (article) {
+        speakFromPercent(article, progressPercent).catch(() => {});
+      }
+    }
+  });
 
   return {
     mount(article) {

@@ -104,7 +104,6 @@ export const state = {
   splashEnabled: true,
   ttsVoiceId: "",
   ttsRate: 1,
-  ttsBackgroundPlay: false,
   pendingSelection: null,
   rssFeeds: [],
   rssActiveFeedId: null,
