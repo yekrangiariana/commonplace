@@ -25,8 +25,35 @@
   color: var(--text-muted);
 }
 
-.filter-badge {
+.filter-modal-trigger .filter-badge {
   margin-left: auto;
+  min-height: 18px;
+  height: 18px;
+  min-width: 18px;
+  padding: 0 5px;
+  font-size: 10px;
+  line-height: 18px;
+  border-radius: 10px;
+  letter-spacing: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+#library-active-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.active-filters-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
 }
 
 /* ── Filter dialog ── */
@@ -232,13 +259,26 @@
   }
 
   #library-active-filters {
+    display: flex;
+    flex-direction: row;
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
+    gap: 6px;
+    align-items: center;
+    width: auto;
   }
 
   #library-active-filters::-webkit-scrollbar {
     display: none;
+  }
+
+  .active-filters-group {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
+    width: auto;
   }
 
   .filter-dialog {

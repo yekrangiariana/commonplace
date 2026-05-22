@@ -421,7 +421,7 @@ async function init() {
   }
 }
 
-const SPLASH_MIN_MS = 800;
+const SPLASH_MIN_MS = 1500;
 const splashShownAt = performance.now();
 
 function dismissSplashWhenReady() {

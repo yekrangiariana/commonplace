@@ -9,14 +9,25 @@
   justify-content: center;
   background: var(--bg);
   transition:
-    opacity 0.5s ease,
-    visibility 0.5s ease;
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .splash-screen.splash-hidden {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+}
+
+/* Beautiful dynamic exit transition on branding */
+.splash-screen.splash-hidden .splash-branding {
+  transform: translateY(-20px) scale(0.95);
+  opacity: 0;
+  filter: blur(8px);
+  transition:
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.6s ease,
+    filter 0.6s ease;
 }
 
 html.splash-disabled .splash-screen {
@@ -27,14 +38,22 @@ html.splash-disabled .splash-screen {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: clamp(12px, 3vw, 24px);
+  gap: clamp(16px, 4vw, 28px);
   user-select: none;
+  will-change: transform, opacity, filter;
 }
 
 .splash-icon {
-  width: clamp(2.5rem, 6vw, 4rem);
-  height: clamp(2.5rem, 6vw, 4rem);
+  width: clamp(2.8rem, 7vw, 4.5rem);
+  height: clamp(2.8rem, 7vw, 4.5rem);
   object-fit: contain;
+  opacity: 0;
+  transform: scale(0.55) rotate(-20deg);
+  will-change: transform, opacity, filter;
+  /* Bloom animation on entry, breathing dynamic glow infinitely */
+  animation:
+    lotus-bloom 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+    lotus-breath 4s ease-in-out infinite 0.5s;
 }
 
 .splash-branding-text {
@@ -48,6 +67,10 @@ html.splash-disabled .splash-screen {
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--text);
+  opacity: 0;
+  will-change: transform, opacity, filter, letter-spacing;
+  /* Smooth expand-out reveal */
+  animation: elegant-title 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards 0.1s;
 }
 
 .splash-eyebrow {
@@ -58,4 +81,134 @@ html.splash-disabled .splash-screen {
   font-size: clamp(0.7rem, 2vw, 1rem);
   font-weight: var(--font-weight-label);
   min-height: 1.4em;
+  font-family: "Roboto Mono", "SF Mono", Menlo, Monaco, monospace;
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid var(--success);
+  width: 0;
+  opacity: 0;
+  padding-right: 6px; /* Create breathing room for the caret border and letter-spacing */
+  will-change: width, opacity;
+  /* Delayed typing typewriter effect */
+  animation:
+    eyebrow-reveal 0.05s forwards 0.35s,
+    typing 0.75s steps(25, end) forwards 0.35s,
+    blink-caret 0.75s step-end infinite 0.35s;
+}
+
+/* ── Animation Keyframes ───────────────────────────────── */
+
+/* 1. Lotus Bloom: spring scale + subtle rotation + glow */
+@keyframes lotus-bloom {
+  from {
+    opacity: 0;
+    transform: scale(0.55) rotate(-20deg);
+    filter: drop-shadow(0 0 0 rgba(42, 170, 115, 0)) blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 16px color-mix(in srgb, var(--success) 35%, transparent)) blur(0);
+  }
+}
+
+/* 2. Lotus Breath: slow pulse to feel alive and organic */
+@keyframes lotus-breath {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 16px color-mix(in srgb, var(--success) 35%, transparent));
+  }
+  50% {
+    transform: scale(1.03) rotate(2deg);
+    filter: drop-shadow(0 0 24px color-mix(in srgb, var(--success) 55%, transparent));
+  }
+}
+
+/* 3. Title reveal: expand tracking + de-blur */
+@keyframes elegant-title {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    letter-spacing: -2px;
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    letter-spacing: 1.5px;
+    filter: blur(0);
+  }
+}
+
+/* 4. Slogan reveal */
+@keyframes eyebrow-reveal {
+  to {
+    opacity: 1;
+  }
+}
+
+/* 5. Slogan Typing: increments in character units + letter-spacing cushion */
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    /* Slogan: "Collect, Connect, Compose" (25 chars) + letter-spacing space */
+    width: 28ch;
+  }
+}
+
+/* 6. Typing Cursor Blink */
+@keyframes blink-caret {
+  from, to {
+    border-color: transparent;
+  }
+  50% {
+    border-color: var(--success);
+  }
+}
+
+/* ── Prefers Reduced Motion Fallbacks ──────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .splash-screen,
+  .splash-branding,
+  .splash-icon,
+  .splash-title,
+  .splash-eyebrow {
+    transition: opacity 0.4s ease !important;
+    animation: none !important;
+    transform: none !important;
+    letter-spacing: 1.5px !important;
+    filter: none !important;
+    opacity: 1 !important;
+    width: auto !important;
+    border-right: none !important;
+  }
+
+  .splash-icon {
+    opacity: 1 !important;
+  }
+
+  .splash-title {
+    opacity: 1 !important;
+  }
+
+  .splash-eyebrow {
+    opacity: 1 !important;
+    width: auto !important;
+  }
+
+  /* Fade out only when dismissed */
+  .splash-screen.splash-hidden {
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+  }
+
+  .splash-screen.splash-hidden .splash-branding {
+    transform: none !important;
+    opacity: 0 !important;
+    filter: none !important;
+    transition: opacity 0.3s ease !important;
+  }
 }

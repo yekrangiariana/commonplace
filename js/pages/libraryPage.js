@@ -87,9 +87,14 @@ export function renderLibraryFilters(state, dom) {
         </span>`;
     });
 
-    dom.libraryActiveFilters.innerHTML = [...tagPills, ...projectPills].join(
-      "",
-    );
+    let html = "";
+    if (tagPills.length > 0) {
+      html += `<div class="active-filters-group tag-filters-group">${tagPills.join("")}</div>`;
+    }
+    if (projectPills.length > 0) {
+      html += `<div class="active-filters-group project-filters-group">${projectPills.join("")}</div>`;
+    }
+    dom.libraryActiveFilters.innerHTML = html;
   }
 
   // Populate the dialog contents (so it's ready when opened)
