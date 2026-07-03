@@ -1,0 +1,238 @@
+:root {
+  --bg: #f8f5ed;
+  --surface: #f5f0e4;
+  --text: #1a1a1a;
+  --text-light: #555555;
+  --text-muted: #777777;
+  --border-color: #1a1a1a;
+  --border: 1px solid var(--border-color);
+  --border-light: 1px solid #d4d2ce;
+  --primary: #2aaa73;
+  --primary-hover: #218c5e;
+  --primary-bg-soft: rgba(42, 170, 115, 0.1);
+  --input-bg: #f8f7f5;
+  --font-mono: "Roboto Mono", "SF Mono", Menlo, Monaco, "Courier New", monospace;
+  --font-sans: "Atkinson Hyperlegible", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --radius: 7px;
+  --shadow: 3px 3px 0px 0px #1a1a1a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #181716;
+    --surface: #22201f;
+    --text: #ecebe8;
+    --text-light: #c3c0bb;
+    --text-muted: #a7a39d;
+    --border-color: #d8d5cf;
+    --border-light: 1px solid #4a4743;
+    --primary: #b4f7cf;
+    --primary-hover: #9ee6bb;
+    --primary-bg-soft: rgba(180, 247, 207, 0.1);
+    --input-bg: #2f2d2a;
+    --shadow: 3px 3px 0px 0px #d8d5cf;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  width: 320px;
+  overflow-x: hidden;
+}
+
+.popup-container {
+  padding: 16px;
+  border-radius: var(--radius);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: var(--border);
+  padding-bottom: 10px;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}
+
+.app-name {
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: -0.5px;
+}
+
+.settings-btn {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.settings-btn:hover {
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+.settings-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.main-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+label {
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+input[type="url"],
+textarea {
+  width: 100%;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  background-color: var(--input-bg);
+  border: var(--border);
+  border-radius: var(--radius);
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.15s ease;
+}
+
+input[type="url"]:focus,
+textarea:focus {
+  border-color: var(--primary);
+}
+
+.type-selector {
+  display: flex;
+  gap: 6px;
+}
+
+.type-btn {
+  flex: 1;
+  padding: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: bold;
+  background-color: var(--bg);
+  color: var(--text-light);
+  border: var(--border-light);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.type-btn.active {
+  background-color: var(--primary-bg-soft);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.type-btn:hover:not(.active) {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.add-btn {
+  margin-top: 6px;
+  width: 100%;
+  padding: 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: bold;
+  text-transform: uppercase;
+  background-color: var(--primary);
+  color: #1a1a1a; /* Dark text for contrast */
+  border: var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: all 0.1s ease;
+  outline: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .add-btn {
+    color: #181716;
+  }
+}
+
+.add-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px 0px var(--border-color);
+}
+
+.add-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px 0px var(--border-color);
+}
+
+.status-container {
+  min-height: 20px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+#status-text {
+  transition: opacity 0.2s ease;
+  opacity: 0;
+}
+
+#status-text.show {
+  opacity: 1;
+}
+
+.success-text {
+  color: var(--primary);
+}
+
+.error-text {
+  color: #c0392b;
+}
+
+.info-text {
+  color: var(--text-light);
+}

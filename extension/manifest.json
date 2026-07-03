@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "Commonplace Connector",
+  "version": "1.0.0",
+  "description": "Quickly add articles and links to your Commonplace research workspace.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "contextMenus"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "commands": {
+    "add-current-page": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y",
+        "mac": "Command+Shift+Y"
+      },
+      "description": "Quickly add the current page to Commonplace"
+    }
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "commonplace-connector@yekrangi.me",
+      "strict_min_version": "109.0"
+    }
+  }
+}

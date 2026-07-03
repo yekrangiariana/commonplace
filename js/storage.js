@@ -419,9 +419,12 @@ function applyParsedState(state, parsedState) {
   state.projects = Array.isArray(parsedState.projects)
     ? parsedState.projects.map((project) => withNormalizedProjectStage(project))
     : [];
-  state.savedTags = Array.isArray(parsedState.savedTags)
-    ? dedupeTags(parsedState.savedTags.map(normalizeTag))
-    : collectTagsFromBookmarks(state.bookmarks);
+  state.savedTags = dedupeTags([
+    ...(Array.isArray(parsedState.savedTags)
+      ? parsedState.savedTags.map(normalizeTag)
+      : []),
+    ...collectTagsFromBookmarks(state.bookmarks),
+  ]);
   state.selectedArticleId =
     parsedState.selectedArticleId || state.bookmarks[0]?.id || null;
   state.selectedProjectId = parsedState.selectedProjectId || null;

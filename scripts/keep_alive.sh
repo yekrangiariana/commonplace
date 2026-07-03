@@ -11,9 +11,6 @@
 #
 # If not found, it falls back to looking for:
 #   ../app-settings.json
-#
-# NOTE: This script contains ZERO hardcoded credentials. It is 100% safe to commit
-# to your public GitHub or Cloudflare Pages repositories.
 # ==============================================================================
 
 # Paths

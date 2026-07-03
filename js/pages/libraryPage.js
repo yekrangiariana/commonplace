@@ -39,9 +39,7 @@ function getCachedSortedArticles(state, sortMode) {
 
 export function renderLibraryFilters(state, dom) {
   const indexes = getDerivedIndexes(state);
-  const availableTags = [
-    ...new Set((state.savedTags || []).filter(Boolean)),
-  ].sort((left, right) => left.localeCompare(right));
+  const availableTags = indexes.availableTags;
   const availableTagSet = new Set(availableTags);
   state.libraryTagFilters = state.libraryTagFilters.filter((tag) =>
     availableTagSet.has(tag),
@@ -211,9 +209,7 @@ function renderFilterDialogContents(state, dom, availableTags, indexes) {
 
 function refreshDialogSearch(state, dom) {
   const indexes = getDerivedIndexes(state);
-  const availableTags = [
-    ...new Set((state.savedTags || []).filter(Boolean)),
-  ].sort((left, right) => left.localeCompare(right));
+  const availableTags = indexes.availableTags;
   renderFilterDialogContents(state, dom, availableTags, indexes);
 }
 

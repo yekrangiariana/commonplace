@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Commonplace Connector Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo-container">
+        <img class="logo" src="icons/icon-128.png" alt="Commonplace Logo">
+        <h1>Commonplace Connector Settings</h1>
+      </div>
+      <p class="subtitle">Configure how the extension integrates with your personal research workspace.</p>
+    </header>
+
+    <main class="main-content">
+      <section class="card">
+        <h2>Connection Settings</h2>
+        
+        <div class="form-group">
+          <label for="app-url">Commonplace App URL</label>
+          <input type="url" id="app-url" placeholder="e.g. http://localhost:8080/index.html" required>
+          <p class="help-text">Enter the URL where your Commonplace app is running. For local development, this is typically <code>http://localhost:8080/index.html</code>, <code>http://localhost:5500/index.html</code>, or <code>http://127.0.0.1:8080/index.html</code>.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="open-behavior">Launch Preference</label>
+          <select id="open-behavior">
+            <option value="focus">Focus existing tab/PWA window (Recommended)</option>
+            <option value="pwa">Open in a standalone window (PWA style)</option>
+            <option value="tab">Open in a new browser tab</option>
+          </select>
+          <p class="help-text">
+            <strong>Focus existing tab/PWA:</strong> If Commonplace is already open, the extension will bring it to the front, switch to it, and open the "Add Article" dialog. If it is not open, it will launch in PWA style.<br>
+            <strong>Standalone window:</strong> Opens Commonplace in a chromeless window without browser tabs or address bar, mimicking a native desktop application.
+          </p>
+        </div>
+
+        <div class="actions">
+          <button id="save-btn" class="btn btn-primary">Save Settings</button>
+          <span id="status-msg" class="status-msg"></span>
+        </div>
+      </section>
+
+      <section class="card info-card">
+        <h2>Usage Instructions</h2>
+        
+        <h3>Adding Articles</h3>
+        <ul>
+          <li><strong>Extension Button:</strong> Click the extension icon in your toolbar to open a preview popup. Customize the title, URL, and select "Article" or "Tweet", then click "Add to Commonplace".</li>
+          <li><strong>Keyboard Shortcut:</strong> Press <kbd>Cmd+Shift+Y</kbd> (Mac) or <kbd>Ctrl+Shift+Y</kbd> (Windows/Linux) to instantly capture the current page.</li>
+          <li><strong>Context Menu:</strong> Right-click anywhere on a webpage to add the page, or right-click a link to add that link.</li>
+        </ul>
+
+        <h3>Local Files (<code>file:///</code> URLs)</h3>
+        <p>If you run Commonplace directly by opening the <code>index.html</code> file in your browser, you must grant the extension permission to access file URLs:</p>
+        <ol>
+          <li>Open the extensions management page (<strong>Firefox:</strong> <code>about:addons</code>, <strong>Chrome:</strong> <code>chrome://extensions</code>).</li>
+          <li>Find <strong>Commonplace Connector</strong> and click details/preferences.</li>
+          <li>Toggle on <strong>"Allow access to file URLs"</strong> (Chrome) or check relevant permission boxes.</li>
+        </ol>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Commonplace Connector v1.0.0 • Made with care for your commonplace book.</p>
+    </footer>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

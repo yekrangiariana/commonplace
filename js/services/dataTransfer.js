@@ -4,6 +4,7 @@
  */
 
 import { state, touchBookmarks, touchProjects } from "../state.js";
+import { syncSavedTags } from "../taxonomy.js";
 import { persistState } from "../storage.js";
 import { getDerivedIndexes } from "../derivedIndexes.js";
 import { formatRelativeTime } from "../utils.js";
@@ -615,7 +616,13 @@ function executeImport() {
   });
 
   // Mark state as dirty and persist
-  if (addedBookmarks > 0 || updatedBookmarks > 0) touchBookmarks(state);
+  if (addedBookmarks > 0 || updatedBookmarks > 0) {
+    const allImportedTags = (importData.bookmarks || []).flatMap((b) => b.tags || []);
+    if (allImportedTags.length > 0) {
+      syncSavedTags(state, allImportedTags);
+    }
+    touchBookmarks(state);
+  }
   if (addedProjects > 0) touchProjects(state);
   persistState(state);
 

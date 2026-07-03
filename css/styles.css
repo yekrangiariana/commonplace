@@ -202,7 +202,7 @@ button:disabled {
 }
 
 .app-shell {
-  max-width: 1200px;
+  max-width: 80%px;
   margin: 0 auto;
   width: 100%;
   border-left: var(--border-light);
