@@ -29,13 +29,15 @@
         <div class="form-group">
           <label for="open-behavior">Launch Preference</label>
           <select id="open-behavior">
-            <option value="focus">Focus existing tab/PWA window (Recommended)</option>
-            <option value="pwa">Open in a standalone window (PWA style)</option>
-            <option value="tab">Open in a new browser tab</option>
+            <option value="focus">Focus existing Firefox tab/window (Recommended)</option>
+            <option value="pwa">Open in a standalone Firefox window (PWA style)</option>
+            <option value="tab">Open in a new Firefox tab</option>
+            <option value="chrome-pwa">Open in Chrome PWA (via web+commonplace protocol)</option>
           </select>
           <p class="help-text">
-            <strong>Focus existing tab/PWA:</strong> If Commonplace is already open, the extension will bring it to the front, switch to it, and open the "Add Article" dialog. If it is not open, it will launch in PWA style.<br>
-            <strong>Standalone window:</strong> Opens Commonplace in a chromeless window without browser tabs or address bar, mimicking a native desktop application.
+            <strong>Chrome PWA:</strong> Launches or focuses your Chrome-installed Commonplace PWA directly from Firefox. (Make sure you've allowed Chrome to register the protocol handler).<br>
+            <strong>Focus existing Firefox:</strong> If Commonplace is already open in Firefox, the extension will bring it to focus. If not open, it launches in a standalone Firefox window.<br>
+            <strong>Standalone Firefox:</strong> Opens Commonplace in a chromeless Firefox window without tabs or address bar, mimicking a native desktop app.
           </p>
         </div>
 

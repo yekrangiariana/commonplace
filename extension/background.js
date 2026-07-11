@@ -56,6 +56,22 @@ async function addLinkToCommonplace(url, title, type) {
       }
     }
 
+    if (openBehavior === 'chrome-pwa') {
+      const protocolUrl = `web+commonplace://add?shared_url=${encodedUrl}&shared_title=${encodedTitle}`;
+      const tab = await browserAPI.tabs.create({ url: protocolUrl });
+      
+      // Auto-close the temporary tab in Firefox after 1.5 seconds 
+      // (gives enough time for the browser to launch the external application dialog/app)
+      setTimeout(async () => {
+        try {
+          await browserAPI.tabs.remove(tab.id);
+        } catch (e) {}
+      }, 1500);
+
+      await flashBadge('OK', '#2aaa73'); // Green success
+      return { success: true };
+    }
+
     if (existingTab && openBehavior === 'focus') {
       // Focus existing tab and navigate it to trigger consumeShareTarget()
       await browserAPI.tabs.update(existingTab.id, {
@@ -72,7 +88,7 @@ async function addLinkToCommonplace(url, title, type) {
       if (openBehavior === 'tab') {
         await browserAPI.tabs.create({ url: targetUrl });
       } else {
-        // 'pwa' or 'focus' (as fallback when tab is not open): open standalone popup window
+        // 'pwa' or 'focus' (as fallback when tab is not open): open standalone popup window in Firefox
         await browserAPI.windows.create({
           url: targetUrl,
           type: 'popup',

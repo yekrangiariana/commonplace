@@ -437,8 +437,19 @@ function dismissSplashWhenReady() {
 
 function consumeShareTarget() {
   const params = new URLSearchParams(window.location.search);
-  const sharedUrl = params.get("shared_url") || params.get("shared_text") || "";
-  if (!sharedUrl) return;
+  const rawSharedUrl = params.get("shared_url") || params.get("shared_text") || "";
+  if (!rawSharedUrl) return;
+
+  // Extract nested URL if this was opened via a custom protocol handler
+  let sharedUrl = rawSharedUrl;
+  if (rawSharedUrl.startsWith("web+commonplace:")) {
+    try {
+      const protocolUrl = new URL(rawSharedUrl);
+      sharedUrl = protocolUrl.searchParams.get("shared_url") || protocolUrl.searchParams.get("shared_text") || rawSharedUrl;
+    } catch (e) {
+      console.error("Failed to parse custom protocol URL:", e);
+    }
+  }
 
   // Strip the query string so it doesn't persist on refresh
   const cleanUrl =
@@ -461,6 +472,42 @@ function consumeShareTarget() {
     dom.articleUrl.value = sharedUrl;
     dom.articleUrl.dispatchEvent(new Event("input", { bubbles: true }));
   }
+}
+
+// Register LaunchQueue API consumer to handle custom protocol links
+// when the Chrome PWA is already open.
+if ("launchQueue" in window) {
+  window.launchQueue.setConsumer((launchParams) => {
+    if (!launchParams.targetURL) return;
+    try {
+      const url = new URL(launchParams.targetURL);
+      const params = url.searchParams;
+      const rawSharedUrl = params.get("shared_url") || params.get("shared_text") || "";
+      if (!rawSharedUrl) return;
+
+      let sharedUrl = rawSharedUrl;
+      if (rawSharedUrl.startsWith("web+commonplace:")) {
+        const protocolUrl = new URL(rawSharedUrl);
+        sharedUrl = protocolUrl.searchParams.get("shared_url") || protocolUrl.searchParams.get("shared_text") || rawSharedUrl;
+      }
+
+      if (isTweetUrl(sharedUrl)) {
+        openAddModal("tweet");
+        if (dom.addTweetUrl) {
+          dom.addTweetUrl.value = sharedUrl;
+          dom.addTweetUrl.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      } else {
+        openAddModal("article");
+        if (dom.articleUrl) {
+          dom.articleUrl.value = sharedUrl;
+          dom.articleUrl.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      }
+    } catch (err) {
+      console.error("Failed to process LaunchQueue params:", err);
+    }
+  });
 }
 
 function bindEvents() {

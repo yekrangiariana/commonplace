@@ -5,6 +5,15 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "protocol_handlers": [
+    {
+      "protocol": "web+commonplace",
+      "url": "./index.html?shared_url=%s"
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
   "orientation": "natural",
   "icons": [
     {
