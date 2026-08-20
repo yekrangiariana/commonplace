@@ -49,8 +49,15 @@ else
   echo ".env configuration already exists."
 fi
 
-# Ensure data directory exists
+# Ensure data directory exists and has correct permissions
 mkdir -p "$DATA_DIR"
+if [ "$EUID" -eq 0 ]; then
+  USER_NAME=$(logname || echo $SUDO_USER || echo $USER || whoami)
+  chown -R "$USER_NAME:$USER_NAME" "$DATA_DIR"
+  if [ -f "$SERVER_DIR/.env" ]; then
+    chown "$USER_NAME:$USER_NAME" "$SERVER_DIR/.env"
+  fi
+fi
 
 # 4. OS-specific service installation
 OS_TYPE=$(uname -s)
