@@ -116,7 +116,7 @@ export async function pullSync(localState) {
   if (!isLoggedIn()) return null;
   if (syncTimerId !== null) return null;
 
-  notifyStatus("pulling", "Syncing from cloud…");
+  notifyStatus("pulling", "Syncing from server…");
 
   try {
     const since = getLastPullTimestamp();
@@ -224,7 +224,7 @@ export async function pullSync(localState) {
     setLocalSyncTimestamp(Date.now());
 
     if (hasChanges) {
-      notifyStatus("done", "Synced from cloud");
+      notifyStatus("done", "Synced from server");
       return {
         bookmarks: mergedBookmarks,
         projects: mergedProjects,
@@ -266,7 +266,7 @@ export async function pushSyncNow(localState, serializeMetaFn) {
   }
 
   syncInFlight = true;
-  notifyStatus("pushing", "Saving to cloud…");
+  notifyStatus("pushing", "Saving to server…");
 
   try {
     const promises = [];
@@ -678,7 +678,7 @@ export function initSyncUI(deps) {
     const password = passwordInput?.value;
     if (!email || !password) return;
 
-    loginStatus.textContent = isSignUp ? "Creating account…" : "Signing in…";
+    loginStatus.textContent = isSignUp ? "Registering password…" : "Logging in…";
     try {
       if (isSignUp) {
         await signUp(email, password);
@@ -724,7 +724,7 @@ export function initSyncUI(deps) {
   forcePullBtn?.addEventListener("click", async () => {
     if (
       !confirm(
-        "Replace all local data with cloud data? Any unsynced local changes will be lost.",
+        "Replace all local data with server data? Any unsynced local changes will be lost.",
       )
     )
       return;
@@ -743,7 +743,7 @@ export function initSyncUI(deps) {
   forcePushBtn?.addEventListener("click", async () => {
     if (
       !confirm(
-        "Replace all cloud data with local data? Any unsynced changes on other devices will be lost.",
+        "Replace all server data with local data? Any unsynced changes on other devices will be lost.",
       )
     )
       return;

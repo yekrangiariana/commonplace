@@ -923,12 +923,12 @@
             <section class="panel-card panel-card--settings-detail">
               <section class="settings-panel" data-settings-panel="export">
 
-                <!-- ═══ Cloud Sync Panel ═══ -->
+                <!-- ═══ Database Sync Panel ═══ -->
                 <div class="sync-panel">
                   <div class="sync-panel__titlebar">
                     <span class="sync-panel__titlebar-label">
-                      <i class="fa-solid fa-cloud" aria-hidden="true"></i>
-                      Cloud Sync
+                      <i class="fa-solid fa-server" aria-hidden="true"></i>
+                      Database Sync
                     </span>
                     <span class="sync-panel__titlebar-status" id="sync-titlebar-status"></span>
                   </div>
@@ -937,7 +937,7 @@
                     <!-- Logged-out state -->
                     <div id="sync-login-view" class="sync-login">
                       <p class="sync-login__desc">
-                        Sign in to sync your library, projects, and settings across devices.
+                        Connect to your self-hosted database to sync bookmarks, RSS feeds, and projects.
                       </p>
                       <form id="sync-auth-form" class="sync-login__form">
                         <div class="sync-login__field">
@@ -966,14 +966,14 @@
                             class="button button--primary sync-login__submit"
                             type="submit"
                           >
-                            Sign in
+                            Log in
                           </button>
                           <button
                             class="button button--ghost sync-login__submit"
                             type="button"
                             id="sync-signup-button"
                           >
-                            Create account
+                            Register Password
                           </button>
                         </div>
                       </form>

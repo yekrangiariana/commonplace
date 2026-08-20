@@ -210,6 +210,7 @@ export async function refreshAccessToken() {
 
 export function logout() {
   persistSession(null);
+  window.location.reload();
 }
 
 export function getSessionEmail() {
