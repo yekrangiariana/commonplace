@@ -70,20 +70,7 @@ export function renderSettings(state, dom) {
     dom.soundEffectsEnabled.checked = state.soundEffectsEnabled !== false;
   }
 
-  if (dom.rssRetentionSelect) {
-    const retentionValue =
-      state.rssRetentionDays === "never"
-        ? "never"
-        : String(Number(state.rssRetentionDays) || 7);
-    dom.rssRetentionSelect.value = retentionValue;
-  }
 
-  if (dom.rssAutoRefreshSelect) {
-    const autoRefreshValue = normalizeRssAutoRefreshMinutes(
-      state.rssAutoRefreshMinutes,
-    );
-    dom.rssAutoRefreshSelect.value = String(autoRefreshValue);
-  }
 
   if (dom.exportMarkdownStatus && activeSection === "export") {
     const supported = typeof window.showDirectoryPicker === "function";

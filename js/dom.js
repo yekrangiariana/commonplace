@@ -91,10 +91,6 @@ export const dom = {
   projectHighlightList: document.querySelector("#project-highlight-list"),
   settingsNavButtons: [...document.querySelectorAll("[data-settings-section]")],
   settingsPanels: [...document.querySelectorAll("[data-settings-panel]")],
-  exportMarkdownFolderButton: document.querySelector(
-    "#export-markdown-folder-button",
-  ),
-  exportMarkdownStatus: document.querySelector("#export-markdown-status"),
   settingsStorageRefreshButton: document.querySelector(
     "#settings-storage-refresh-button",
   ),
@@ -115,8 +111,6 @@ export const dom = {
     "#display-text-size-increase",
   ),
   displayTextSizeLabel: document.querySelector("#display-text-size-label"),
-  rssRetentionSelect: document.querySelector("#rss-retention-select"),
-  rssAutoRefreshSelect: document.querySelector("#rss-auto-refresh-select"),
   rssFeedSettingsList: document.querySelector("#rss-feed-settings-list"),
   aboutAppVersion: document.querySelector("#about-app-version"),
   aboutAppDescription: document.querySelector("#about-app-description"),

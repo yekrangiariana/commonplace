@@ -84,22 +84,6 @@ export const ACTION_COMMANDS = [
     icon: "fa-expand",
   },
   {
-    id: "action:export-data",
-    type: "command",
-    category: "Actions",
-    title: "Export data",
-    keywords: "export data backup download clipboard",
-    icon: "fa-download",
-  },
-  {
-    id: "action:import-data",
-    type: "command",
-    category: "Actions",
-    title: "Import data",
-    keywords: "import data restore upload clipboard",
-    icon: "fa-upload",
-  },
-  {
     id: "action:copy-highlights",
     type: "command",
     category: "Actions",
@@ -134,12 +118,6 @@ export async function executeActionCommand(commandId) {
     case "action:focus-mode":
       _openFocusMode();
       return true;
-    case "action:export-data":
-      _openExportDialog();
-      return true;
-    case "action:import-data":
-      _openImportDialog();
-      return true;
     case "action:copy-highlights":
       // If currently reading an article, copy its highlights directly
       if (state.activeTab === "reader" && state.selectedArticleId) {
@@ -164,11 +142,19 @@ export async function executeActionCommand(commandId) {
  */
 export async function copyArticleHighlightsById(articleId) {
   const article = state.bookmarks.find((b) => b.id === articleId);
-  if (!article?.highlights?.length) {
+  let highlights = article?.highlights || [];
+  if (typeof highlights === "string") {
+    try {
+      highlights = JSON.parse(highlights);
+    } catch {
+      highlights = [];
+    }
+  }
+  if (!Array.isArray(highlights) || !highlights.length) {
     _setStatus("No highlights to copy for this article.");
     return false;
   }
-  const text = article.highlights
+  const text = highlights
     .slice()
     .sort((a, b) => a.start - b.start)
     .map((h) => h.quote)
@@ -187,12 +173,20 @@ export async function copyArticleHighlightsById(articleId) {
 export function getBookmarksWithHighlights() {
   const out = [];
   for (const b of state.bookmarks) {
-    if (b.highlights && b.highlights.length > 0) {
+    let highlights = b.highlights || [];
+    if (typeof highlights === "string") {
+      try {
+        highlights = JSON.parse(highlights);
+      } catch {
+        highlights = [];
+      }
+    }
+    if (Array.isArray(highlights) && highlights.length > 0) {
       const title = b.title || "Untitled";
       out.push({
         id: b.id,
         title,
-        count: b.highlights.length,
+        count: highlights.length,
         _lowerTitle: title.toLowerCase(),
       });
     }

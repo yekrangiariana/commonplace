@@ -118,19 +118,6 @@ import {
   normalizeRssAutoRefreshMinutes,
 } from "./services/rssAutoRefresh.js";
 import {
-  exportMarkdownToFolder,
-  exportMarkdownToSavedFolder,
-  exportMarkdownAsZip,
-  getSavedMarkdownExportStatus,
-  isMarkdownFolderExportSupported,
-  isMobileDevice,
-} from "./services/markdownExport.js";
-import {
-  initDataTransfer,
-  openExportDialog,
-  openImportDialog,
-} from "./services/dataTransfer.js";
-import {
   initSearchIndex,
   rebuildIndex,
   initSearchUI,
@@ -190,16 +177,7 @@ let focusModeController = null;
 let lastTabClickTime = 0;
 let lastTabClickTarget = null;
 let storageUsageRequestInFlight = false;
-let markdownExportInFlight = false;
-let markdownAutoSyncTimerId = null;
-let markdownAutoSyncPending = false;
-let markdownAutoSyncReady = false;
-let markdownAutoSyncedBookmarksVersion = 0;
-let markdownAutoSyncedProjectsVersion = 0;
 let experimentalReaderFetchInFlight = false;
-
-const MARKDOWN_AUTO_SYNC_DEBOUNCE_MS = 2500;
-const MOBILE_EXPORT_TIMESTAMP_KEY = "commonplace-mobile-export-timestamp";
 
 const RSS_PAGINATION_SCOPE = "rss";
 
@@ -334,7 +312,6 @@ async function init() {
     applyDisplayPreferences();
     bindEvents();
     initSwipeNavigation(switchTab, () => state.activeTab);
-    initDataTransfer();
     workspaceContextMenu = initWorkspaceContextMenu({
       state,
       setStatus,
@@ -831,42 +808,6 @@ function bindEvents() {
     applyDisplayPreferences();
     renderSettings(state, dom);
   });
-  dom.rssRetentionSelect?.addEventListener("change", () => {
-    const raw = dom.rssRetentionSelect.value;
-    state.rssRetentionDays = raw === "never" ? "never" : Number(raw) || 7;
-    touchMeta(state);
-    const removedCount = pruneRssItemsForRetention();
-    persistState(state);
-    renderSettings(state, dom);
-
-    if (state.activeTab === "rss") {
-      renderRssPanel();
-    }
-
-    if (removedCount > 0) {
-      setStatus(
-        `Removed ${removedCount} stale RSS item${removedCount === 1 ? "" : "s"}.`,
-      );
-    }
-  });
-
-  dom.rssAutoRefreshSelect?.addEventListener("change", () => {
-    state.rssAutoRefreshMinutes = normalizeRssAutoRefreshMinutes(
-      dom.rssAutoRefreshSelect.value,
-    );
-    touchMeta(state);
-    persistState(state);
-    renderSettings(state, dom);
-    rssAutoRefreshController?.sync();
-
-    const interval = state.rssAutoRefreshMinutes;
-
-    if (interval === "off") {
-      setStatus("RSS auto refresh disabled.");
-      return;
-    }
-
-    setStatus(`RSS auto refresh set to every ${interval} minute(s).`);
   });
 
   dom.articleTags.addEventListener("input", () => {
@@ -1222,328 +1163,6 @@ function getSyncDeps() {
   };
 }
 
-async function handleMarkdownFolderExport() {
-  // Use ZIP download on mobile devices to avoid Android FSAA issues
-  if (isMobileDevice()) {
-    await runMobileZipExport();
-    return;
-  }
-
-  await runMarkdownSync({
-    reason: "manual",
-    allowFolderPicker: true,
-    forceNow: true,
-    announceStatus: true,
-  });
-}
-
-async function runMobileZipExport() {
-  if (dom.exportMarkdownFolderButton) {
-    dom.exportMarkdownFolderButton.disabled = true;
-  }
-
-  try {
-    const result = await exportMarkdownAsZip(state, {
-      onProgress: (progress) => {
-        if (!dom.exportMarkdownStatus) return;
-
-        if (progress.stage === "loading-zip-library") {
-          dom.exportMarkdownStatus.textContent = "Loading...";
-        } else if (progress.stage === "building-content") {
-          dom.exportMarkdownStatus.textContent = "Building content...";
-        } else if (progress.stage === "adding-files") {
-          dom.exportMarkdownStatus.textContent = `Adding files: ${progress.completed}/${progress.total}`;
-        } else if (progress.stage === "generating-zip") {
-          dom.exportMarkdownStatus.textContent = "Generating ZIP...";
-        } else if (progress.stage === "downloading") {
-          dom.exportMarkdownStatus.textContent = "Starting download...";
-        }
-      },
-    });
-
-    // Save export timestamp
-    localStorage.setItem(MOBILE_EXPORT_TIMESTAMP_KEY, new Date().toISOString());
-
-    if (dom.exportMarkdownStatus) {
-      dom.exportMarkdownStatus.textContent = `Exported ${result.library.total} articles and ${result.projects.total} projects to ${result.fileName}`;
-    }
-  } catch (error) {
-    console.error("ZIP export failed:", error);
-    if (dom.exportMarkdownStatus) {
-      dom.exportMarkdownStatus.textContent = `Export failed: ${error.message}`;
-    }
-  } finally {
-    if (dom.exportMarkdownFolderButton) {
-      dom.exportMarkdownFolderButton.disabled = false;
-    }
-  }
-}
-
-async function refreshMarkdownExportBindingStatus() {
-  // On mobile, show ZIP export messaging instead of folder sync
-  if (isMobileDevice()) {
-    markdownAutoSyncReady = false;
-    if (dom.exportMarkdownStatus) {
-      const lastExport = localStorage.getItem(MOBILE_EXPORT_TIMESTAMP_KEY);
-      if (lastExport) {
-        const relativeTime = formatRelativeTime(lastExport);
-        dom.exportMarkdownStatus.textContent = `On mobile, export downloads as a ZIP file. Last exported ${relativeTime}.`;
-      } else {
-        dom.exportMarkdownStatus.textContent =
-          "On mobile, export downloads as a ZIP file.";
-      }
-    }
-    return;
-  }
-
-  if (!isMarkdownFolderExportSupported()) {
-    markdownAutoSyncReady = false;
-    return;
-  }
-
-  const status = await getSavedMarkdownExportStatus({
-    requestPermission: false,
-  });
-  markdownAutoSyncReady = status.hasSavedHandle && status.canWrite;
-
-  if (markdownAutoSyncReady) {
-    if (dom.exportMarkdownStatus) {
-      dom.exportMarkdownStatus.textContent = `Syncing to folder: ${status.rootFolderName}. Auto-sync is on.`;
-    }
-    if (dom.exportMarkdownFolderButton) {
-      dom.exportMarkdownFolderButton.innerHTML = `<i class="fa-solid fa-sync" aria-hidden="true"></i> Sync Now`;
-    }
-    return;
-  }
-
-  // Reset button to default state when not linked
-  if (dom.exportMarkdownFolderButton) {
-    dom.exportMarkdownFolderButton.innerHTML = `<i class="fa-solid fa-folder-open" aria-hidden="true"></i> Export`;
-  }
-
-  if (status.hasSavedHandle && !status.canWrite) {
-    if (dom.exportMarkdownStatus) {
-      dom.exportMarkdownStatus.textContent =
-        "Export folder linked, but permission is missing. Click Export to reconnect.";
-    }
-  }
-}
-
-function getMarkdownDataVersions() {
-  return {
-    bookmarksVersion: Number(state.__bookmarksVersion || 0),
-    projectsVersion: Number(state.__projectsVersion || 0),
-  };
-}
-
-function hasUnsyncedMarkdownChanges() {
-  const versions = getMarkdownDataVersions();
-
-  return (
-    versions.bookmarksVersion !== markdownAutoSyncedBookmarksVersion ||
-    versions.projectsVersion !== markdownAutoSyncedProjectsVersion
-  );
-}
-
-function markMarkdownSyncCheckpoint() {
-  const versions = getMarkdownDataVersions();
-  markdownAutoSyncedBookmarksVersion = versions.bookmarksVersion;
-  markdownAutoSyncedProjectsVersion = versions.projectsVersion;
-}
-
-function queueMarkdownAutoSync(reason = "auto") {
-  if (!markdownAutoSyncReady || !hasUnsyncedMarkdownChanges()) {
-    return;
-  }
-
-  if (markdownAutoSyncTimerId !== null) {
-    return;
-  }
-
-  markdownAutoSyncTimerId = window.setTimeout(() => {
-    markdownAutoSyncTimerId = null;
-    runMarkdownSync({
-      reason,
-      allowFolderPicker: false,
-      forceNow: false,
-      announceStatus: false,
-    });
-  }, MARKDOWN_AUTO_SYNC_DEBOUNCE_MS);
-}
-
-function clearMarkdownAutoSyncTimer() {
-  if (markdownAutoSyncTimerId === null) {
-    return;
-  }
-
-  window.clearTimeout(markdownAutoSyncTimerId);
-  markdownAutoSyncTimerId = null;
-}
-
-async function runMarkdownSync(options = {}) {
-  const reason = options.reason || "auto";
-  const allowFolderPicker = options.allowFolderPicker === true;
-  const forceNow = options.forceNow === true;
-  const announceStatus = options.announceStatus !== false;
-
-  if (!isMarkdownFolderExportSupported()) {
-    return;
-  }
-
-  if (!forceNow && !hasUnsyncedMarkdownChanges()) {
-    return;
-  }
-
-  if (markdownExportInFlight) {
-    markdownAutoSyncPending = true;
-    return;
-  }
-
-  if (forceNow) {
-    clearMarkdownAutoSyncTimer();
-  }
-
-  markdownExportInFlight = true;
-
-  if (dom.exportMarkdownFolderButton) {
-    dom.exportMarkdownFolderButton.disabled = true;
-  }
-
-  try {
-    let result = null;
-
-    if (markdownAutoSyncReady) {
-      result = await exportMarkdownToSavedFolder(state, {
-        requestPermission: false,
-        onProgress: (progress) => {
-          if (!announceStatus || !dom.exportMarkdownStatus) {
-            return;
-          }
-
-          if (
-            (progress.stage === "sync-library" ||
-              progress.stage === "sync-projects") &&
-            Number.isFinite(progress.completed) &&
-            Number.isFinite(progress.total)
-          ) {
-            const label =
-              progress.stage === "sync-library"
-                ? "Syncing library"
-                : "Syncing projects";
-            dom.exportMarkdownStatus.textContent = `${label}: ${progress.completed}/${progress.total}`;
-          }
-        },
-      });
-    } else if (allowFolderPicker) {
-      const savedStatus = await getSavedMarkdownExportStatus({
-        requestPermission: true,
-      });
-
-      if (savedStatus.hasSavedHandle && savedStatus.canWrite) {
-        result = await exportMarkdownToSavedFolder(state, {
-          requestPermission: true,
-          onProgress: (progress) => {
-            if (!dom.exportMarkdownStatus) {
-              return;
-            }
-
-            if (
-              (progress.stage === "sync-library" ||
-                progress.stage === "sync-projects") &&
-              Number.isFinite(progress.completed) &&
-              Number.isFinite(progress.total)
-            ) {
-              const label =
-                progress.stage === "sync-library"
-                  ? "Syncing library"
-                  : "Syncing projects";
-              dom.exportMarkdownStatus.textContent = `${label}: ${progress.completed}/${progress.total}`;
-            }
-          },
-        });
-      } else {
-        result = await exportMarkdownToFolder(state, {
-          appFolderName: "Bookmark Manager",
-          onProgress: (progress) => {
-            if (!dom.exportMarkdownStatus) {
-              return;
-            }
-
-            if (progress.stage === "pick-folder") {
-              dom.exportMarkdownStatus.textContent =
-                "Waiting for folder selection...";
-              return;
-            }
-
-            if (
-              (progress.stage === "sync-library" ||
-                progress.stage === "sync-projects") &&
-              Number.isFinite(progress.completed) &&
-              Number.isFinite(progress.total)
-            ) {
-              const label =
-                progress.stage === "sync-library"
-                  ? "Syncing library"
-                  : "Syncing projects";
-              dom.exportMarkdownStatus.textContent = `${label}: ${progress.completed}/${progress.total}`;
-            }
-          },
-        });
-      }
-    } else {
-      markdownAutoSyncReady = false;
-      return;
-    }
-
-    markdownAutoSyncReady = true;
-    markMarkdownSyncCheckpoint();
-
-    if (dom.exportMarkdownStatus && result) {
-      dom.exportMarkdownStatus.textContent = `Linked folder: ${result.rootFolderName}. Last sync: library ${result.library.written} written, ${result.library.skipped} skipped; projects ${result.projects.written} written, ${result.projects.skipped} skipped.`;
-    }
-
-    if (announceStatus || reason === "manual") {
-      setStatus("Markdown sync completed.");
-    }
-  } catch (error) {
-    if (error?.name === "AbortError") {
-      if (reason === "manual") {
-        if (dom.exportMarkdownStatus) {
-          dom.exportMarkdownStatus.textContent = "Export cancelled.";
-        }
-        setStatus("Markdown export cancelled.");
-      }
-      return;
-    }
-
-    const message =
-      error?.message || "Markdown export failed. Please try again.";
-
-    if (dom.exportMarkdownStatus) {
-      dom.exportMarkdownStatus.textContent = message;
-    }
-
-    if (announceStatus || reason === "manual") {
-      setStatus(message);
-    }
-
-    if (/permission|linked|reconnect|No export folder/i.test(message)) {
-      markdownAutoSyncReady = false;
-    }
-  } finally {
-    markdownExportInFlight = false;
-
-    if (dom.exportMarkdownFolderButton) {
-      dom.exportMarkdownFolderButton.disabled = false;
-    }
-
-    if (markdownAutoSyncPending) {
-      markdownAutoSyncPending = false;
-      queueMarkdownAutoSync("pending");
-    }
-  }
-}
-
 function handleDocumentVisibilityChange() {
   // Stamp the time so init() can skip the splash delay on a fold-triggered reload
   if (document.visibilityState === "hidden") {
@@ -1553,21 +1172,6 @@ function handleDocumentVisibilityChange() {
       // ignore storage errors
     }
   }
-
-  if (document.visibilityState !== "hidden") {
-    return;
-  }
-
-  if (!markdownAutoSyncReady || !hasUnsyncedMarkdownChanges()) {
-    return;
-  }
-
-  runMarkdownSync({
-    reason: "hidden",
-    allowFolderPicker: false,
-    forceNow: true,
-    announceStatus: false,
-  });
 }
 
 async function refreshStorageUsageDisplay() {
@@ -2900,8 +2504,6 @@ function render() {
   if (state.activeTab === "settings") {
     renderSettings(state, dom);
   }
-
-  queueMarkdownAutoSync("render");
 
   workspaceContextMenu?.syncSelectionClasses();
 }
