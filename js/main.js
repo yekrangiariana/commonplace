@@ -808,7 +808,6 @@ function bindEvents() {
     applyDisplayPreferences();
     renderSettings(state, dom);
   });
-  });
 
   dom.articleTags.addEventListener("input", () => {
     syncPendingAutoTagSelectionFromInput();
