@@ -15,23 +15,32 @@ Commonplace is a local-first research workspace that turns saved articles into u
 You can self-host Commonplace natively on your old laptop or home server using the Node.js + SQLite backend. This replaces the Supabase Cloud database and ensures your data is hosted entirely on your own hardware without limitations.
 
 ### Prerequisites
-* **Node.js** (version 18 or newer)
-* **npm** (comes packaged with Node.js)
+To run the server, you need **Node.js** (version 18 or newer) and **npm** installed on your server:
+
+* **Linux (Mint/Ubuntu/Debian)**:
+  Install Node.js and npm via the standard package manager:
+  ```bash
+  sudo apt update
+  sudo apt install -y nodejs npm
+  ```
+  *(If your package manager installs an older version, we recommend using NodeSource or NVM to install Node 20 LTS.)*
+* **macOS**:
+  Install via Homebrew:
+  ```bash
+  brew install node
+  ```
 
 ### Installation
-Run the installer script from the root of the repository:
+You can configure and start the entire app with a single copy-pasteable command. Open a terminal on your self-hosted machine and run:
+
 ```bash
-./scripts/install.sh
+git clone https://github.com/yekrangiariana/commonplace.git && cd commonplace && chmod +x scripts/install.sh && sudo ./scripts/install.sh
 ```
 
 #### Running as a Background Service
-If you want Commonplace to run automatically as a background service when your system boots up:
-* **Linux (Mint/Ubuntu/Debian)**: Run the installer with sudo:
-  ```bash
-  sudo ./scripts/install.sh
-  ```
-  This registers a `systemd` daemon (`commonplace.service`).
-* **macOS**: The installer automatically registers a user-level `launchd` plist agent (`com.commonplace.server.plist`) which starts on login. No sudo is required!
+If you want Commonplace to run automatically as a background service:
+* **Linux (Mint/Ubuntu/Debian)**: Run the script above with `sudo`. It automatically registers and enables a `systemd` daemon (`commonplace.service`).
+* **macOS**: The installer automatically registers a user-level `launchd` plist agent (`com.commonplace.server.plist`) which starts on login. No sudo is required! (On macOS, you can run `scripts/install.sh` without the `sudo` prefix).
 
 ### Configuration
 * The server configuration is stored in the `server/.env` file. 
@@ -45,8 +54,8 @@ If you want Commonplace to run automatically as a background service when your s
 4. You can change your password at any time in the **Settings -> Data** tab under the **Change Account Password** section.
 
 ### Uninstallation
-To remove the background services and clean up installation files:
+To stop the background services and clean up installation files, run:
 ```bash
-./scripts/uninstall.sh
+cd ~/commonplace && sudo ./scripts/uninstall.sh
 ```
-*(Run with `sudo ./scripts/uninstall.sh` if you installed the systemd background service on Linux.)*
+*(On macOS, you do not need the `sudo` prefix: `cd ~/commonplace && ./scripts/uninstall.sh`)*

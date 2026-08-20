@@ -90,6 +90,16 @@ async function authRequired(req, res, next) {
   next();
 }
 
+async function fetchArticleAuth(req, res, next) {
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : null;
+
+  if (token === "local-anon-key" || await validateSession(token)) {
+    return next();
+  }
+  res.status(401).json({ error: "Unauthorized", msg: "Invalid or expired session" });
+}
+
 // --- Auth Endpoints ---
 
 // Get current user details
@@ -275,7 +285,7 @@ app.post("/rest/v1/:table", authRequired, async (req, res) => {
 });
 
 // --- Fetch Proxy / Scraper Helper ---
-app.post("/functions/v1/fetch-article", authRequired, async (req, res) => {
+app.post("/functions/v1/fetch-article", fetchArticleAuth, async (req, res) => {
   const { url } = req.body;
   if (!url) {
     return res.status(400).json({ error: "Bad Request", message: "url parameter is required" });
