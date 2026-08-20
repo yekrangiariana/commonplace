@@ -636,8 +636,6 @@ export function initSyncUI(deps) {
   const lastSyncedEl = document.getElementById("sync-last-synced");
   const logoutBtn = document.getElementById("sync-logout-button");
   const syncStatusEl = document.getElementById("sync-status");
-  const forcePullBtn = document.getElementById("sync-force-pull-button");
-  const forcePushBtn = document.getElementById("sync-force-push-button");
   const titlebarStatus = document.getElementById("sync-titlebar-status");
 
   const overlay = document.getElementById("full-screen-login-overlay");
@@ -730,41 +728,6 @@ export function initSyncUI(deps) {
     const email = document.getElementById("sync-email-input")?.value?.trim();
     const password = document.getElementById("sync-password-input")?.value;
     handleAuth(true, email, password, loginStatus);
-  });
-
-  forcePullBtn?.addEventListener("click", async () => {
-    if (
-      !confirm(
-        "Replace all local data with server data? Any unsynced local changes will be lost.",
-      )
-    )
-      return;
-    forcePullBtn.disabled = true;
-    try {
-      const remoteData = await forcePull();
-      if (remoteData) {
-        applyRemote(remoteData);
-        updateSyncView();
-      }
-    } finally {
-      forcePullBtn.disabled = false;
-    }
-  });
-
-  forcePushBtn?.addEventListener("click", async () => {
-    if (
-      !confirm(
-        "Replace all server data with local data? Any unsynced changes on other devices will be lost.",
-      )
-    )
-      return;
-    forcePushBtn.disabled = true;
-    try {
-      await forcePush(getState(), serializeMetaState);
-      updateSyncView();
-    } finally {
-      forcePushBtn.disabled = false;
-    }
   });
 
   logoutBtn?.addEventListener("click", () => {

@@ -728,18 +728,7 @@ function bindEvents() {
     handleMarkdownFolderExport,
   );
 
-  // Data transfer (clipboard import/export)
-  document
-    .querySelector("#data-transfer-export-button")
-    ?.addEventListener("click", openExportDialog);
-  document
-    .querySelector("#data-transfer-import-button")
-    ?.addEventListener("click", openImportDialog);
-  window.addEventListener("dataTransferImportComplete", () => {
-    renderAndSyncUrl();
-    rebuildIndex(state.bookmarks, state.projects).catch(() => {});
-    setStatus("Import complete");
-  });
+
 
   dom.settingsStorageRefreshButton?.addEventListener(
     "click",
