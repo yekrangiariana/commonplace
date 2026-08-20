@@ -21,11 +21,15 @@ let onChange = null;
 let intentionalClose = false;
 
 function getRealtimeUrl() {
-  const url = runtimeConfig.fetchServiceUrl || "";
-  const match = url.match(/^https:\/\/([^/]+\.supabase\.co)/);
-  if (!match) return "";
-  const anonKey = runtimeConfig.supabaseAnonKey || "";
-  return `wss://${match[1]}/realtime/v1/websocket?apikey=${encodeURIComponent(anonKey)}&vsn=1.0.0`;
+  const urlStr = runtimeConfig.fetchServiceUrl || "";
+  try {
+    const url = new URL(urlStr, window.location.origin);
+    const wsProtocol = url.protocol === "https:" ? "wss:" : "ws:";
+    const anonKey = runtimeConfig.supabaseAnonKey || "";
+    return `${wsProtocol}//${url.host}/realtime/v1/websocket?apikey=${encodeURIComponent(anonKey)}&vsn=1.0.0`;
+  } catch {
+    return "";
+  }
 }
 
 function nextRef() {

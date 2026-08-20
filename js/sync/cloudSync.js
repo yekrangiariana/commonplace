@@ -19,6 +19,7 @@ import {
   signUp,
   logout,
   getSessionEmail,
+  updatePassword,
 } from "./supabaseClient.js";
 import {
   startRealtime,
@@ -760,6 +761,40 @@ export function initSyncUI(deps) {
     stopAutoPull();
     updateSyncView();
     if (syncStatusEl) syncStatusEl.textContent = "";
+  });
+
+  const changePasswordForm = document.getElementById("sync-change-password-form");
+  const changePasswordInput = document.getElementById("sync-new-password-input");
+  const changePasswordStatus = document.getElementById("sync-change-password-status");
+
+  changePasswordForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const newPassword = changePasswordInput?.value;
+    if (!newPassword) return;
+
+    if (changePasswordStatus) {
+      changePasswordStatus.textContent = "Updating password...";
+      changePasswordStatus.style.color = "var(--text-color-muted)";
+    }
+
+    try {
+      await updatePassword(newPassword);
+      if (changePasswordStatus) {
+        changePasswordStatus.textContent = "Password updated successfully!";
+        changePasswordStatus.style.color = "var(--color-success, #2e7d32)";
+      }
+      if (changePasswordInput) {
+        changePasswordInput.value = "";
+      }
+      setTimeout(() => {
+        if (changePasswordStatus) changePasswordStatus.textContent = "";
+      }, 4000);
+    } catch (err) {
+      if (changePasswordStatus) {
+        changePasswordStatus.textContent = `Error: ${err.message}`;
+        changePasswordStatus.style.color = "var(--color-danger, #c62828)";
+      }
+    }
   });
 
   updateSyncView();

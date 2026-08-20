@@ -884,6 +884,7 @@ export function initReaderTtsPlayer({
             data-tts-action="toggle-play"
             title="Play"
             aria-label="Play"
+            data-cuelume-toggle="toggle"
           >
             <i class="fa-solid fa-play" aria-hidden="true"></i>
           </button>
@@ -911,6 +912,7 @@ export function initReaderTtsPlayer({
               data-tts-action="toggle-settings"
               title="Voice settings"
               aria-label="Voice settings"
+              data-cuelume-toggle="toggle"
             >
               <i class="fa-solid fa-sliders" aria-hidden="true"></i>
             </button>
@@ -927,11 +929,11 @@ export function initReaderTtsPlayer({
               <div class="tts-player__field">
                 <span>Speed</span>
                 <div class="tts-player__speed-controls">
-                  <button type="button" class="tts-player__speed-button" data-tts-action="speed-down" aria-label="Decrease speed">
+                  <button type="button" class="tts-player__speed-button" data-tts-action="speed-down" aria-label="Decrease speed" data-cuelume-press="press" data-cuelume-release="release">
                     <i class="fa-solid fa-minus" aria-hidden="true"></i>
                   </button>
                   <strong class="tts-player__speed-value" data-tts-rate-value>1.00x</strong>
-                  <button type="button" class="tts-player__speed-button" data-tts-action="speed-up" aria-label="Increase speed">
+                  <button type="button" class="tts-player__speed-button" data-tts-action="speed-up" aria-label="Increase speed" data-cuelume-press="press" data-cuelume-release="release">
                     <i class="fa-solid fa-plus" aria-hidden="true"></i>
                   </button>
                 </div>

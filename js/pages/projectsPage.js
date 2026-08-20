@@ -161,6 +161,9 @@ export function renderProjects(state, dom) {
           draggable="true"
           role="button"
           tabindex="0"
+          data-cuelume-hover="tick"
+          data-cuelume-press="press"
+          data-cuelume-release="release"
         >
           <div class="project-card__header">
             <div>
@@ -180,6 +183,8 @@ export function renderProjects(state, dom) {
               data-delete-project="${project.id}"
               title="Delete project"
               aria-label="Delete ${escapeHtml(project.name)}"
+              data-cuelume-press="press"
+              data-cuelume-release="release"
             >
               <i class="fa-solid fa-xmark" aria-hidden="true"></i>
             </button>

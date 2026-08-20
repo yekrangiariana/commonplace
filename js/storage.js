@@ -340,6 +340,7 @@ export function serializeMetaState(state) {
     theme: state.theme,
     displayHighlightColor: state.displayHighlightColor,
     splashEnabled: state.splashEnabled,
+    soundEffectsEnabled: state.soundEffectsEnabled,
     ttsVoiceId: state.ttsVoiceId,
     ttsRate: state.ttsRate,
     rssActiveFeedId: state.rssActiveFeedId,
@@ -389,6 +390,7 @@ function buildMetaSnapshot(snapshot) {
       : "system",
     displayHighlightColor: snapshot.displayHighlightColor || "green",
     splashEnabled: snapshot.splashEnabled !== false,
+    soundEffectsEnabled: snapshot.soundEffectsEnabled !== false,
     ttsVoiceId: snapshot.ttsVoiceId || "",
     ttsRate:
       Number.isFinite(Number(snapshot.ttsRate)) && Number(snapshot.ttsRate) > 0
@@ -498,6 +500,7 @@ function applyParsedState(state, parsedState) {
     ? parsedState.displayHighlightColor
     : "green";
   state.splashEnabled = parsedState.splashEnabled !== false;
+  state.soundEffectsEnabled = parsedState.soundEffectsEnabled !== false;
   state.ttsVoiceId =
     typeof parsedState.ttsVoiceId === "string" ? parsedState.ttsVoiceId : "";
   state.ttsRate =

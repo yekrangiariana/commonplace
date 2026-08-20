@@ -160,28 +160,28 @@
               </div>
             </div>
             <div class="nav-links__center">
-              <button class="nav-link" data-tab-target="rss">
+              <button class="nav-link" data-tab-target="rss" data-cuelume-hover="tick" data-cuelume-toggle="toggle">
                 <i class="fa-solid fa-compass" aria-hidden="true"></i>
                 <span>Explore</span>
               </button>
-              <button class="nav-link" data-tab-target="library">
+              <button class="nav-link" data-tab-target="library" data-cuelume-hover="tick" data-cuelume-toggle="toggle">
                 <i class="fa-solid fa-book-open" aria-hidden="true"></i>
                 <span>Library</span>
               </button>
-              <button class="nav-link" data-tab-target="projects">
+              <button class="nav-link" data-tab-target="projects" data-cuelume-hover="tick" data-cuelume-toggle="toggle">
                 <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
                 <span>Projects</span>
               </button>
             </div>
             <div class="nav-links__actions">
-              <button class="nav-link nav-link--icon" data-tab-target="settings" aria-label="Settings">
+              <button class="nav-link nav-link--icon" data-tab-target="settings" aria-label="Settings" data-cuelume-hover="tick" data-cuelume-toggle="toggle">
                 <i class="fa-solid fa-gear" aria-hidden="true"></i>
                 <span>Settings</span>
               </button>
             </div>
           </nav>
           <!-- Action FAB -->
-          <button class="desktop-fab" id="add-article-open-button" aria-label="Actions">
+          <button class="desktop-fab" id="add-article-open-button" aria-label="Actions" data-cuelume-hover="tick">
             <i class="fa-solid fa-bolt fab-icon--default" aria-hidden="true"></i>
             <i class="fa-solid fa-xmark fab-icon--close" aria-hidden="true"></i>
           </button>
@@ -192,24 +192,25 @@
             class="tab-button"
             id="add-article-open-button-mobile"
             type="button"
+            data-cuelume-hover="tick"
           >
             <i class="fa-solid fa-bolt fab-icon--default" aria-hidden="true"></i>
             <i class="fa-solid fa-xmark fab-icon--close" aria-hidden="true"></i>
             Actions
           </button>
-          <button class="tab-button" data-tab-target="rss">
+          <button class="tab-button" data-tab-target="rss" data-cuelume-hover="tick" data-cuelume-toggle="toggle">
             <i class="fa-solid fa-compass" aria-hidden="true"></i>
             Explore
           </button>
-          <button class="tab-button" data-tab-target="library">
+          <button class="tab-button" data-tab-target="library" data-cuelume-hover="tick" data-cuelume-toggle="toggle">
             <i class="fa-solid fa-book-open" aria-hidden="true"></i>
             Library
           </button>
-          <button class="tab-button" data-tab-target="projects">
+          <button class="tab-button" data-tab-target="projects" data-cuelume-hover="tick" data-cuelume-toggle="toggle">
             <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
             Projects
           </button>
-          <button class="tab-button" data-tab-target="settings">
+          <button class="tab-button" data-tab-target="settings" data-cuelume-hover="tick" data-cuelume-toggle="toggle">
             <i class="fa-solid fa-gear" aria-hidden="true"></i>
             Settings
           </button>
@@ -1023,6 +1024,24 @@
                         </button>
                       </div>
 
+                      <div id="sync-change-password-section" class="sync-change-password" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                        <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Change Account Password</h4>
+                        <form id="sync-change-password-form" style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                          <input
+                            type="password"
+                            id="sync-new-password-input"
+                            placeholder="New password (min 6 chars)"
+                            required
+                            minlength="6"
+                            style="padding: 0.25rem 0.5rem; font-size: 0.85rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color-field); color: var(--text-color);"
+                          />
+                          <button class="button button--ghost button--sm" type="submit">
+                            Update
+                          </button>
+                        </form>
+                        <p id="sync-change-password-status" style="font-size: 0.8rem; margin-top: 0.25rem; color: var(--text-color-muted); min-height: 1.2em;"></p>
+                      </div>
+
                       <p class="sync-account__privacy">
                         <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
                         Data is stored unencrypted: articles, highlights, projects, feeds, tags, and preferences.
@@ -1361,6 +1380,8 @@
                         type="button"
                         class="settings-segmented__btn"
                         data-display-theme="system"
+                        data-cuelume-hover="tick"
+                        data-cuelume-toggle="toggle"
                       >
                         <i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i> System
                       </button>
@@ -1368,6 +1389,8 @@
                         type="button"
                         class="settings-segmented__btn"
                         data-display-theme="light"
+                        data-cuelume-hover="tick"
+                        data-cuelume-toggle="toggle"
                       >
                         <i class="fa-solid fa-sun" aria-hidden="true"></i> Light
                       </button>
@@ -1375,6 +1398,8 @@
                         type="button"
                         class="settings-segmented__btn"
                         data-display-theme="dark"
+                        data-cuelume-hover="tick"
+                        data-cuelume-toggle="toggle"
                       >
                         <i class="fa-solid fa-moon" aria-hidden="true"></i> Dark
                       </button>
@@ -1408,6 +1433,23 @@
                       type="checkbox"
                       class="toggle-switch"
                       checked
+                      data-cuelume-toggle="toggle"
+                    />
+                  </label>
+
+                  <label class="settings-toggle-row" for="sound-effects-enabled">
+                    <div class="settings-toggle-row__text">
+                      <strong>Sound effects</strong>
+                      <small
+                        >Play subtle interaction sounds synthesized live.</small
+                      >
+                    </div>
+                    <input
+                      id="sound-effects-enabled"
+                      type="checkbox"
+                      class="toggle-switch"
+                      checked
+                      data-cuelume-toggle="toggle"
                     />
                   </label>
                 </div>
@@ -1427,6 +1469,8 @@
                     type="button"
                     class="settings-font-tile"
                     data-display-font="mono"
+                    data-cuelume-hover="tick"
+                    data-cuelume-toggle="toggle"
                   >
                     <span
                       class="settings-font-tile__preview"
@@ -1443,6 +1487,8 @@
                     type="button"
                     class="settings-font-tile"
                     data-display-font="sans"
+                    data-cuelume-hover="tick"
+                    data-cuelume-toggle="toggle"
                   >
                     <span
                       class="settings-font-tile__preview"
@@ -1460,6 +1506,8 @@
                     type="button"
                     class="settings-font-tile"
                     data-display-font="guardian"
+                    data-cuelume-hover="tick"
+                    data-cuelume-toggle="toggle"
                   >
                     <span
                       class="settings-font-tile__preview"
@@ -1474,6 +1522,8 @@
                     type="button"
                     class="settings-font-tile"
                     data-display-font="josefin"
+                    data-cuelume-hover="tick"
+                    data-cuelume-toggle="toggle"
                   >
                     <span
                       class="settings-font-tile__preview"
@@ -1504,6 +1554,9 @@
                         class="settings-text-size-btn"
                         id="display-text-size-decrease"
                         aria-label="Decrease text size"
+                        data-cuelume-hover="tick"
+                        data-cuelume-press="press"
+                        data-cuelume-release="release"
                       >
                         <i class="fa-solid fa-minus" aria-hidden="true"></i>
                       </button>
@@ -1517,6 +1570,9 @@
                         class="settings-text-size-btn"
                         id="display-text-size-increase"
                         aria-label="Increase text size"
+                        data-cuelume-hover="tick"
+                        data-cuelume-press="press"
+                        data-cuelume-release="release"
                       >
                         <i class="fa-solid fa-plus" aria-hidden="true"></i>
                       </button>

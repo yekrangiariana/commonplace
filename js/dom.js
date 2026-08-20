@@ -124,6 +124,7 @@ export const dom = {
   tagName: document.querySelector("#tag-name"),
   tagList: document.querySelector("#tag-list"),
   splashEnabled: document.querySelector("#splash-enabled"),
+  soundEffectsEnabled: document.querySelector("#sound-effects-enabled"),
   autoTagEnabled: document.querySelector("#auto-tag-enabled"),
   autoTagUseDefaultCountries: document.querySelector(
     "#auto-tag-use-default-countries",

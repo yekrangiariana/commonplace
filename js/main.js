@@ -98,6 +98,7 @@ import {
 import { initWorkspaceContextMenu } from "./contextMenu.js";
 import { initReaderTtsPlayer } from "./ttsPlayer.js";
 import { initSwipeNavigation } from "./swipeNavigation.js";
+import { bind as bindCuelume, play as playSound, setEnabled as setCuelumeEnabled } from "./cuelume.js";
 import { injectAccentStyles, isValidAccent } from "./accentColors.js";
 import {
   initImageCache,
@@ -261,6 +262,9 @@ async function init() {
     if (!didClearData) {
       await hydrateState(state);
     }
+
+    setCuelumeEnabled(state.soundEffectsEnabled !== false);
+    bindCuelume();
 
     if (state.activeTab === "add") {
       state.activeTab = "library";
@@ -673,6 +677,7 @@ function bindEvents() {
       createId,
       setStatus,
       onChanged: () => {
+        playSound("sparkle");
         const didSave = ensureHighlightedRssReaderArticleInLibrary();
         // If article was already in library (not saved just now), mark bookmarks dirty
         if (!didSave && state.selectedArticleId) {
@@ -699,6 +704,7 @@ function bindEvents() {
       getSelectedArticle: getActiveReaderArticle,
       setStatus,
     });
+    playSound("success");
   });
   dom.shareSelectionButton.addEventListener("click", () => {
     sharePendingSelection({
@@ -707,6 +713,7 @@ function bindEvents() {
       getSelectedArticle: getActiveReaderArticle,
       setStatus,
     });
+    playSound("chime");
   });
   dom.settingsNavButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -790,6 +797,13 @@ function bindEvents() {
         localStorage.setItem("splashOff", "1");
       }
     } catch {}
+    persistState(state);
+  });
+
+  dom.soundEffectsEnabled?.addEventListener("change", () => {
+    state.soundEffectsEnabled = dom.soundEffectsEnabled.checked;
+    setCuelumeEnabled(state.soundEffectsEnabled);
+    touchMeta(state);
     persistState(state);
   });
 
@@ -2936,10 +2950,12 @@ function getActiveReaderArticle() {
 // ─── Focus Reading Mode (Paginated Two-Column) ─────────────────────────────────
 
 function openFocusMode(options = {}) {
+  playSound("bloom");
   focusModeController?.open(options);
 }
 
 function closeFocusMode(options = {}) {
+  playSound("whisper");
   focusModeController?.close(options);
 }
 
@@ -3858,6 +3874,8 @@ function openAddModal(tabOverride) {
     return;
   }
 
+  playSound("chime");
+
   const targetTab = tabOverride || getDefaultAddTab();
   switchAddDialogTab(targetTab);
 
@@ -3892,6 +3910,7 @@ function openAddModal(tabOverride) {
 function closeAddModal() {
   dom.addArticleDialog?.close();
   document.body.classList.remove("add-dialog-open");
+  playSound("whisper");
 }
 
 function renderFeedSuggestions() {
@@ -4059,6 +4078,7 @@ function handleAddProjectSubmit(event) {
   updateSearchIndexForProject(newProject);
   dom.addProjectForm?.reset();
   closeAddModal();
+  playSound("success");
   showTransientStatus(`Created project "${name}".`);
   renderAndSyncUrl();
 }
@@ -4151,6 +4171,7 @@ async function handleTweetSubmit(event) {
     switchTab("library", false);
     renderLibraryFilters(state, dom);
     renderArticleList(state, dom);
+    playSound("success");
     showTransientStatus(`Saved tweet by ${tweet.authorName}.`);
   } catch (error) {
     showTransientStatus(
@@ -4427,6 +4448,7 @@ function savePendingFetchedArticle() {
   switchTab("library", false);
   renderLibraryFilters(state, dom);
   renderArticleList(state, dom);
+  playSound("success");
   showTransientStatus(`Saved "${bookmark.title}" to the library.`);
 
   if (bookmark.imageUrl) {
@@ -5040,6 +5062,7 @@ async function refreshAllRssFeeds(options = {}) {
   }
 
   if (!silent) {
+    playSound("droplet");
     setRssRefreshButtonRefreshing(true, 0, state.rssFeeds.length);
   }
 
@@ -5091,22 +5114,31 @@ async function refreshAllRssFeeds(options = {}) {
         successCount++;
         totalNewItems += newCount;
       } catch (error) {
-        // Continue with other feeds even if one fails
+        // Record that we attempted to fetch this feed, to avoid a tight retry loop
+        feed.lastFetchedAt = new Date().toISOString();
+        console.warn(`Failed to refresh feed ${feed.url}:`, error);
       }
     }
 
-    if (successCount > 0) {
-      pruneRssItemsForRetention();
-      touchRss(state);
-      persistState(state);
-      renderRssPanel();
-      rssAutoRefreshController?.sync();
+    // Always persist state to save the lastFetchedAt timestamps (even if all failed)
+    pruneRssItemsForRetention();
+    touchRss(state);
+    persistState(state);
+    renderRssPanel();
+    rssAutoRefreshController?.sync();
 
-      if (!silent && totalNewItems > 0) {
-        showTransientStatus(
-          `Found ${totalNewItems} new item${totalNewItems === 1 ? "" : "s"}.`,
-        );
+    if (!silent && successCount > 0) {
+      if (totalNewItems > 0) {
+        playSound("success");
+      } else {
+        playSound("chime");
       }
+    }
+
+    if (!silent && successCount > 0 && totalNewItems > 0) {
+      showTransientStatus(
+        `Found ${totalNewItems} new item${totalNewItems === 1 ? "" : "s"}.`,
+      );
     }
 
     setRssRefreshButtonRefreshing(false);

@@ -102,6 +102,7 @@ export const state = {
   theme: "system",
   displayHighlightColor: "green",
   splashEnabled: true,
+  soundEffectsEnabled: true,
   ttsVoiceId: "",
   ttsRate: 1,
   pendingSelection: null,

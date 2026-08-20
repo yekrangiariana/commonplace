@@ -83,18 +83,11 @@ html.splash-disabled .splash-screen {
   min-height: 1.4em;
   font-family: "Roboto Mono", "SF Mono", Menlo, Monaco, monospace;
   display: inline-block;
-  overflow: hidden;
   white-space: nowrap;
   border-right: 2px solid var(--success);
-  width: 0;
   opacity: 0;
-  padding-right: 6px; /* Create breathing room for the caret border and letter-spacing */
-  will-change: width, opacity;
-  /* Delayed typing typewriter effect */
-  animation:
-    eyebrow-reveal 0.05s forwards 0.35s,
-    typing 0.75s steps(25, end) forwards 0.35s,
-    blink-caret 0.75s step-end infinite 0.35s;
+  padding-right: 4px; /* Create breathing room for the caret border */
+  animation: blink-caret 0.75s step-end infinite;
 }
 
 /* ── Animation Keyframes ───────────────────────────────── */
@@ -141,25 +134,7 @@ html.splash-disabled .splash-screen {
   }
 }
 
-/* 4. Slogan reveal */
-@keyframes eyebrow-reveal {
-  to {
-    opacity: 1;
-  }
-}
-
-/* 5. Slogan Typing: increments in character units + letter-spacing cushion */
-@keyframes typing {
-  from {
-    width: 0;
-  }
-  to {
-    /* Slogan: "Collect, Connect, Compose" (25 chars) + letter-spacing space */
-    width: 28ch;
-  }
-}
-
-/* 6. Typing Cursor Blink */
+/* 4. Typing Cursor Blink */
 @keyframes blink-caret {
   from, to {
     border-color: transparent;

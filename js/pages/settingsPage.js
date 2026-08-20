@@ -66,6 +66,10 @@ export function renderSettings(state, dom) {
     dom.splashEnabled.checked = state.splashEnabled !== false;
   }
 
+  if (dom.soundEffectsEnabled) {
+    dom.soundEffectsEnabled.checked = state.soundEffectsEnabled !== false;
+  }
+
   if (dom.rssRetentionSelect) {
     const retentionValue =
       state.rssRetentionDays === "never"
@@ -152,8 +156,8 @@ function renderTagList(state, dom) {
               </td>
               <td class="settings-table__count">${tagCounts.get(tag) || 0}</td>
               <td class="settings-table__actions">
-                <button class="link-button" data-rename-tag="${escapeHtml(tag)}">Rename</button>
-                <button class="link-button" data-delete-tag="${escapeHtml(tag)}">Delete</button>
+                <button class="link-button" data-rename-tag="${escapeHtml(tag)}" data-cuelume-hover="tick" data-cuelume-press="press" data-cuelume-release="release">Rename</button>
+                <button class="link-button" data-delete-tag="${escapeHtml(tag)}" data-cuelume-hover="tick" data-cuelume-press="press" data-cuelume-release="release">Delete</button>
               </td>
             </tr>
           `,
@@ -202,7 +206,7 @@ function renderFeedList(state, dom) {
                 <span>Updated ${lastFetched}</span>
               </div>
             </div>
-            <button class="link-button" data-delete-settings-feed="${escapeHtml(feed.id)}">Delete</button>
+            <button class="link-button" data-delete-settings-feed="${escapeHtml(feed.id)}" data-cuelume-hover="tick" data-cuelume-press="press" data-cuelume-release="release">Delete</button>
           </div>
         `;
         })
@@ -248,8 +252,8 @@ function renderProjectList(state, dom) {
               <td class="settings-table__count">${stats.articleCount}</td>
               <td class="settings-table__count">${stats.highlightCount}</td>
               <td class="settings-table__actions">
-                <button class="link-button" data-rename-project="${project.id}">Rename</button>
-                <button class="link-button" data-delete-project="${project.id}">Delete</button>
+                <button class="link-button" data-rename-project="${project.id}" data-cuelume-hover="tick" data-cuelume-press="press" data-cuelume-release="release">Rename</button>
+                <button class="link-button" data-delete-project="${project.id}" data-cuelume-hover="tick" data-cuelume-press="press" data-cuelume-release="release">Delete</button>
               </td>
             </tr>
           `;

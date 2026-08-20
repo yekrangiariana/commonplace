@@ -10,9 +10,12 @@ const AUTH_TOKEN_KEY = "sb-auth-token";
 let cachedSession = null;
 
 function getProjectUrl() {
-  const url = runtimeConfig.fetchServiceUrl || "";
-  const match = url.match(/^(https:\/\/[^/]+\.supabase\.co)/);
-  return match ? match[1] : "";
+  const urlStr = runtimeConfig.fetchServiceUrl || "";
+  try {
+    return new URL(urlStr, window.location.origin).origin;
+  } catch {
+    return "";
+  }
 }
 
 function getAnonKey() {
@@ -212,6 +215,22 @@ export function logout() {
 export function getSessionEmail() {
   const session = restoreSession();
   return session?.user?.email || null;
+}
+
+export async function updatePassword(newPassword) {
+  const base = getProjectUrl();
+  if (!base) throw new Error("Server URL not configured");
+  const headers = await authedHeaders();
+  const res = await fetch(`${base}/auth/v1/user`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ password: newPassword }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.msg || data.error || "Password update failed");
+  }
+  return data;
 }
 
 // ── Database helpers ──

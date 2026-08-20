@@ -477,6 +477,9 @@ function createArticleCardMarkup(article, projectNameById, options = {}) {
       draggable="false"
       role="button"
       tabindex="0"
+      data-cuelume-hover="tick"
+      data-cuelume-press="press"
+      data-cuelume-release="release"
     >
       ${imageMarkup}
       <div class="article-card__header">
@@ -489,6 +492,8 @@ function createArticleCardMarkup(article, projectNameById, options = {}) {
           data-delete-article="${article.id}"
           title="Delete article"
           aria-label="Delete ${escapeHtml(article.title)}"
+          data-cuelume-press="press"
+          data-cuelume-release="release"
         >
           <i class="fa-solid fa-xmark" aria-hidden="true"></i>
         </button>
