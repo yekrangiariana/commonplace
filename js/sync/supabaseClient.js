@@ -476,3 +476,25 @@ export async function deleteServerData() {
     console.error("Failed to delete server database:", e);
   }
 }
+
+export async function fetchServerConfig() {
+  const base = getProjectUrl();
+  if (!base) return null;
+  const headers = await authedHeaders();
+  const res = await fetch(`${base}/auth/v1/server-config`, { headers });
+  if (!res.ok) throw new Error("Failed to fetch server configuration");
+  return res.json();
+}
+
+export async function saveServerConfig(config) {
+  const base = getProjectUrl();
+  if (!base) return null;
+  const headers = await authedHeaders();
+  const res = await fetch(`${base}/auth/v1/server-config`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(config),
+  });
+  if (!res.ok) throw new Error("Failed to save server configuration");
+  return res.json();
+}

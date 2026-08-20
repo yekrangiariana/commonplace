@@ -20,6 +20,8 @@ import {
   logout,
   getSessionEmail,
   updatePassword,
+  fetchServerConfig,
+  saveServerConfig,
 } from "./supabaseClient.js";
 import {
   startRealtime,
@@ -641,6 +643,26 @@ export function initSyncUI(deps) {
   const overlay = document.getElementById("full-screen-login-overlay");
   const shell = document.querySelector(".app-shell");
 
+  async function loadServerConfig() {
+    if (!isLoggedIn()) return;
+    try {
+      const config = await fetchServerConfig();
+      if (!config) return;
+
+      const exportPathInput = document.getElementById("server-export-path");
+      const exportEnabledCheckbox = document.getElementById("server-export-enabled");
+      const rssIntervalSelect = document.getElementById("server-rss-interval");
+      const rssRetentionSelect = document.getElementById("server-rss-retention");
+
+      if (exportPathInput) exportPathInput.value = config.export_path || "";
+      if (exportEnabledCheckbox) exportEnabledCheckbox.checked = !!config.auto_export;
+      if (rssIntervalSelect) rssIntervalSelect.value = String(config.rss_interval);
+      if (rssRetentionSelect) rssRetentionSelect.value = String(config.rss_retention);
+    } catch (err) {
+      console.warn("Failed to load server configurations:", err.message);
+    }
+  }
+
   function updateSyncView() {
     if (isLoggedIn()) {
       if (overlay) overlay.style.display = "none";
@@ -653,6 +675,7 @@ export function initSyncUI(deps) {
         ? `Last synced ${formatRelativeTime(lastSync)}`
         : "Not synced yet";
       if (titlebarStatus) titlebarStatus.textContent = "● Connected";
+      loadServerConfig();
     } else {
       if (overlay) overlay.style.display = "flex";
       if (shell) shell.style.display = "none";
@@ -787,6 +810,74 @@ export function initSyncUI(deps) {
     const password = document.getElementById("overlay-password-input")?.value;
     if (!email || !password) return;
     handleAuth(true, email, password, overlayLoginStatus);
+  });
+
+  const saveExportBtn = document.getElementById("save-server-export-btn");
+  const exportStatusEl = document.getElementById("server-export-status");
+  
+  saveExportBtn?.addEventListener("click", async () => {
+    const export_path = document.getElementById("server-export-path")?.value?.trim() || "";
+    const auto_export = !!document.getElementById("server-export-enabled")?.checked;
+    const rss_interval = Number(document.getElementById("server-rss-interval")?.value || 3);
+    const rss_retention = Number(document.getElementById("server-rss-retention")?.value || 30);
+
+    if (exportStatusEl) {
+      exportStatusEl.textContent = "Saving export settings...";
+      exportStatusEl.style.color = "var(--text-light)";
+    }
+    
+    try {
+      await saveServerConfig({
+        export_path,
+        auto_export,
+        rss_interval,
+        rss_retention
+      });
+      if (exportStatusEl) {
+        exportStatusEl.textContent = "Export settings saved successfully!";
+        exportStatusEl.style.color = "var(--success, #2a9d8f)";
+      }
+      setTimeout(() => { if (exportStatusEl) exportStatusEl.textContent = ""; }, 4000);
+    } catch (err) {
+      if (exportStatusEl) {
+        exportStatusEl.textContent = `Error: ${err.message}`;
+        exportStatusEl.style.color = "var(--danger, #e76f51)";
+      }
+    }
+  });
+
+  const saveRssBtn = document.getElementById("save-server-rss-btn");
+  const rssStatusEl = document.getElementById("server-rss-status");
+
+  saveRssBtn?.addEventListener("click", async () => {
+    const export_path = document.getElementById("server-export-path")?.value?.trim() || "";
+    const auto_export = !!document.getElementById("server-export-enabled")?.checked;
+    const rss_interval = Number(document.getElementById("server-rss-interval")?.value || 0);
+    const rss_retention = Number(document.getElementById("server-rss-retention")?.value || 0);
+
+    if (rssStatusEl) {
+      rssStatusEl.textContent = "Saving scraper settings...";
+      rssStatusEl.style.color = "var(--text-light)";
+    }
+
+    try {
+      await saveServerConfig({
+        export_path,
+        auto_export,
+        rss_interval,
+        rss_retention
+      });
+      if (rssStatusEl) {
+        rssStatusEl.textContent = "Scraper settings saved successfully!";
+        rssStatusEl.style.color = "var(--success, #2a9d8f)";
+      }
+      setTimeout(() => { if (rssStatusEl) rssStatusEl.textContent = ""; }, 4000);
+    } catch (err) {
+      if (rssStatusEl) {
+        rssStatusEl.textContent = `Error: ${err.message}`;
+        rssStatusEl.style.color = "var(--danger, #e76f51)";
+      }
+    }
   });
 
   updateSyncView();

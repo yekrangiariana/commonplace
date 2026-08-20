@@ -1053,7 +1053,62 @@
                     aria-live="polite"
                   ></p>
 
-                  <div class="settings-action-row">
+                  <div class="settings-action-row" style="flex-direction: column; align-items: stretch; gap: 1rem; border-top: var(--border-faint); padding-top: 1rem; margin-top: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+                      <div class="settings-action-row__text">
+                        <strong>Obsidian / Server Export Sync</strong>
+                        <small>Automatically sync highlights and projects to a directory on your server.</small>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="server-export-enabled" style="width: auto; margin: 0;" />
+                        <label for="server-export-enabled" style="font-size: var(--font-size-sm); font-weight: normal; cursor: pointer; color: var(--text-light);">Auto-Export</label>
+                      </div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; width: 100%;">
+                      <input
+                        type="text"
+                        id="server-export-path"
+                        placeholder="Server directory path (e.g. /home/thelinux/Obsidian/Commonplace)"
+                        style="flex: 1; padding: 0.35rem 0.5rem; font-size: var(--font-size-sm); border: var(--border-light); border-radius: 4px; background: var(--input-bg); color: var(--text);"
+                      />
+                      <button class="button button--ghost button--sm" id="save-server-export-btn" type="button">Save</button>
+                    </div>
+                    <p id="server-export-status" style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 0; min-height: 1.2em;"></p>
+                  </div>
+
+                  <div class="settings-action-row" style="flex-direction: column; align-items: stretch; gap: 1rem; border-top: var(--border-faint); padding-top: 1rem; margin-top: 1rem;">
+                    <div class="settings-action-row__text">
+                      <strong>RSS Background Scraper</strong>
+                      <small>Configure server-side feed scraping frequency and local retention.</small>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; width: 100%;">
+                      <div style="flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 0.25rem;">
+                        <label for="server-rss-interval" style="font-size: var(--font-size-xs); font-weight: var(--font-weight-label); color: var(--text-light);">Fetch Interval</label>
+                        <select id="server-rss-interval" style="padding: 0.35rem 0.5rem; font-size: var(--font-size-sm); border: var(--border-light); border-radius: 4px; background: var(--input-bg); color: var(--text); height: 2.2rem;">
+                          <option value="0">Disabled (Manual Only)</option>
+                          <option value="1">Every 1 hour</option>
+                          <option value="3" selected>Every 3 hours</option>
+                          <option value="6">Every 6 hours</option>
+                          <option value="12">Every 12 hours</option>
+                          <option value="24">Every 24 hours</option>
+                        </select>
+                      </div>
+                      <div style="flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 0.25rem;">
+                        <label for="server-rss-retention" style="font-size: var(--font-size-xs); font-weight: var(--font-weight-label); color: var(--text-light);">Feed Retention</label>
+                        <select id="server-rss-retention" style="padding: 0.35rem 0.5rem; font-size: var(--font-size-sm); border: var(--border-light); border-radius: 4px; background: var(--input-bg); color: var(--text); height: 2.2rem;">
+                          <option value="7">Keep for 7 days</option>
+                          <option value="14">Keep for 14 days</option>
+                          <option value="30" selected>Keep for 30 days</option>
+                          <option value="90">Keep for 90 days</option>
+                          <option value="0">Keep Indefinitely</option>
+                        </select>
+                      </div>
+                      <button class="button button--ghost button--sm" id="save-server-rss-btn" type="button" style="align-self: flex-end; height: 2.2rem;">Save</button>
+                    </div>
+                    <p id="server-rss-status" style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 0; min-height: 1.2em;"></p>
+                  </div>
+
+                  <div class="settings-action-row" style="border-top: var(--border-faint); padding-top: 1rem; margin-top: 1rem;">
                     <div class="settings-action-row__text">
                       <strong>Storage usage</strong>
                       <small>Check how much space your data is using.</small>

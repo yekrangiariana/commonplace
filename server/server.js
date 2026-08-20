@@ -6,6 +6,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import crypto from "crypto";
+import Parser from "rss-parser";
 
 import {
   initDb,
@@ -24,6 +25,7 @@ import {
   changeUserPassword,
   getUserCount,
 } from "./auth.js";
+import { triggerServerExport } from "./exporter.js";
 
 // Load environment variables
 dotenv.config();
@@ -67,6 +69,152 @@ app.get("/app-settings.json", (req, res) => {
     appVersion: "2.3.7",
   });
 });
+
+// --- Background RSS Scraper & Scheduler ---
+const activeScraperTimers = new Map();
+
+async function runRssScrapingJob(userId) {
+  console.log(`Running background RSS scraping job for user ${userId}...`);
+  const parser = new Parser({
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    }
+  });
+
+  try {
+    const config = await dbGet("SELECT rss_retention FROM server_configs WHERE user_id = ?", [userId]);
+    const retentionDays = config ? Number(config.rss_retention) : 30;
+
+    const feeds = await dbAll("SELECT * FROM rss_feeds WHERE user_id = ? AND _deleted = 0", [userId]);
+    const bookmarkedRows = await dbAll("SELECT url FROM bookmarks WHERE user_id = ? AND _deleted = 0", [userId]);
+    const bookmarkedUrls = new Set(bookmarkedRows.map(r => r.url).filter(Boolean));
+
+    const now = new Date();
+
+    for (const feed of feeds) {
+      try {
+        console.log(`Scraping RSS feed: ${feed.feed_url}`);
+        const parsedFeed = await parser.parseURL(feed.feed_url);
+        
+        let existingItems = [];
+        try {
+          existingItems = JSON.parse(feed.items || "[]");
+        } catch (e) {
+          existingItems = [];
+        }
+
+        const itemMap = new Map(existingItems.map(item => [item.url || item.id, item]));
+
+        const newItems = (parsedFeed.items || []).map((item, idx) => {
+          const itemUrl = item.link || item.guid || "";
+          const pubDateStr = item.pubDate || item.isoDate || new Date().toISOString();
+          
+          let excerpt = item.contentSnippet || item.summary || "";
+          if (excerpt) {
+            excerpt = excerpt.replace(/<[^>]*>/g, "").substring(0, 200).trim();
+          }
+
+          return {
+            id: item.guid || item.link || `item-${feed.id}-${Date.now()}-${idx}`,
+            url: itemUrl,
+            title: item.title || "Untitled Article",
+            excerpt: excerpt,
+            pubDate: pubDateStr,
+            author: item.creator || item.author || "",
+            thumbnail: item.enclosure?.url || ""
+          };
+        });
+
+        for (const item of newItems) {
+          itemMap.set(item.url || item.id, item);
+        }
+
+        let mergedItems = Array.from(itemMap.values());
+        if (retentionDays > 0) {
+          const cutoffMs = now.getTime() - (retentionDays * 24 * 3600 * 1000);
+          mergedItems = mergedItems.filter(item => {
+            if (bookmarkedUrls.has(item.url)) return true;
+            let pubTime = 0;
+            try {
+              pubTime = new Date(item.pubDate).getTime();
+            } catch {
+              pubTime = now.getTime();
+            }
+            return pubTime >= cutoffMs;
+          });
+        }
+
+        mergedItems.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+
+        const itemsJson = JSON.stringify(mergedItems);
+        const updateTime = new Date().toISOString();
+        
+        await dbRun(
+          `UPDATE rss_feeds 
+           SET items = ?, last_fetched_at = ?, updated_at = ? 
+           WHERE id = ? AND user_id = ?`,
+          [itemsJson, updateTime, updateTime, feed.id, userId]
+        );
+
+        broadcastChange("rss_feeds", {
+          id: feed.id,
+          user_id: userId,
+          feed_url: feed.feed_url,
+          title: feed.title || parsedFeed.title,
+          folder: feed.folder || "",
+          items: mergedItems,
+          last_fetched_at: updateTime,
+          updated_at: updateTime,
+          _deleted: false
+        }, userId);
+
+        console.log(`Successfully synced RSS feed ${feed.title || feed.feed_url} (${mergedItems.length} items kept)`);
+      } catch (err) {
+        console.error(`Failed to scrape RSS feed ${feed.feed_url}:`, err.message);
+      }
+    }
+  } catch (err) {
+    console.error("Failed to run RSS scraping job:", err.message);
+  }
+}
+
+async function rescheduleRssScraper(userId, intervalHours) {
+  if (activeScraperTimers.has(userId)) {
+    clearInterval(activeScraperTimers.get(userId));
+    activeScraperTimers.delete(userId);
+  }
+
+  if (intervalHours <= 0) {
+    console.log(`Background RSS scraping disabled for user ${userId}`);
+    return;
+  }
+
+  console.log(`Scheduling background RSS scraping for user ${userId} every ${intervalHours} hours`);
+  
+  const timer = setInterval(async () => {
+    await runRssScrapingJob(userId);
+  }, intervalHours * 3600 * 1000);
+
+  activeScraperTimers.set(userId, timer);
+
+  // Run once immediately in the background
+  setTimeout(async () => {
+    await runRssScrapingJob(userId);
+  }, 1000);
+}
+
+async function initStartupSchedulers() {
+  try {
+    const users = await dbAll("SELECT id FROM users");
+    for (const user of users) {
+      const config = await dbGet("SELECT rss_interval FROM server_configs WHERE user_id = ?", [user.id]);
+      const interval = config ? Number(config.rss_interval) : 3;
+      await rescheduleRssScraper(user.id, interval);
+    }
+  } catch (err) {
+    console.error("Failed to initialize startup background schedulers:", err);
+  }
+}
 
 // Serve static frontend files
 app.use(express.static(ROOT_DIR));
@@ -223,6 +371,54 @@ app.post("/auth/v1/delete-all-data", authRequired, async (req, res) => {
   }
 });
 
+// Get server configuration
+app.get("/auth/v1/server-config", authRequired, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const config = await dbGet("SELECT * FROM server_configs WHERE user_id = ?", [userId]);
+    if (!config) {
+      return res.json({
+        export_path: "",
+        auto_export: 0,
+        rss_interval: 3,
+        rss_retention: 30
+      });
+    }
+    res.json({
+      export_path: config.export_path || "",
+      auto_export: Boolean(config.auto_export),
+      rss_interval: Number(config.rss_interval),
+      rss_retention: Number(config.rss_retention)
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Database Error", msg: err.message });
+  }
+});
+
+// Update server configuration
+app.post("/auth/v1/server-config", authRequired, async (req, res) => {
+  const { export_path, auto_export, rss_interval, rss_retention } = req.body;
+  try {
+    const userId = req.user.id;
+    const autoExportVal = auto_export ? 1 : 0;
+    const now = new Date().toISOString();
+    
+    await dbRun(
+      `INSERT OR REPLACE INTO server_configs 
+       (user_id, export_path, auto_export, rss_interval, rss_retention, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [userId, export_path || "", autoExportVal, Number(rss_interval), Number(rss_retention), now]
+    );
+
+    // Reschedule the RSS background scraping process if the interval changed
+    await rescheduleRssScraper(userId, Number(rss_interval));
+
+    res.json({ msg: "Server configuration updated successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Database Error", msg: err.message });
+  }
+});
+
 // --- REST DB Endpoints ---
 
 const VALID_TABLES = ["bookmarks", "projects", "rss_feeds", "user_settings"];
@@ -292,6 +488,13 @@ app.post("/rest/v1/:table", authRequired, async (req, res) => {
 
       // Broadcast changes to active websocket clients
       broadcastChange(table, parsedRow, req.user.id);
+
+      // Server-side filesystem Markdown export trigger
+      if (table === "bookmarks" || table === "projects") {
+        triggerServerExport(req.user.id, table, parsedRow).catch((err) => {
+          console.error("Auto-export failed:", err.message);
+        });
+      }
     }
 
     res.status(201).json(upsertedRows);
@@ -449,6 +652,7 @@ function broadcastChange(table, data, userId) {
 // Start Server
 async function start() {
   await initDb();
+  await initStartupSchedulers();
   server.listen(PORT, () => {
     console.log(`===================================================`);
     console.log(`Commonplace Self-Hosted Server running on port ${PORT}`);

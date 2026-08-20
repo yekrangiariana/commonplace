@@ -189,6 +189,19 @@ export async function initDb() {
     )
   `);
 
+  // 7. Server Configurations (Self-Hosted paths & frequencies)
+  await dbRun(`
+    CREATE TABLE IF NOT EXISTS server_configs (
+      user_id TEXT PRIMARY KEY,
+      export_path TEXT,
+      auto_export INTEGER DEFAULT 0,
+      rss_interval INTEGER DEFAULT 3,
+      rss_retention INTEGER DEFAULT 30,
+      updated_at TEXT,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
   // Indexes for sync lookup performance
   await dbRun(`CREATE INDEX IF NOT EXISTS idx_bookmarks_user_updated ON bookmarks (user_id, updated_at)`);
   await dbRun(`CREATE INDEX IF NOT EXISTS idx_projects_user_updated ON projects (user_id, updated_at)`);
