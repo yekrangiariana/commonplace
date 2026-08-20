@@ -267,8 +267,6 @@ async function init() {
     });
     initCommandActions({
       openAddModal,
-      openExportDialog,
-      openImportDialog,
       openFocusMode,
       setStatus,
     });

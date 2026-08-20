@@ -14,8 +14,6 @@ import { state } from "../state.js";
 
 // ── Callbacks supplied by main.js via initCommandActions() ────────────────
 let _openAddModal = () => {};
-let _openExportDialog = () => {};
-let _openImportDialog = () => {};
 let _openFocusMode = () => {};
 let _setStatus = () => {};
 
@@ -25,14 +23,10 @@ let _setStatus = () => {};
  */
 export function initCommandActions({
   openAddModal,
-  openExportDialog,
-  openImportDialog,
   openFocusMode,
   setStatus,
 }) {
   _openAddModal = openAddModal;
-  _openExportDialog = openExportDialog;
-  _openImportDialog = openImportDialog;
   _openFocusMode = openFocusMode;
   _setStatus = setStatus;
 }
