@@ -189,8 +189,8 @@ app.post("/auth/v1/token", async (req, res) => {
 // Update/change password
 app.put("/auth/v1/user", authRequired, async (req, res) => {
   const { password } = req.body;
-  if (!password || password.length < 6) {
-    return res.status(400).json({ error: "Invalid Password", msg: "Password must be at least 6 characters" });
+  if (!password) {
+    return res.status(400).json({ error: "Invalid Password", msg: "Password is required" });
   }
 
   try {
@@ -204,6 +204,22 @@ app.put("/auth/v1/user", authRequired, async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: "Internal Error", msg: err.message });
+  }
+});
+
+// Delete all database records (wipe self-hosted database)
+app.post("/auth/v1/delete-all-data", authRequired, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    await dbRun("DELETE FROM bookmarks WHERE user_id = ?", [userId]);
+    await dbRun("DELETE FROM projects WHERE user_id = ?", [userId]);
+    await dbRun("DELETE FROM rss_feeds WHERE user_id = ?", [userId]);
+    await dbRun("DELETE FROM user_settings WHERE user_id = ?", [userId]);
+    await dbRun("DELETE FROM sessions WHERE user_id = ?", [userId]);
+    await dbRun("DELETE FROM users WHERE id = ?", [userId]);
+    res.json({ msg: "All database data deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Database Error", msg: err.message });
   }
 });
 

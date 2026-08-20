@@ -1199,15 +1199,23 @@ async function fetchArticleWithExperimentalHelper({
 
 async function handleDeleteAllData() {
   const shouldDelete = window.confirm(
-    "Delete all saved data from this browser? This cannot be undone.",
+    "Permanently delete all saved data from this browser AND your self-hosted server? This cannot be undone.",
   );
 
   if (!shouldDelete) {
     return;
   }
 
+  try {
+    const { deleteServerData } = await import("./sync/supabaseClient.js");
+    await deleteServerData();
+  } catch (e) {
+    console.error("Failed to delete remote data:", e);
+  }
+
   // Set flag for deletion on next page load (avoids blocked database issues)
   window.localStorage.setItem("pendingClearAllData", "1");
+  window.localStorage.removeItem("sb-auth-token"); // force sign out
   window.location.href = window.location.pathname + "#library";
   window.location.reload();
 }

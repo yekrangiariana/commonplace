@@ -823,10 +823,6 @@ export function initSyncUI(deps) {
     const email = document.getElementById("overlay-email-input")?.value?.trim();
     const password = document.getElementById("overlay-password-input")?.value;
     if (!email || !password) return;
-    if (password.length < 6) {
-      if (overlayLoginStatus) overlayLoginStatus.textContent = "Error: Password must be at least 6 characters";
-      return;
-    }
     handleAuth(true, email, password, overlayLoginStatus);
   });
 

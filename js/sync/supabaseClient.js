@@ -462,3 +462,17 @@ export async function fetchLegacySyncData() {
     return null;
   }
 }
+
+export async function deleteServerData() {
+  const base = getProjectUrl();
+  if (!base) return;
+  try {
+    const headers = await authedHeaders();
+    await fetch(`${base}/auth/v1/delete-all-data`, {
+      method: "POST",
+      headers,
+    });
+  } catch (e) {
+    console.error("Failed to delete server database:", e);
+  }
+}

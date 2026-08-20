@@ -955,10 +955,9 @@
                           <input
                             type="password"
                             id="sync-password-input"
-                            placeholder="••••••"
+                            placeholder="Password"
                             required
                             autocomplete="current-password"
-                            minlength="6"
                           />
                         </div>
                         <div class="sync-login__actions">
@@ -995,24 +994,6 @@
                       </div>
 
                       <div class="sync-account__actions">
-                        <button
-                          class="button button--ghost button--sm"
-                          id="sync-force-pull-button"
-                          type="button"
-                          title="Replace local data with cloud data"
-                        >
-                          <i class="fa-solid fa-cloud-arrow-down" aria-hidden="true"></i>
-                          Pull
-                        </button>
-                        <button
-                          class="button button--ghost button--sm"
-                          id="sync-force-push-button"
-                          type="button"
-                          title="Replace cloud data with local data"
-                        >
-                          <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
-                          Push
-                        </button>
                         <span class="sync-account__spacer"></span>
                         <button
                           class="button button--ghost button--sm sync-account__signout"
@@ -1024,35 +1005,34 @@
                         </button>
                       </div>
 
-                      <div id="sync-change-password-section" class="sync-change-password" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                        <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600;">Change Account Password</h4>
+                      <div id="sync-change-password-section" class="sync-change-password" style="margin-top: 1.5rem; padding-top: 1rem; border-top: var(--border-light);">
+                        <h4 style="margin-bottom: 0.5rem; font-size: var(--font-size-sm); font-weight: var(--font-weight-label); color: var(--text);">Change Password</h4>
                         <form id="sync-change-password-form" style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
                           <input
                             type="password"
                             id="sync-new-password-input"
-                            placeholder="New password (min 6 chars)"
+                            placeholder="New password"
                             required
-                            minlength="6"
-                            style="padding: 0.25rem 0.5rem; font-size: 0.85rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color-field); color: var(--text-color);"
+                            style="padding: 0.25rem 0.5rem; font-size: var(--font-size-sm); border: var(--border-light); border-radius: 4px; background: var(--input-bg); color: var(--text);"
                           />
                           <button class="button button--ghost button--sm" type="submit">
                             Update
                           </button>
                         </form>
-                        <p id="sync-change-password-status" style="font-size: 0.8rem; margin-top: 0.25rem; color: var(--text-color-muted); min-height: 1.2em;"></p>
+                        <p id="sync-change-password-status" style="font-size: var(--font-size-xs); margin-top: 0.25rem; color: var(--text-muted); min-height: 1.2em;"></p>
                       </div>
 
                       <p class="sync-account__privacy">
                         <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-                        Data is stored unencrypted: articles, highlights, projects, feeds, tags, and preferences.
+                        Data is stored unencrypted in the local database: articles, highlights, projects, feeds, tags, and preferences.
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <!-- ═══ Local Data ═══ -->
+                <!-- ═══ Utilities ═══ -->
                 <div class="section-heading section-heading--compact">
-                  <h2>Local</h2>
+                  <h2>Utilities</h2>
                 </div>
 
                 <div class="stack-form">
@@ -1077,31 +1057,6 @@
                     id="export-markdown-status"
                     aria-live="polite"
                   ></p>
-
-                  <div class="settings-action-row">
-                    <div class="settings-action-row__text">
-                      <strong>Quick Share</strong>
-                      <small>Move bookmarks between devices via clipboard.</small>
-                    </div>
-                    <div class="settings-action-row__buttons">
-                      <button
-                        class="button button--primary button--sm"
-                        id="data-transfer-export-button"
-                        type="button"
-                      >
-                        <i class="fa-solid fa-share-from-square" aria-hidden="true"></i>
-                        Share
-                      </button>
-                      <button
-                        class="button button--ghost button--sm"
-                        id="data-transfer-import-button"
-                        type="button"
-                      >
-                        <i class="fa-solid fa-paste" aria-hidden="true"></i>
-                        Receive
-                      </button>
-                    </div>
-                  </div>
 
                   <div class="settings-action-row">
                     <div class="settings-action-row__text">
@@ -2312,36 +2267,35 @@
       </div>
     </dialog>
 
-    <div id="full-screen-login-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg-color, #f8f5ed); z-index: 9999; align-items: center; justify-content: center; padding: 2rem; box-sizing: border-box;">
-      <div class="sync-panel" style="max-width: 400px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-color-card, #fff); padding: 2rem; box-sizing: border-box;">
-        <div style="text-align: center; margin-bottom: 1.5rem;">
+    <div id="full-screen-login-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: radial-gradient(circle, var(--surface, #f8f5ed) 30%, var(--bg, #f5f0e4) 100%); z-index: 9999; align-items: center; justify-content: center; padding: 2rem; box-sizing: border-box;">
+      <div class="sync-panel" style="max-width: 400px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.1); border: var(--border-light); border-radius: var(--radius-cards, 8px); background: var(--surface); padding: 2.5rem; box-sizing: border-box; color: var(--text);">
+        <div style="text-align: center; margin-bottom: 2rem;">
           <img src="./lotus.png" alt="Commonplace Logo" style="width: 48px; height: 48px; margin-bottom: 0.5rem;" />
-          <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--text-color);">Commonplace Setup</h2>
-          <p style="font-size: 0.85rem; color: var(--text-color-muted); margin: 0;">Connect to your self-hosted database</p>
+          <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--text);">Commonplace Setup</h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Connect to your self-hosted database</p>
         </div>
         <div class="sync-login">
           <form id="overlay-auth-form" class="sync-login__form">
-            <div class="sync-login__field" style="margin-bottom: 1rem;">
-              <label class="sync-login__label" for="overlay-email-input" style="font-weight: 600; font-size: 0.85rem;">Email</label>
+            <div class="sync-login__field" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.25rem;">
+              <label class="sync-login__label" for="overlay-email-input" style="font-weight: var(--font-weight-label, 600); font-size: var(--font-size-sm, 13px); color: var(--text-light);">Email</label>
               <input
                 type="email"
                 id="overlay-email-input"
                 placeholder="user@example.com"
                 required
                 autocomplete="email"
-                style="width: 100%; box-sizing: border-box; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color-field); color: var(--text-color);"
+                style="width: 100%; box-sizing: border-box; padding: 0.5rem; border: var(--border-light); border-radius: 4px; background: var(--input-bg); color: var(--text);"
               />
             </div>
-            <div class="sync-login__field" style="margin-bottom: 1.5rem;">
-              <label class="sync-login__label" for="overlay-password-input" style="font-weight: 600; font-size: 0.85rem;">Password</label>
+            <div class="sync-login__field" style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.25rem;">
+              <label class="sync-login__label" for="overlay-password-input" style="font-weight: var(--font-weight-label, 600); font-size: var(--font-size-sm, 13px); color: var(--text-light);">Password</label>
               <input
                 type="password"
                 id="overlay-password-input"
-                placeholder="••••••"
+                placeholder="Password"
                 required
                 autocomplete="current-password"
-                minlength="6"
-                style="width: 100%; box-sizing: border-box; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color-field); color: var(--text-color);"
+                style="width: 100%; box-sizing: border-box; padding: 0.5rem; border: var(--border-light); border-radius: 4px; background: var(--input-bg); color: var(--text);"
               />
             </div>
             <div class="sync-login__actions" style="display: flex; gap: 0.5rem;">
@@ -2366,7 +2320,7 @@
             class="sync-login__status"
             id="overlay-login-status"
             aria-live="polite"
-            style="font-size: 0.85rem; margin-top: 1rem; color: var(--color-danger, #c62828); min-height: 1.2em; text-align: center;"
+            style="font-size: var(--font-size-sm, 13px); margin-top: 1rem; color: var(--danger, #c0392b); min-height: 1.2em; text-align: center;"
           ></p>
         </div>
       </div>
