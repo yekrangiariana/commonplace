@@ -640,17 +640,24 @@ export function initSyncUI(deps) {
   const forcePushBtn = document.getElementById("sync-force-push-button");
   const titlebarStatus = document.getElementById("sync-titlebar-status");
 
+  const overlay = document.getElementById("full-screen-login-overlay");
+  const shell = document.querySelector(".app-shell");
+
   function updateSyncView() {
     if (isLoggedIn()) {
+      if (overlay) overlay.style.display = "none";
+      if (shell) shell.style.display = "";
       loginView.hidden = true;
       accountView.hidden = false;
-      emailDisplay.textContent = getSessionEmail() || "Signed in";
+      emailDisplay.textContent = getSessionEmail() || "Connected to Server";
       const lastSync = getLastSyncTime();
       lastSyncedEl.textContent = lastSync
         ? `Last synced ${formatRelativeTime(lastSync)}`
         : "Not synced yet";
       if (titlebarStatus) titlebarStatus.textContent = "● Connected";
     } else {
+      if (overlay) overlay.style.display = "flex";
+      if (shell) shell.style.display = "none";
       loginView.hidden = false;
       accountView.hidden = true;
       if (titlebarStatus) titlebarStatus.textContent = "";
@@ -671,21 +678,19 @@ export function initSyncUI(deps) {
     }
   });
 
-  async function handleAuth(isSignUp) {
-    const emailInput = document.getElementById("sync-email-input");
-    const passwordInput = document.getElementById("sync-password-input");
-    const email = emailInput?.value?.trim();
-    const password = passwordInput?.value;
+  async function handleAuth(isSignUp, email, password, statusEl) {
     if (!email || !password) return;
 
-    loginStatus.textContent = isSignUp ? "Registering password…" : "Logging in…";
+    if (statusEl) {
+      statusEl.textContent = isSignUp ? "Registering password…" : "Logging in…";
+    }
     try {
       if (isSignUp) {
         await signUp(email, password);
       } else {
         await signIn(email, password);
       }
-      loginStatus.textContent = "";
+      if (statusEl) statusEl.textContent = "";
 
       // Full sync after login: pull remote → merge → push local-only items
       const localState = getState();
@@ -697,7 +702,7 @@ export function initSyncUI(deps) {
         }
         // Push all local data so local-only items reach the cloud
         await forcePush(getState(), serializeMetaState);
-      } catch {
+      } catch (err) {
         /* sync failure after login is non-critical */
       }
       // Start background sync (polling + realtime)
@@ -707,18 +712,24 @@ export function initSyncUI(deps) {
 
       updateSyncView();
     } catch (err) {
-      loginStatus.textContent = `Error: ${err.message}`;
+      if (statusEl) {
+        statusEl.textContent = `Error: ${err.message}`;
+      }
     }
   }
 
   authForm?.addEventListener("submit", (e) => {
     e.preventDefault();
-    handleAuth(false);
+    const email = document.getElementById("sync-email-input")?.value?.trim();
+    const password = document.getElementById("sync-password-input")?.value;
+    handleAuth(false, email, password, loginStatus);
   });
 
   signupBtn?.addEventListener("click", () => {
     if (!authForm?.reportValidity()) return;
-    handleAuth(true);
+    const email = document.getElementById("sync-email-input")?.value?.trim();
+    const password = document.getElementById("sync-password-input")?.value;
+    handleAuth(true, email, password, loginStatus);
   });
 
   forcePullBtn?.addEventListener("click", async () => {
@@ -795,6 +806,28 @@ export function initSyncUI(deps) {
         changePasswordStatus.style.color = "var(--color-danger, #c62828)";
       }
     }
+  });
+
+  const overlayAuthForm = document.getElementById("overlay-auth-form");
+  const overlaySignupBtn = document.getElementById("overlay-signup-button");
+  const overlayLoginStatus = document.getElementById("overlay-login-status");
+
+  overlayAuthForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const email = document.getElementById("overlay-email-input")?.value?.trim();
+    const password = document.getElementById("overlay-password-input")?.value;
+    handleAuth(false, email, password, overlayLoginStatus);
+  });
+
+  overlaySignupBtn?.addEventListener("click", () => {
+    const email = document.getElementById("overlay-email-input")?.value?.trim();
+    const password = document.getElementById("overlay-password-input")?.value;
+    if (!email || !password) return;
+    if (password.length < 6) {
+      if (overlayLoginStatus) overlayLoginStatus.textContent = "Error: Password must be at least 6 characters";
+      return;
+    }
+    handleAuth(true, email, password, overlayLoginStatus);
   });
 
   updateSyncView();

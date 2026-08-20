@@ -2312,6 +2312,66 @@
       </div>
     </dialog>
 
+    <div id="full-screen-login-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg-color, #f8f5ed); z-index: 9999; align-items: center; justify-content: center; padding: 2rem; box-sizing: border-box;">
+      <div class="sync-panel" style="max-width: 400px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-color-card, #fff); padding: 2rem; box-sizing: border-box;">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+          <img src="./lotus.png" alt="Commonplace Logo" style="width: 48px; height: 48px; margin-bottom: 0.5rem;" />
+          <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--text-color);">Commonplace Setup</h2>
+          <p style="font-size: 0.85rem; color: var(--text-color-muted); margin: 0;">Connect to your self-hosted database</p>
+        </div>
+        <div class="sync-login">
+          <form id="overlay-auth-form" class="sync-login__form">
+            <div class="sync-login__field" style="margin-bottom: 1rem;">
+              <label class="sync-login__label" for="overlay-email-input" style="font-weight: 600; font-size: 0.85rem;">Email</label>
+              <input
+                type="email"
+                id="overlay-email-input"
+                placeholder="user@example.com"
+                required
+                autocomplete="email"
+                style="width: 100%; box-sizing: border-box; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color-field); color: var(--text-color);"
+              />
+            </div>
+            <div class="sync-login__field" style="margin-bottom: 1.5rem;">
+              <label class="sync-login__label" for="overlay-password-input" style="font-weight: 600; font-size: 0.85rem;">Password</label>
+              <input
+                type="password"
+                id="overlay-password-input"
+                placeholder="••••••"
+                required
+                autocomplete="current-password"
+                minlength="6"
+                style="width: 100%; box-sizing: border-box; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color-field); color: var(--text-color);"
+              />
+            </div>
+            <div class="sync-login__actions" style="display: flex; gap: 0.5rem;">
+              <button
+                class="button button--primary sync-login__submit"
+                type="submit"
+                style="flex: 1; padding: 0.5rem;"
+              >
+                Log in
+              </button>
+              <button
+                class="button button--ghost sync-login__submit"
+                type="button"
+                id="overlay-signup-button"
+                style="flex: 1; padding: 0.5rem;"
+              >
+                Register Password
+              </button>
+            </div>
+          </form>
+          <p
+            class="sync-login__status"
+            id="overlay-login-status"
+            aria-live="polite"
+            style="font-size: 0.85rem; margin-top: 1rem; color: var(--color-danger, #c62828); min-height: 1.2em; text-align: center;"
+          ></p>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="./js/main.js"></script>
     <script>
       if ("serviceWorker" in navigator) {
